@@ -145,7 +145,7 @@
  function addSortPrimary(card,school,sortBy,level){
   const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
   if(key==='school_name'||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
-     (level<2&&key==='housing_price_won'))return;
+     (level<1&&key==='housing_price_won'))return;
   const numeric=(value,suffix,options={})=>{
    if(value===null||value===undefined||value===''||
       !Number.isFinite(Number(value))||Number(value)<0)return '자료 없음';

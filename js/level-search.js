@@ -20,8 +20,7 @@
     const isLv2=viewerTier>=2;
     $('lv2UpgradeCard').hidden=isLv2;
     const option=$('regionSort').querySelector('option[value="housing_price_won"]');
-    if(option){option.disabled=!isLv2;option.textContent=isLv2?'공동주택 평균 공시가격':'🔒 공시가격 (Lv.2)';}
-    if(!isLv2&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';
+    if(option){option.disabled=false;option.textContent='공동주택 평균 공시가격';}
   }
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
@@ -877,8 +876,9 @@
     return section;
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
+    if(![1,2].includes(viewerTier)){host.replaceChildren(make('p','beagu-detail-feedback','Lv.1 인증 후 상세조회할 수 있습니다.'));return;}
     host.replaceChildren(yearlyPercentileHistory(school,viewerTier));
-    const allowedYears=[1,2].includes(viewerTier)?YEARS:YEARS.filter(year=>year!==2026);
+    const allowedYears=[1,2].includes(viewerTier)?YEARS:[];
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
     const prefix='beagu-history-'+String(school.school_id);
@@ -1009,18 +1009,10 @@
       housing=make('section','beagu-housing-preview');
       housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
       const amount=make('div','beagu-housing-amount');
-      const available=viewerTier>=2&&school.housing_price_won!=null&&Number(school.housing_price_won)>0&&Number.isFinite(Number(school.housing_price_won));
-      amount.textContent=viewerTier>=2?
-        (available?Number(school.housing_price_won).toLocaleString('ko-KR')+'원':'공개할 공시가격 자료 없음'):'₩ •••,•••,•••';
-      if(viewerTier<2){amount.classList.add('beagu-housing-blur');amount.setAttribute('aria-label','Lv.2에서 공개');}
+      const available=viewerTier>=1&&school.housing_price_won!=null&&Number(school.housing_price_won)>0&&Number.isFinite(Number(school.housing_price_won));
+      amount.textContent=available?Number(school.housing_price_won).toLocaleString('ko-KR')+'원':'공개할 공시가격 자료 없음';
       housing.append(amount,make('p','beagu-housing-note',
         '해당 학교가 위치한 행정동의 공동주택 평균 공시가격입니다. 학교 자체나 개별 주택의 가격이 아닙니다.'));
-      if(viewerTier<2){
-        const unlock=make('a','beagu-housing-unlock','🔒 Lv.2 잠금 · 레벨2에 도전하세요!');
-        unlock.href='challenge.html';
-        unlock.setAttribute('aria-label','Lv.2 잠금 해제 안내 · 챌린지로 이동');
-        housing.append(unlock);
-      }
       // Existing level-specific housing information belongs in detailed view.
       }
       const trigger=button;

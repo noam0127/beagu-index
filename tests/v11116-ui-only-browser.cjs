@@ -10,9 +10,9 @@ if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname)
 if(p==='data/public-lv0-percentiles-v1.2.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({data_version:'public-lv0-20261120-all-regions-verified-percentiles-v1.4',publication_status:'LV0_EXISTING_PUBLIC_SCOPE',rows:[{school_id:school.school_id,percentiles:[10,20,30],statuses:['EXISTING_PUBLIC_VALUE_PRESERVED','EXISTING_PUBLIC_VALUE_PRESERVED','VETTED_2025_EMPIRICAL_PERCENTILE']}]})});
 try{return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body:await fs.readFile(p)})}catch{return route.fulfill({status:404,body:''})}});
 const page=await ctx.newPage();await page.goto(origin+'/school-report.html?school_id='+school.school_id);
-await page.locator('#mainContent').waitFor({state:'visible'});await page.locator('#beaguYearGraph svg').waitFor();
+await page.locator('#mainContent').waitFor({state:'visible'});await page.locator('#reportBasicCard').waitFor();
 assert.equal(await page.locator('#schoolOffice').textContent(),'남부');
-assert.match(await page.locator('#beaguYearGraph svg').getAttribute('aria-label'),/2023년 10.0백분위/);
+assert.match(await page.locator('#reportBasicCard').innerText(),/2025년/);assert.equal(await page.locator('#yearGrid button').count(),0);assert.equal(await page.locator('#beaguYearGraph svg').count(),0);assert.equal(await page.locator('.report-body').isVisible(),false);
 assert.ok(await page.locator('#tierPanel').evaluate(e=>e.getBoundingClientRect().height<110));
 assert.ok(await page.locator('.school-hero').evaluate(e=>e.getBoundingClientRect().height<280));
 assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));

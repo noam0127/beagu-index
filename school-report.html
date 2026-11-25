@@ -270,6 +270,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="학교 선택 횟수 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span><a id="reportPostitLink" href="postit.html" class="postit-quick-link postit-lv2-link">▤ 포스트잇</a><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
     <section class="tier-panel court-compact-access" id="tierPanel" aria-label="등급별 열람"><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자</strong></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">레벨1 인증</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div></section>
+    <section id="reportBasicCard" class="school-survey-snapshot" aria-live="polite" aria-label="기본 배구지수"></section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><div id="beaguYearGraph" style="width:100%;max-width:480px;margin:0 auto"></div></section>
     <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
       <div><strong>2026년 최신 조사</strong><p id="latestYearMessage" aria-live="polite">2026년 학교별 공개 승인 상태를 확인 중입니다.</p></div>
@@ -1385,10 +1386,11 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   async function publicYearDB(id,latestOnly=false){
     if(!client()||!/^[A-Z0-9]{7}$/.test(id))return;
     const serial=state.reportSerial;
+    if(state.tier===0&&latestOnly)return;
     try{
       const request=client().from('beagu_school_report_yearly')
         .select('survey_year,percentile').eq('school_id',id).eq('publication_status','PUBLISHED');
-      const result=await (latestOnly?request.eq('survey_year',2026):request);
+      const result=state.tier===0?{data:[],error:null}:await (latestOnly?request.eq('survey_year',2026):request);
       if(result.error)throw result.error;
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
       state.years['2026'].percentile=null;
@@ -1684,7 +1686,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     document.addEventListener('click',e=>{if(!e.target.closest('.search-surface'))$('suggestions').hidden=true});
     let refreshing2026=false;
     async function refreshVisible2026(){
-      if(refreshing2026||document.visibilityState!=='visible'||state.demo||state.selected!==2026||!state.school)return;
+      if(refreshing2026||document.visibilityState!=='visible'||state.demo||state.tier===0||state.selected!==2026||!state.school)return;
       refreshing2026=true;
       const id=String(state.school.school_id);
       try{await Promise.all([publicYearDB(id,true),protectedReport(id,true)]);}
@@ -1778,6 +1780,18 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     $('schoolOffice').title=office;
     $('schoolType').textContent=s.establishment||'설립구분 정보 없음';
     tierUI();
+    const anonymous=state.tier===0;
+    if(anonymous)state.selected=2025;
+    const overview=$('yearGrid').closest('.year-overview'),latest=$('latestYearMessage').closest('.latest-year-status'),body=$('reportHeading').closest('.report-body');
+    overview.hidden=anonymous;latest.hidden=anonymous;body.hidden=anonymous;
+    // hidden must win against legacy page display rules.
+    for(const node of [overview,latest,body])node.style.display=anonymous?'none':'';
+    const basicYear=state.tier<2?2025:([2026,2025,2024,2023].find(y=>{const p=num(yearData(y).percentile);return p!==null&&p>=0&&p<=100;})||2025);
+    renderSchoolSurveySnapshot($('reportBasicCard'),basicYear);
+    if(anonymous){
+      $('yearGrid').replaceChildren();$('beaguYearGraph').replaceChildren();$('sections').replaceChildren();$('categoryNav').replaceChildren();$('approvedSummary').replaceChildren();$('schoolSurveySnapshot').replaceChildren();$('metricRow').replaceChildren();
+      return;
+    }
     const current=yearData(2026);
     const approvedQuestions=state.tier>=1&&Object.values(current.items||{}).some(item=>item?.serverApproved===true);
     const latestMessage=$('latestYearMessage');
@@ -1815,10 +1829,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   // A published percentile is an actual school-level survey result, not the
   // answer to any one question. Display it prominently in every yearly detail.
   // Never turn participation alone into a fictitious survey score.
-  function renderSchoolSurveySnapshot(){
-    const host=$('schoolSurveySnapshot');
+  function renderSchoolSurveySnapshot(host=$('schoolSurveySnapshot'),year=state.selected){
     if(!host)return;
-    const year=state.selected,entry=yearData(year),p=num(entry.percentile);
+    const entry=yearData(year),p=num(entry.percentile);
     const valid=p!==null&&p>=0&&p<=100;
     const recorded=Boolean(state.publicParticipationByYear[String(year)]?.has(String(state.school?.school_id)))||
       (year===2025&&state.participationYears.includes(year));
@@ -1871,6 +1884,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     renderSections();
   }
   function renderSections(){
+    if(state.tier===0){$('sections').replaceChildren();$('categoryNav').replaceChildren();return;}
     const catalog=state.catalog?.years?.[String(state.selected)];if(!catalog)return;
     const base=state.q?catalog.items.filter(x=>(x.label+' '+x.id+' '+x.group).toLocaleLowerCase('ko-KR').includes(state.q)):catalog.items;
     const groups=catalog.groups;const nav=$('categoryNav');nav.replaceChildren();
