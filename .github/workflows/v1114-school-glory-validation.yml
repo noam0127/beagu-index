@@ -1,0 +1,48 @@
+name: v1.11.14 isolated school glory validation
+on:
+  push:
+    branches: [release/v1.11.14-school-glory]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  school-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Actual Chromium, offline fixture only
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then export BEAGU_CHROMIUM_PATH="$browser"; else npx playwright install chromium --only-shell; fi
+          mkdir -p artifacts/v1114
+          node tests/v1114-school-glory-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v1114-school-card-evidence
+          path: artifacts/v1114/
+          if-no-files-found: ignore
+  school-points:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Disposable PostgreSQL only
+        run: |
+          set -euo pipefail
+          container="glory-fixture-$GITHUB_RUN_ID"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$container" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          psql_local < tests/v1114-school-points-fixture.sql
+          psql_local < scripts/sql/v1.11.14-school-game-points-candidate.sql
+          psql_local < tests/v1114-school-points-assertions.sql
+          psql_local < scripts/sql/v1.11.14-school-game-points-candidate.sql
+          printf '%s\n' "select 1/(case when (select points from public.beagu_school_game_points(array['1234567']))=330 then 1 else 0 end);" | psql_local
