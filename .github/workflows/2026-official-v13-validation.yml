@@ -1,7 +1,7 @@
 name: 2026 official school profiles and percentile v1.3 isolated validation
 on:
   push:
-    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court]
+    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court, fix/v11116-game-controls]
   workflow_dispatch:
 permissions:
   contents: read

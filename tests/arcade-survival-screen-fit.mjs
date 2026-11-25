@@ -22,7 +22,7 @@ function check(viewportHeight,isMobile,survival=true){
  const canvas={closest(sel){return survival&&sel===".stage"?{}:null},getBoundingClientRect(){return {top:800,height:playHeight,bottom:800+playHeight};}};
  const window={scrollY:200,pageYOffset:200,innerHeight:viewportHeight,visualViewport:{height:viewportHeight,offsetTop:0},matchMedia(){return {matches:isMobile}},scrollTo(_x,y){scrolled=y},addEventListener(){}};
  window.parent=window;
- const document={documentElement:{scrollHeight:4000,classList:{toggle(_c,v){locked=v}},style:{setProperty(name,value){if(name==="--arcade-run-parent-visible-height"){setHeight=Number.parseFloat(value);playHeight=Math.min(400,Math.max(205,setHeight-32));}}}},
+ const document={documentElement:{scrollHeight:4000,classList:{toggle(_c,v){locked=v}},style:{setProperty(name,value){if(name==="--arcade-run-parent-visible-height"){setHeight=Number.parseFloat(value);playHeight=Math.min(400,Math.max(205,setHeight-32));}},removeProperty(){}}},
  body:{scrollHeight:4000,style:{position:"",top:"",left:"",right:"",width:"",overflow:""}},querySelector(sel){return sel===".arcade-game-viewport canvas"?canvas:null},addEventListener(){}};
  new Function("window","document",hostLock)(window,document);
  window.ArcadePlayLock.sync(true);

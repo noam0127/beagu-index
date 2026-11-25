@@ -1,0 +1,6 @@
+# v1.11.16 코트 리뉴얼 (candidate)
+
+- Base: v1.11.15 candidate 1c649951f6e68d8cb282865c99a18f3827711e63. Preserve existing production draft and existing rankings.
+- Production arcade-leaderboard v29 lacks the recommend GET route. The web candidate is not sufficient alone. After CI success and explicit release authorization, verify deployed function source/version again; if still missing, install the reviewed arcade-leaderboard source exactly once through the authorized server release procedure. Read-only smoke GET for all five tiers, check returned eligible school and tier; no live POST scores. If no matching school is found, report absence, never fabricate.
+- Do not use Vercel or directly change production DB, publication flags, Q31, or preexisting draft. Do not register if the predecessor is not the approved production base. Recheck exact SHA of production and all candidate CI. Keep prior deployment candidates untouched.
+- Mobile swipe thresholds: 12 CSS px, 0.65 CSS px/ms, max 160 ms sample, 90 ms debounce. Existing desktop dash cooldown remains. Manual desktop J/K/Shift compatibility remains; normal slow contact is not a spike. Mobile pause remains outside canvas. Fixture tests do not certify physical iOS devices or production API.
