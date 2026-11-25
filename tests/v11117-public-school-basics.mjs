@@ -5,3 +5,9 @@ const p=project([row],['1234567'])['1234567'];assert.deepEqual(p,{source_year:20
 const q=project([{...row,profile:{...row.profile,ratio_basis:undefined,student_reference_year:2025}}],['1234567'])['1234567'];assert.deepEqual(q,{source_year:2026,student_count:null,teacher_total:null,male_teacher_ratio:null,second_grade_teacher_ratio:null});
 assert.equal(Object.keys(project([row],['7654321'])).length,0);assert.equal(Object.keys(project([{...row,source_year:2025}],['1234567'])).length,0);
 console.log('PASS public official-only projection, certified denominator and no protected fields');
+const counts={source_year:2026,basis:'REPORTED_1_2_ASSOCIATE',first_male:3,first_female:7,first_total:10,second_male:1,second_female:3,second_total:4,associate_male:0,associate_female:1,associate_total:1};
+const independent={...row,profile:{...row.profile,ratio_basis:undefined,elementary_certified_counts:counts}};
+assert.deepEqual(project([independent],['1234567'])['1234567'],{source_year:2026,student_count:200,teacher_total:15,male_teacher_ratio:26.67,second_grade_teacher_ratio:26.67});
+const invalid={...independent,profile:{...independent.profile,elementary_certified_counts:{...counts,first_total:11}}};
+assert.deepEqual(project([invalid],['1234567'])['1234567'],{source_year:2026,student_count:200,teacher_total:null,male_teacher_ratio:null,second_grade_teacher_ratio:null});
+console.log('PASS distinct qualified denominator, category sums and fail-closed invalid inputs');
