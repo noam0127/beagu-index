@@ -53,7 +53,7 @@
       premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
     if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
-    if(stateLabel)stateLabel.textContent=verifiedLoginLevel>=2?'Lv.2 인증 완료':upgraded?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!currentLink?'추천 확인 중':count>=1?'권한 활성화 확인 중':'유효 추천 0 / 1건';
+    if(stateLabel){stateLabel.hidden=!!currentLink&&count<1&&verifiedLoginLevel<2&&!upgraded;stateLabel.textContent=verifiedLoginLevel>=2?'Lv.2 인증 완료':upgraded?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!currentLink?'추천 확인 중':count>=1?'권한 활성화 확인 중':'';}
     if(benefitsState)benefitsState.textContent=verifiedLoginLevel>=2?'Lv.2 이용 가능':upgraded?'Lv.2 참여코드로 인증하면 이용 가능':'Lv.2 인증 후 이용';
     if(meter)meter.hidden=premiumVisual;
     copyIdentityCode.hidden = !upgraded;

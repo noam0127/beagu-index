@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
 import {readFile} from "node:fs/promises";
 
 const base="https://baeguindex.com";
@@ -7,7 +8,16 @@ const origin={"Origin":base,"Content-Type":"application/json"};
 const html=await readFile("index.html","utf8");
 const hub=await readFile("games.html","utf8");
 const volley=await readFile("teacher-volleyball.html","utf8");
-const runner=await readFile("teacher-run.html","utf8");
+const currentRunner=await readFile("teacher-run.html","utf8");
+// Retain historical 3.0 gameplay contracts against its immutable last source.
+// Current 4.0 lifecycle, physics and replay are independently checked by the
+// actual-page Chromium suite and 4.0 rule contracts, not by 3.0 source regexes.
+const runner=execFileSync("git",["show","8bc306ae6f4633937a84af6b56f0f000c286fa02:teacher-run.html"],{encoding:"utf8",maxBuffer:4*1024*1024});
+assert.equal(currentRunner,await readFile("teacher-run-4-preview.html","utf8"));
+assert.match(currentRunner,/<title>험난한 교직생활 4\.0 — 정년까지 살아남아라 \| 배구지수<\/title>/);
+assert.match(currentRunner,/BeaguRun4Rules/);assert.match(currentRunner,/class="hud" hidden/);
+assert.match(currentRunner,/data-game-lv1-form/);assert.match(currentRunner,/recordPolicy\.save\(localStorage,result\)/);assert.doesNotMatch(currentRunner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
+for(const m of currentRunner.matchAll(/<script>([\s\S]*?)<\/script>/g))new Function(m[1]);
 const shared=await readFile("js/arcade-leaderboard-v1.js","utf8");
 const picker=await readFile("js/arcade-school-picker-v1.js","utf8");
 const backend=await readFile("supabase/functions/arcade-leaderboard/index.ts","utf8");
@@ -240,7 +250,7 @@ assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profil
 assert.match(shared,/arcade-rank-school/);
 assert.doesNotMatch(shared,/ENTER YOUR NAME|nickname:/,"no player names in leaderboard client");
 assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"volleyball homepage title should show 1.0");
-assert.match(hub,/<h3>험난한 교직생활 3\.0<\/h3>/,"teacher-run homepage title should show 3.0");
+assert.match(hub,/<h3>험난한 교직생활 4\.0<\/h3>/,"teacher-run homepage title should show 4.0");
 assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
 assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구지수<\/title>/);
 assert.doesNotMatch(hub,/<h3>험난한 교직생활 2\.0<\/h3>|<h3>선생님배구<\/h3>/,"old game titles removed from Playcourt headings");
@@ -249,7 +259,7 @@ assert.ok(hub.indexOf('data-game="volleyball"')<hub.indexOf('data-game="survival
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
 assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
-assert.match(volley,/id="volley-attack"/,"combined spike/dash button is available");
+assert.doesNotMatch(volley,/id="volley-attack"/,"separate attack button removed");assert.match(volley,/attackPointer=event.pointerId;requestSpike\(\)/);
 assert.match(volley,/state.spikeBufferFrames=SPIKE_BUFFER/,"manual spike buffer is implemented");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
@@ -302,7 +312,7 @@ assert.doesNotMatch(mainVolley,/class="top"|7 PTS|beagu-brand-mark/,"volleyball 
 assert.doesNotMatch(mainRun,/class="top"|ARCADE · LIFE|beagu-brand-mark/,"run duplicate game header removed");
 assert.doesNotMatch(html,/<details class="teacher-game-details"|게임 펼치기 · 접기/,"home game no longer has unnecessary fold text");
 assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"outer game name remains");
-assert.match(hub,/<h3>험난한 교직생활 3\.0<\/h3>/,"outer run name remains");
+assert.match(hub,/<h3>험난한 교직생활 4\.0<\/h3>/,"outer run name remains");
 assert.match(runner,/id="teacher-run-lv1-gate"/,"standalone LV1 game gate is preserved");
 assert.match(picker,/this\.guide=make\("p","arcade-school-brief-note","학교를 선택해주세요\. 배구지수 자료가 없는 학교는 2026 조사에 참여해야 진행이 가능합니다\."/);
 assert.match(picker,/this\.mount\.append\(heading,this\.input,this\.guide,this\.changeButton/,"small help directly follows the school input");

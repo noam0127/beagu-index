@@ -18,3 +18,5 @@
 /* Only finished survival runs use the same two-column action row as volleyball. */
 .panel .choices.arcade-result-replay-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .panel .choices.arcade-result-replay-row button{min-height:44px;font-size:12px;padding:7px 8px}
+
+.arcade-result-full{gap:12px;background:linear-gradient(145deg,#102c48,#293455);padding:18px 12px}.arcade-result-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:min(100%,440px);gap:7px;margin:6px auto}.arcade-result-metrics span{display:flex;align-items:center;justify-content:center;min-height:38px;border-color:#b9a16e;background:#ffffff12;border-radius:10px;font-size:clamp(11px,3vw,14px);line-height:1.3;overflow-wrap:anywhere}.arcade-result-title{letter-spacing:-.03em}.arcade-result-compact .arcade-result-metrics{margin-bottom:10px}.arcade-result-share .arcade-result-brag{background:#e9cb8d;color:#23324a;border-color:#f5e0b4}.arcade-result-status{max-width:420px;text-align:center}

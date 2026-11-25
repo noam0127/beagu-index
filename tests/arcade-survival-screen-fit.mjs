@@ -38,7 +38,7 @@ assert.equal(check(1080,false,false).center,null,"desktop volleyball scroll beha
 
 // Simulate the survival movement segment directly extracted from the game.
 const movementStart=run.indexOf(' const dir=(pressed.has("right")?1:0)');
-const movementEnd=run.indexOf(' player.x=Math.max(27,Math.min(W-27,player.x));',movementStart);
+const movementEnd=run.indexOf(' player.x=Math.max(windowRunEffects().meeting?',movementStart);
 assert(movementStart>0&&movementEnd>movementStart);
 const movement=run.slice(movementStart,movementEnd);
 const move=new Function("env",[
@@ -46,6 +46,7 @@ const move=new Function("env",[
  'const W=600,H=420,dt=.016,skill={speed:1},pressed=new Set();',
  'const difficultyProfiles={easy:{jumpEnabled:true,heroSpeed:1},hard:{jumpEnabled:true,heroSpeed:1},extreme:{jumpEnabled:false,heroSpeed:1}};',
  'const profile=difficultyProfiles[env.difficulty];',
+ 'const growth={effects:()=>({speed:1})},windowRunEffects=()=>({speed:1,meeting:false});',
  'const isMysteryBuff=item=>item==="wings"?env.wings:item==="shackle"?env.shackle:false;',
  'const canPlayerRise=()=>!isMysteryBuff("shackle")&&(profile.jumpEnabled!==false||isMysteryBuff("wings"));',
  movement,

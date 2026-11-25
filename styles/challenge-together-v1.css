@@ -52,3 +52,5 @@ body.beagu-page-challenge #challengeAccessPanel .beagu-participation-intro{margi
 body.beagu-page-challenge #challengeAccessPanel .beagu-participation-inline-status{min-height:44px}
 
 body.beagu-page-challenge #challengeReferralCountHint{font-size:11px;flex-basis:100%;text-align:left;color:#536079}
+
+body.beagu-page-challenge .together-benefits{padding:21px 20px;border:1px solid #a78bcb;border-radius:18px;background:linear-gradient(145deg,#fff,#f3edff);box-shadow:0 8px 22px #3b17691a;color:#32224b}body.beagu-page-challenge .together-benefits h2{font-size:19px;color:#54328a}body.beagu-page-challenge .together-benefits ul{padding-left:20px;margin:12px 0 16px}body.beagu-page-challenge .together-benefits li{line-height:1.6}body.beagu-page-challenge .together-benefits .together-level-guide{display:flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #7951a8;border-radius:11px;background:#5c388a;color:#fff;text-decoration:none;font-weight:750}

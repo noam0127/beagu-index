@@ -47,6 +47,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch immutable legacy 3.0 source for historical contracts
+        run: git fetch --no-tags --depth=1 origin 8bc306ae6f4633937a84af6b56f0f000c286fa02
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

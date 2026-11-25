@@ -3,9 +3,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),{chrom
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const css=await fs.readFile('styles/arcade-playback-v1.css','utf8'),gest=await fs.readFile('js/arcade-gestures-v1.js','utf8'),rail=await fs.readFile('js/arcade-scroll-rail-v1.js','utf8');
 const source=await fs.readFile('teacher-volleyball.html','utf8');
 const cssStart=source.indexOf('/* Full Set touch controls:'),cssEnd=source.indexOf('</style>',cssStart);
-const markupStart=source.indexOf('<div class="volleyball-touch-controls"'),markupEnd=source.indexOf('<div class="volley-ready-overlay"',markupStart);
-assert(cssStart>=0&&cssEnd>cssStart&&markupStart>=0&&markupEnd>markupStart);
-const controlsCss=source.slice(cssStart,cssEnd),controls=source.slice(markupStart,markupEnd),fullscreenCss=await fs.readFile('styles/arcade-fullscreen-v1.css','utf8');
+assert(cssStart>=0&&cssEnd>cssStart);assert(!source.includes('id="volley-attack"'));
+const controlsCss=source.slice(cssStart,cssEnd),controls='',fullscreenCss=await fs.readFile('styles/arcade-fullscreen-v1.css','utf8');
 for(const width of [320,390,768,1440])for(const mode of ['normal','arcade-fullscreen-fallback']){
  const page=await browser.newPage({viewport:{width,height:700}});try{
  await page.setContent('<style>body{margin:0}.arcade-game-viewport{position:relative;height:300px;width:100%}canvas{width:100%;height:100%}</style><div class="arcade-game-viewport '+mode+'"><canvas></canvas><button id="pause" class="arcade-playback" hidden>⏸ 일시정지</button></div><div class="arcade-mobile-scroll-rail"></div>');
@@ -17,16 +16,32 @@ for(const width of [320,390,768,1440])for(const mode of ['normal','arcade-fullsc
  if(width<=768){
   const touch=await browser.newPage({viewport:{width,height:700},hasTouch:true,isMobile:true});
   try{
-   await touch.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}.arcade-game-viewport{position:relative;width:100%;overflow:hidden}canvas{display:block;width:100%;height:auto;aspect-ratio:9/5}</style><div class="court arcade-game-viewport volleyball-playing volleyball-controls-active '+mode+'"><canvas width="900" height="500"></canvas><button id="pause" class="arcade-playback">⏸ 일시정지</button>'+controls+'</div>');
+   await touch.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}.arcade-game-viewport{position:relative;width:100%;overflow:hidden}canvas{display:block;width:100%;height:auto;aspect-ratio:9/5}</style><div class="court arcade-game-viewport volleyball-playing '+mode+'"><canvas width="900" height="500"></canvas><button id="pause" class="arcade-playback">⏸ 일시정지</button>'+controls+'</div>');
    await touch.addStyleTag({content:fullscreenCss+'\n'+css+'\n'+controlsCss});
    assert.equal(await touch.locator('#volley-joystick,#volley-spike,#volley-dash').count(),0);
-   const c=await touch.locator('#volley-attack').boundingBox(),p=await touch.locator('#pause').boundingBox(),canvas=await touch.locator('canvas').boundingBox();
-   assert(c&&p&&canvas&&c.width>=44&&c.height>=44);assert(c.x>=p.x+p.width-1,JSON.stringify({message:'attack overlaps pause',width,mode,attack:c,pause:p}));
-   assert(c.y>=canvas.y+canvas.height-1&&p.y>=canvas.y+canvas.height-1,JSON.stringify({message:'controls overlap canvas',width,mode,attack:c,pause:p,canvas}));
+   assert.equal(await touch.locator('#volley-attack').count(),0);const p=await touch.locator('#pause').boundingBox(),canvas=await touch.locator('canvas').boundingBox();assert(p&&canvas&&canvas.width>0&&canvas.height>0&&p.height>=44);
    console.log('PASS direct touch controls layout viewport='+width+' mode='+mode);
   }finally{await touch.close()}
  }
  }finally{await page.close()}
+}
+// New expanded court: exact production fullscreen CSS and auto-rotation event.
+const wide=await browser.newPage({viewport:{width:844,height:390},hasTouch:true,isMobile:true});try{
+ await wide.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><div class="game-shell"><div class="court arcade-game-viewport" data-arcade-fullscreen><button data-arcade-fullscreen-button class="arcade-fullscreen-toggle"></button><div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud"><strong>8</strong><strong>12</strong></div><canvas id="game" width="900" height="500"></canvas></div></div>');
+ await wide.addStyleTag({content:fullscreenCss});await wide.addScriptTag({content:await fs.readFile('js/arcade-fullscreen-v1.js','utf8')});await wide.evaluate(()=>window.dispatchEvent(new CustomEvent('beagu:volley-landscape',{detail:true})));
+ const bounds=await wide.locator('#game').boundingBox();assert(bounds&&Math.abs(bounds.width-844)<2&&Math.abs(bounds.height-390)<2);assert.deepEqual(await wide.locator('.arcade-volley-fullscreen-hud strong').allTextContents(),['8','12']);assert.equal(await wide.locator('#game').evaluate(e=>getComputedStyle(e).objectFit),'fill');
+ await wide.evaluate(()=>window.dispatchEvent(new CustomEvent('beagu:volley-landscape',{detail:false})));assert.equal(await wide.locator('.arcade-fullscreen-fallback').count(),0);
+}finally{await wide.close();}
+// Survival and volleyball minimal HUD in portrait/landscape, in-page and CSS fullscreen.
+const minimal=await fs.readFile('styles/arcade-minimal-v11112.css','utf8'),leaveCss=await fs.readFile('styles/teacher-run-4-leave.css','utf8');
+for(const [width,height] of [[390,700],[844,390]])for(const expanded of [false,true])for(const survival of [false,true]){
+ const p=await browser.newPage({viewport:{width,height},hasTouch:true,isMobile:true});try{
+ const kind=survival?'run':'volley',stage=survival?'stage':'court',hud=survival?'<div class="arcade-fullscreen-hud arcade-run-fullscreen-hud"><div class="arcade-run-fullscreen-heading" hidden>HP numbers</div><div class="arcade-run-fullscreen-track" id="hp"><div class="arcade-run-fullscreen-fill"></div></div><div class="arcade-fullscreen-subline" hidden>score</div></div>':'<div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud"><strong>8</strong><strong>12</strong></div>';
+ await p.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}canvas{display:block;width:100%;height:300px}.stage,.court{position:relative}</style><div id="school">학교명 검색</div><div class="scoreboard" hidden>old</div><div class="hud" hidden>old</div><div class="'+stage+' arcade-game-viewport '+(expanded?'arcade-fullscreen-fallback':'')+'">'+hud+'<canvas id="game" width="900" height="500"></canvas></div>');
+ await p.evaluate(kind=>document.body.classList.add('beagu-minimal-'+kind),kind);await p.addStyleTag({content:fullscreenCss+'\n'+leaveCss+'\n'+minimal});
+ const canvas=await p.locator('#game').boundingBox(),header=await p.locator(survival?'#hp':'.arcade-volley-fullscreen-hud').boundingBox();assert(canvas&&header&&header.width>0&&header.y>=canvas.y-1&&header.y+header.height<=canvas.y+canvas.height+1,JSON.stringify({width,height,expanded,survival,canvas,header}));assert.equal(await p.locator('.scoreboard,.hud').evaluateAll(els=>els.every(e=>getComputedStyle(e).display==='none')),true);
+ if(survival){assert.equal(await p.locator('.arcade-run-fullscreen-heading,.arcade-fullscreen-subline').evaluateAll(els=>els.every(e=>getComputedStyle(e).display==='none')),true);}
+ }finally{await p.close();}
 }
 // Browser integration: actual canvas pixels, both result layouts, PNG and clipboard fallback.
 const share=await fs.readFile('js/arcade-result-share-v1.js','utf8'),shareCss=await fs.readFile('styles/arcade-result-share-v1.css','utf8');

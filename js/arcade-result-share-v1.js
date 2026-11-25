@@ -17,20 +17,18 @@
   const image=document.createElement("canvas"),w=1000,inner=920;
   const aspect=canvas.width>0&&canvas.height>0?canvas.height/canvas.width:5/9;
   const h=Math.min(800,Math.round(inner*aspect)),imgW=Math.min(inner,Math.round(h/aspect));
-  const extra=Array.isArray(data.certificateLines)?data.certificateLines.slice(0,4):[];
-  image.width=w;image.height=390+h+extra.length*42;const c=image.getContext("2d");
+  const metrics=data.metrics.slice(0,6),rows=Math.ceil(metrics.length/2),top=210,gridY=top+h+32;
+  image.width=w;image.height=gridY+rows*84+90;const c=image.getContext("2d");
   if(!c)throw Error("canvas_unavailable");
-  c.fillStyle="#142b45";c.fillRect(0,0,w,image.height);
-  c.fillStyle="#c7e7fb";c.font="700 23px sans-serif";c.fillText("BAEGUINDEX  ·  "+data.game,40,45,920);
-  c.fillStyle="#fff4d0";c.font="900 46px sans-serif";c.fillText(data.title,40,108,920);
-  c.fillStyle="#d6e9f8";c.font="500 24px sans-serif";c.fillText(data.detail||"",40,154,920);
-  c.fillStyle="#071b2e";c.fillRect(40,180,920,h);
-  c.drawImage(canvas,(w-imgW)/2,180,imgW,h);
-  c.fillStyle="#fff";c.font="800 29px sans-serif";c.fillText(data.metrics.join("  ·  "),40,180+h+55,920);
-  c.fillStyle="#d4edfa";c.font="600 24px sans-serif";
-  extra.forEach((line,i)=>c.fillText(line,40,180+h+96+i*42,920));
-  c.fillStyle="#a8d9ed";c.font="600 22px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,180+h+98+extra.length*42,920);
-  c.fillText("baeguindex.com  |  플레이코트",40,180+h+140+extra.length*42,920);
+  const bg=c.createLinearGradient(0,0,w,image.height);bg.addColorStop(0,"#102c48");bg.addColorStop(1,"#283357");c.fillStyle=bg;c.fillRect(0,0,w,image.height);
+  c.strokeStyle="#d4b77a";c.lineWidth=3;c.strokeRect(20,20,w-40,image.height-40);
+  c.fillStyle="#e4c990";c.font="700 23px sans-serif";c.fillText("BAEGUINDEX  /  "+data.game,40,60,920);
+  c.fillStyle="#fff7df";c.font="900 48px sans-serif";c.fillText(data.title,40,125,920);
+  c.fillStyle="#e4eff9";c.font="500 25px sans-serif";c.fillText(data.detail||"",40,172,920);
+  c.fillStyle="#071b2e";c.fillRect(40,top,920,h);c.drawImage(canvas,(w-imgW)/2,top,imgW,h);
+  metrics.forEach((value,i)=>{const x=40+(i%2)*466,y=gridY+Math.floor(i/2)*84;c.fillStyle="#ffffff18";c.fillRect(x,y,454,70);c.fillStyle="#fff";c.font="800 28px sans-serif";c.fillText(value,x+18,y+45,418);});
+  c.fillStyle="#bcd2e7";c.font="600 19px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,image.height-54,920);
+  c.fillStyle="#e4c990";c.fillText("baeguindex.com  |  플레이코트",40,image.height-29,920);
   return image;
  }
  function create(parent,canvas,{compact=false}={}){
@@ -49,6 +47,7 @@
     for(const item of actions){const b=text("button","",item.label);b.type="button";b.addEventListener("click",item.action);nav.append(b);}
     section.append(nav);
    }
+   if(compact){const stats=text("div","arcade-result-metrics");for(const value of data.metrics.slice(0,4))stats.append(text("span","",value));section.append(stats);}
    const buttons=text("div","arcade-result-actions");
    const copy=text("button","arcade-result-copy","게임화면을 복사하기");copy.type="button";copy.disabled=true;
    const brag=text("a","arcade-result-brag","자랑하기 ↗");brag.href=LOUNGE;brag.target="_blank";brag.rel="noopener noreferrer";

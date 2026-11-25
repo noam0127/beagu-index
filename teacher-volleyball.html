@@ -142,7 +142,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-mystery-hud2">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=11112-wide">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
@@ -155,21 +155,22 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
-<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11112">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
+<link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=1">
 </head>
-<body class="arcade-body beagu-ui-page beagu-page-game">
+<body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-volley">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
-  <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
+  <div class="scoreboard" hidden aria-label="25점 선착순 경기와 점수 기록">
     <div class="volley-best-row"><span class="volley-target-chip">🏁 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span><span class="volley-best-chip" aria-label="내 25점 승리 최단 시간">25점 최단 <strong id="volley-fastest-label">—</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
     <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small><small id="volley-item-score-label">아이템 +0점</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
   </div>
-  <div class="volley-progress" aria-label="25점 달성 진행 상황">
+  <div class="volley-progress" hidden aria-label="25점 달성 진행 상황">
    <div><div class="volley-progress-label"><span>나의 25점</span><span id="volley-my-remain">25점 남음</span></div>
     <div class="volley-progress-track" id="volley-my-progress" role="progressbar" aria-label="내 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill" id="volley-my-fill"></div></div></div>
    <div><div class="volley-progress-label"><span>컴퓨터</span><span id="volley-cpu-remain">25점 남음</span></div>
@@ -179,16 +180,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="court arcade-game-viewport" data-arcade-fullscreen>
       <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
       <div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud" aria-label="전체화면 배구 점수판">
-        <span>나 <strong id="volley-fullscreen-my-score">0</strong></span>
-        <span class="arcade-volley-fullscreen-versus">25점 경기</span>
-        <span>상대 <strong id="volley-fullscreen-cpu-score">0</strong></span>
-        <small id="volley-fullscreen-situation" class="arcade-fullscreen-subline">EASY · 0:00</small>
+        <strong id="volley-fullscreen-my-score" aria-label="내 점수">0</strong>
+        <strong id="volley-fullscreen-cpu-score" aria-label="상대 점수">0</strong>
       </div>
       <button type="button" id="pause" class="arcade-playback" disabled hidden aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
-      <div class="volleyball-touch-controls" aria-label="모바일 배구 조작">
-        <button type="button" id="volley-attack" class="volley-touch-action" aria-label="대시 + 스파이크" title="대시 + 스파이크" aria-pressed="false" disabled>대시 + 스파이크</button>
-      </div>
+      <div class="status arcade-center-notice" id="status" role="status" aria-live="polite" hidden></div>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
         <div class="volley-ready-panel">
           <div class="volley-ready-icon" aria-hidden="true">🏐</div>
@@ -212,7 +209,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="게임 방법" title="게임 방법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 대시 + 스파이크 버튼을 누르는 동안 연속 발동 · EASY/날개 아이템에서만 비행 · 공격 버튼 연속 두 번 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 화면을 누른 채 이동하면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -222,18 +219,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
 <script src="js/arcade-school-picker-v1.js?v=1110-court"></script>
-<script src="js/arcade-fullscreen-v1.js?v=140"></script>
+<script src="js/arcade-fullscreen-v1.js?v=11112-wide"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/volley-touch-v1.js?v=11111"></script>
-<script src="js/arcade-result-share-v1.js?v=11111"></script>
+<script src="js/arcade-result-share-v1.js?v=11112"></script>
 <script>
 (function () {
   "use strict";
   const canvas = document.getElementById("game");
-  const attackButton=document.getElementById("volley-attack");
 
   const courtElement=canvas.closest(".court");
   const resultView=window.BeaguArcadeResult.create(courtElement,canvas);
@@ -501,7 +497,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const setStatus = text => { status.textContent = text; };
+  let statusUntil=0;
+  const setStatus = text => { status.textContent = text;status.hidden=!text;statusUntil=performance.now()+2600; };
   const BEST_SCORE_KEY="teacherVolleyballScore25BestV1";
   // This score-based season starts fresh, separate from the retired time records.
   try{
@@ -659,7 +656,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
     document.getElementById("volley-fullscreen-my-score").textContent=String(state.leftScore);
     document.getElementById("volley-fullscreen-cpu-score").textContent=String(state.rightScore);
-    document.getElementById("volley-fullscreen-situation").textContent=mysteryBrief();
+
     updateScoreProgress();
     startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "⏹ 여기까지 기록";
     startButton.disabled = state.phase === "starting" ||
@@ -832,31 +829,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function courtPoint(event){
     const rect=canvas.getBoundingClientRect();
     if(!rect.width||!rect.height)return null;
+    const fit=getComputedStyle(canvas).objectFit;
     const scale=Math.min(rect.width/W,rect.height/H);
-    const x=(event.clientX-rect.left-(rect.width-W*scale)/2)/scale;
-    const y=(event.clientY-rect.top-(rect.height-H*scale)/2)/scale;
+    const sx=fit==="fill"?rect.width/W:scale,sy=fit==="fill"?rect.height/H:scale;
+    const x=(event.clientX-rect.left-(rect.width-W*sx)/2)/sx;
+    const y=(event.clientY-rect.top-(rect.height-H*sy)/2)/sy;
     return {x:clamp(x,35,NET_X-NET_W/2-36),y:clamp(y,playerCeiling(),FLOOR-31)};
   }
   function capturePointer(node,id){try{node.setPointerCapture?.(id);}catch(_){}}
   canvas.addEventListener("pointerdown",event=>{
     if(event.pointerType==="mouse"||state.phase!=="playing")return;
     const point=courtPoint(event);if(!point||!touchControl.down(event.pointerId,point,left.y))return;
-    event.preventDefault();capturePointer(canvas,event.pointerId);
+    event.preventDefault();capturePointer(canvas,event.pointerId);attackPointer=event.pointerId;requestSpike();
   });
   canvas.addEventListener("pointermove",event=>{
     if(touchControl.pointerId!==event.pointerId)return;
     const point=courtPoint(event);if(!point)return;
     event.preventDefault();touchControl.move(event.pointerId,point,left.y,left.y>=FLOOR-31-.1);
   });
-  canvas.addEventListener("pointerup",event=>touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump()));
-  for(const type of ["pointercancel","lostpointercapture"])canvas.addEventListener(type,event=>touchControl.cancel(event.pointerId));
+  canvas.addEventListener("pointerup",event=>{touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump());endAttack(event);});
+  for(const type of ["pointercancel","lostpointercapture"])canvas.addEventListener(type,event=>{touchControl.cancel(event.pointerId);endAttack(event);});
   function requestSpike(){
     if(state.phase!=="playing")return false;
     const now=Date.now();
     if(lastTapAt&&now-lastTapAt<=320){activateSuperSpike();lastTapAt=0;}
     else lastTapAt=now;
     state.spikeBufferFrames=SPIKE_BUFFER;
-    updateTouchActions();
     return true;
   }
   function aimDash(inputX,inputY){
@@ -874,27 +872,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     aimDash(inputX,inputY);
     state.dashCooldownFrames=mobile?0:DASH_COOLDOWN;
     tone(280,.09,"sawtooth",.035,0,780);
-    updateTouchActions();
     return true;
   }
   function endAttack(event){
     if(attackPointer===null||(event&&event.pointerId!==attackPointer))return;
     attackPointer=null;state.dashFrames=0;state.spikeBufferFrames=0;
-    updateTouchActions();
   }
-  function updateTouchActions(){
-    const playing=state.phase==="playing";
-    attackButton.disabled=!playing;
-    attackButton.classList.toggle("is-armed",playing&&attackPointer!==null);
-    attackButton.setAttribute("aria-pressed",String(playing&&attackPointer!==null));
-  }
-  attackButton.addEventListener("pointerdown",event=>{
-    if(state.phase!=="playing"||attackPointer!==null)return;
-    event.preventDefault();attackPointer=event.pointerId;
-    capturePointer(attackButton,event.pointerId);requestSpike();requestDash(true);
-  });
-  for(const type of ["pointerup","pointercancel","lostpointercapture"])attackButton.addEventListener(type,endAttack);
-  attackButton.addEventListener("click",event=>{if(event.detail===0){requestSpike();requestDash(true);}});
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
@@ -1176,7 +1159,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.winner=result.title;state.winCheer=result.detail;
     render();
     resultView.show({game:"선생님배구",title:result.title,detail:result.detail,
-      metrics:[state.leftScore+" : "+state.rightScore,finalScore.toLocaleString("ko-KR")+"점",fmtTime(elapsedTenths),diffName[currentDifficulty]||currentDifficulty,...(state.recordBroken?["기기 최고점 신기록"]:[]),...(state.timeRecordBroken?["기기 최단시간 신기록"]:[])]},
+      metrics:["경기 스코어 "+state.leftScore+" : "+state.rightScore,"최종 "+finalScore.toLocaleString("ko-KR")+"점","경기 시간 "+fmtTime(elapsedTenths),"난이도 "+(diffName[currentDifficulty]||currentDifficulty),"최대 연속 득점 "+state.bestStreak+"점","최대 열세 "+state.maxDeficit+"점",...(state.recordBroken?["기기 최고점 신기록"]:[]),...(state.timeRecordBroken?["기기 최단시간 신기록"]:[])]},
       [{label:"↻ 다시 하기",action:()=>void startMatch()},{label:"🏫 다른 학교",action:()=>stopForSchoolChange()}]);
     syncUI();
     return saveResult;
@@ -1255,7 +1238,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const touchJump=touchControl.takeJump();
     if(Math.abs(inputX)>.2)lastMoveDirection=Math.sign(inputX);
     if(attackPointer!==null){
-      aimDash(inputX,inputY);state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;
+      if(Math.abs(inputX)>.2||(flightAllowed&&Math.abs(inputY)>.2))aimDash(inputX,inputY);else state.dashFrames=0;
+      state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;
     }
     const dashing=state.dashFrames>0;
     const moveX=dashing?state.dashX:inputX;
@@ -1263,8 +1247,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(flightAllowed){
       // EASY/wings: direct two-axis steering, release to hover.
       const flightStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed*(dashing?1.75:1);
-      left.x=clamp(left.x+(axes&&!dashing?touchControl.limitX(moveX*flightStep,left.x):moveX*flightStep),35,NET_X-NET_W/2-36);
-      left.y=clamp(left.y+(axes&&!dashing?touchControl.limitY(moveY*flightStep,left.y):moveY*flightStep),playerCeiling(),FLOOR-31);
+      left.x=clamp(left.x+(axes?touchControl.limitX(moveX*flightStep,left.x):moveX*flightStep),35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y+(axes?touchControl.limitY(moveY*flightStep,left.y):moveY*flightStep),playerCeiling(),FLOOR-31);
       left.vx=left.x-beforeMoveX;left.vy=left.y-beforeMoveY;
       left.jumpLock=false;
     }else{
@@ -1605,12 +1589,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (state.phase === "paused") overlay("PAUSE", "");
     else if(state.phase==="point"){
       // Non-blocking feedback: keep the court and ball visible between serves.
-      ctx.save();ctx.fillStyle="rgba(12,42,68,.83)";ctx.fillRect(210,22,480,74);
-      textLabel(state.message,450,55,28,"#fff6d8","center",465);
-      textLabel(state.pointCheer,450,82,15,"#d7f8ff","center",470);ctx.restore();
+      ctx.save();ctx.fillStyle="rgba(12,42,68,.83)";ctx.fillRect(170,H*.43,560,82);
+      textLabel(state.message,450,H*.43+34,31,"#fff6d8","center",540);
+      textLabel(state.pointCheer,450,H*.43+64,22,"#d7f8ff","center",540);ctx.restore();
     }
     // Finished games use a scrollable HTML result panel, not painted text.
     ctx.restore();
+  }
+  const mobileLandscape=window.matchMedia("(orientation: landscape) and (pointer: coarse)");
+  let landscapeWanted=false;
+  function syncLandscapeCourt(){
+    const wanted=mobileLandscape.matches&&["playing","point","paused","finished"].includes(state.phase);
+    if(wanted===landscapeWanted)return;
+    landscapeWanted=wanted;
+    if(window.parent===window)window.dispatchEvent(new CustomEvent("beagu:volley-landscape",{detail:wanted}));
   }
   let last = 0, accumulator = 0;
   function frame(time) {
@@ -1619,13 +1611,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const isPlaying=state.phase==="playing";
     if(courtElement.classList.contains("volleyball-playing")!==isPlaying)
       courtElement.classList.toggle("volleyball-playing",isPlaying);
-    courtElement.classList.toggle("volleyball-controls-active",["playing","point","paused"].includes(state.phase));
+    courtElement.classList.remove("volleyball-controls-active");
+    syncLandscapeCourt();
+    status.hidden=!status.textContent||state.phase==="paused"||state.phase==="finished"||state.phase==="point"||(state.phase==="playing"&&time>statusUntil);
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;
     let loops = 0;
     while (accumulator >= 1 / 60 && loops < 4) { step(); accumulator -= 1 / 60; loops++; }
-    updateTouchActions();
     render();
     requestAnimationFrame(frame);
   }

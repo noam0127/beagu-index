@@ -638,6 +638,21 @@
     },
     {
       "order": 22,
+      "version": "v1.11.12",
+      "name": "승리의 순간",
+      "scope": "게임 결과 카드 · 모바일 조작 · 4.0 기본 전환 · 챌린지 UI",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.11.12-victory-card",
+      "dependencies": [
+        "v1.11.11"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "8bc306ae6f4633937a84af6b56f0f000c286fa02",
+      "tests": []
+    },
+    {
+      "order": 23,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -657,7 +672,7 @@
       "rollback_sha": null
     },
     {
-      "order": 23,
+      "order": 24,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -676,7 +691,7 @@
       "rollback_sha": null
     },
     {
-      "order": 24,
+      "order": 25,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -693,7 +708,7 @@
       "rollback_sha": null
     },
     {
-      "order": 25,
+      "order": 26,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

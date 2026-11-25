@@ -13,10 +13,10 @@ assert.match(css,/font-size:clamp\(13px,1\.55vw,17px\)!important/);
 assert.match(css,/font-size:clamp\(12px,3\.4vw,14px\)!important/);
 assert.match(css,/overflow-y:auto!important/,'long dialogue remains accessible');
 assert.doesNotMatch(volley,/id="volley-joystick"|id="volley-spike"|id="volley-dash"|id="volley-mobile-jump"/);
-assert.match(volley,/id="volley-attack"/);
+assert.doesNotMatch(volley,/id="volley-attack"/);assert.match(volley,/attackPointer=event.pointerId;requestSpike\(\)/);
 assert.match(volley,/@media\(pointer:coarse\)\{[\s\S]*?\.court\.volleyball-controls-active \.volleyball-touch-controls\{display:flex/);
 assert.match(volley,/canvas\.addEventListener\("pointerdown"/);
-assert.match(volley,/attackButton\.addEventListener\("pointerdown"/);
+assert.match(volley,/canvas\.addEventListener\("pointermove"/);
 assert.match(volley,/\.court\.volleyball-controls-active\{padding-bottom:/);
 assert.match(volley,/const flightAllowed=hasPlayerWings\(\)&&canPlayerJump\(\)/);
 assert.match(volley,/courtElement\.classList\.toggle\("volleyball-playing",isPlaying\)/);
@@ -24,8 +24,8 @@ const start=run.indexOf('function drawReadableNotice(content,y,background,color)
 const end=run.indexOf('function draw(){',start);
 assert(start>0&&end>start);
 const source=run.slice(start,end);
-assert.match(source,/ctx\.globalAlpha=\.07/);
-assert.match(source,/const fontSize=Math\.min\(13,Math\.max\(11/);
+assert.match(source,/ctx\.globalAlpha=\.84/);
+assert.match(source,/const fontSize=Math\.min\(18,Math\.max\(14/);
 assert.match(source,/ctx\.strokeText\(/);
 const ops=[];
 const ctx={save(){},restore(){},measureText:t=>({width:t.length*7}),
@@ -35,6 +35,8 @@ const paint=new Function('ctx','W','roundRect',source+
  'return drawReadableNotice("학교 안에서 여러 사건이 진행됩니다",90,"rgba(12,32,52,.9)","#fff");');
 const height=paint(ctx,560,(...a)=>ops.push(['panel',ctx.globalAlpha,...a]));
 assert(height<=62);
-assert(ops.some(a=>a[0]==='panel'&&a[1]===.07),'notice panel is transparent');
+assert(ops.some(a=>a[0]==='panel'&&a[1]===.84),'notice panel has readable contrast');
 assert(ops.some(a=>a[0]==='stroke'),'caption is readable');
 console.log('PASS compact transparent captions in diary/survival and direct touch and attack controls');
+
+assert.match(volley,/class="scoreboard" hidden/);assert.match(run,/class="hud" hidden/);assert.match(run,/const central=noticeTime>0/);assert.match(read("styles/arcade-minimal-v11112.css"),/grid-template-rows:minmax\(0,1fr\)/);

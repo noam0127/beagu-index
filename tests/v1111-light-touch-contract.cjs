@@ -23,7 +23,7 @@ const strip=s=>s.replace(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\
 const gitRead=(ref,p)=>cp.execFileSync('git',['show',ref+':'+p],{encoding:'utf8',maxBuffer:20*1024*1024});
 const homecourt='497682f2abd359802944f00f187b3f2e81bd4e2d';
 for(const p of ['teacher-volleyball.html','teacher-run.html']){
- const baseline=gitRead(homecourt,p),current=p==='teacher-volleyball.html'?gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f',p):read(p);
+ const baseline=gitRead(homecourt,p),current=p==='teacher-volleyball.html'?gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f',p):gitRead('8bc306ae6f4633937a84af6b56f0f000c286fa02',p);
  // Reverse only the explicitly approved UI changes; preserve all other game logic.
  let normalized=current.replace(/arcade-school-picker-v1\.js\?v=1110-court/,'arcade-school-picker-v1.js?v=20261120-fast1').replace(/arcade-leaderboard-v1\.js\?v=1119/,'arcade-leaderboard-v1.js?v=20261123-school-links-live2')
  .replace(/arcade-mystery-items-v1\.js\?v=1116/,p.includes('volleyball')?'arcade-mystery-items-v1.js?v=20261123-items':'arcade-mystery-items-v1.js?v=20261123-arcade-items3');
@@ -71,3 +71,6 @@ const fullset=read('styles/beagu-fullset-school-v11111.css');for(const width of 
 const fullVolley=read('teacher-volleyball.html'),publishedVolley=gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f','teacher-volleyball.html');
 for(const [start,end] of [['  async function startMatch() {',"  function stopForSchoolChange(keepSchool=false){"],['  function controlPlayer(','  function moveClones(']]){const a=publishedVolley.indexOf(start),b=publishedVolley.indexOf(end,a+start.length),c=fullVolley.indexOf(start),d=fullVolley.indexOf(end,c+start.length);assert.ok(a>=0&&b>a&&c>=0&&d>c);assert.equal(fullVolley.slice(c,d).replace('state.maxDeficit=0;',''),publishedVolley.slice(a,b));}
 assert.match(fullVolley,/volley-touch-v1\.js\?v=11111/);assert.doesNotMatch(fullVolley,/volley-joystick|조이스틱/);
+
+// 4.0 replacement is explicitly approved; historical preservation checked above.
+assert.equal(read("teacher-run.html"),read("teacher-run-4-preview.html"));assert.match(read("teacher-run.html"),/BeaguRun4Rules/);

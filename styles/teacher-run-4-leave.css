@@ -8,3 +8,7 @@
 html body .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){--arcade-run-hud-height:136px;grid-template-rows:var(--arcade-run-hud-height) minmax(0,1fr)!important}
 #run4-leave-fullscreen{padding:3px 4px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;box-sizing:border-box;white-space:nowrap}
 #run4-leave-fullscreen button{flex:none;min-height:36px}
+
+.run4-leave[hidden],#run4-leave-fullscreen{display:none!important}html body .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){--arcade-run-hud-height:88px}html body .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) #run4-leave-fullscreen:not([hidden]){display:flex!important;position:absolute;bottom:max(58px,env(safe-area-inset-bottom));left:8px;right:8px;width:max-content;max-width:calc(100% - 16px);z-index:31} 
+
+#run4-leave-inventory:not([hidden]){position:absolute;left:8px;right:8px;bottom:58px;z-index:31;width:max-content;max-width:calc(100% - 16px);margin:0;max-height:90px;overflow:auto}html body .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) #run4-leave-inventory{display:none!important}
