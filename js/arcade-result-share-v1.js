@@ -3,9 +3,10 @@
  "use strict";
  const LOUNGE="https://indischool.com/tweets/channels/lounge";
  const text=(tag,cls,value)=>{const n=document.createElement(tag);n.className=cls;if(value!==undefined)n.textContent=value;return n;};
- function volleyballTitle({won,early,opponent,maxDeficit,streak}){
+ function volleyballTitle({won,early,player=25,opponent,maxDeficit,streak,deuce=false}){
   if(early)return {title:"🏁 이번 도전의 기록!",detail:"다음 경기에서 더 높은 점수에 도전해 보세요."};
   if(!won)return {title:opponent>=25?"💪 끝까지 싸운 경기!":"🏐 경기 종료",detail:"이번 경험을 다음 경기의 힘으로!"};
+  if(deuce&&opponent>=24)return {title:"🔥 듀스 승리!",detail:player+" : "+opponent+" · 마지막까지 2점 차를 만들어 냈습니다."};
   if(maxDeficit>0)return {title:maxDeficit>=5?"🔥 대역전승!":"🔥 역전승!",detail:"최대 "+maxDeficit+"점 차의 열세를 극복하고 25점을 달성했습니다."};
   if(opponent===0)return {title:"🏆 25대 0 완벽한 승리!",detail:"한 점도 허용하지 않았습니다."};
   if(opponent>=23)return {title:"🔥 손에 땀을 쥔 접전 승리!",detail:"마지막까지 집중한 멋진 경기!"};

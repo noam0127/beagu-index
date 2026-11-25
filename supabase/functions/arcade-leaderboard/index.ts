@@ -177,18 +177,21 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
-function matchBonusFromRallies(rallies:any,player:number,cpu:number,ordinary:number){
- if(typeof rallies!=="string"||rallies.length>49||!/^[PC]*$/.test(rallies)||rallies.length!==player+cpu)throw Error("invalid_rally_history");
+function volleyMatchEnded(p:number,c:number,deuce:any=false){
+ return deuce?Math.max(p,c)>=25&&Math.abs(p-c)>=2:(p===25||c===25)&&!(p===25&&c===25);
+}
+function matchBonusFromRallies(rallies:any,player:number,cpu:number,ordinary:number,deuce:any=false){
+ if(typeof rallies!=="string"||rallies.length>(deuce?3601:49)||!/^[PC]*$/.test(rallies)||rallies.length!==player+cpu)throw Error("invalid_rally_history");
  let p=0,c=0,deficit=0,streak=0,longest=0,opponentFirst24=false;
  for(const side of rallies){
-  if(p===25||c===25)throw Error("invalid_rally_history");
+  if(volleyMatchEnded(p,c,deuce))throw Error("invalid_rally_history");
   if(side==="P"){p++;streak++;longest=Math.max(longest,streak);}
   else{c++;streak=0;if(c===24&&p<24)opponentFirst24=true;}
   deficit=Math.max(deficit,c-p);
  }
  if(p!==player||c!==cpu)throw Error("invalid_rally_history");
  let kind="none",rate=0;
- if(p===25&&c<25){
+ if(volleyMatchEnded(p,c,deuce)&&p>c){
   const award=(condition:any,name:any,pct:number)=>{if(condition&&pct>rate){kind=name;rate=pct;}};
   award(c===0,"sweep",50);award(deficit>=10,"great_comeback",50);
   award(opponentFirst24,"dramatic",40);award(c<=5,"dominant",30);
@@ -223,34 +226,41 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
  const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
    bonus=result?.survivalBonus,multiplier=result?.multiplier,final=result?.finalScore,
    victory=result?.victory,endedEarly=result?.endedEarly,tenths=result?.activeTenths;
- if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
-   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,100000)||
+ const deuce=result?.matchRule==="deuce_v1";
+ if(result?.matchRule!==undefined&&!deuce)throw Error("invalid_match_rule");
+ if(!int(player,0,deuce?3601:25)||!int(cpu,0,deuce?3601:25)||!int(base,0,deuce?360100:2500)||
+   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,deuce?200000:100000)||
    !int(tenths,1,36000)||typeof victory!=="boolean"||typeof endedEarly!=="boolean")
   throw new Error("invalid_stats");
  if(tenths>Math.floor(elapsed*10)+20)throw new Error("invalid_survival_time");
- const matchEnded=(player===25||cpu===25)&&!(player===25&&cpu===25);
+ const matchEnded=volleyMatchEnded(player,cpu,deuce);
+ if(deuce&&player+cpu>Math.floor(tenths/10)+1)throw Error("invalid_duration");
  if(endedEarly){
   if(matchEnded||tenths<40)throw new Error("invalid_early_end");
  }else{
   if(!matchEnded)throw new Error("invalid_match");
   if(tenths<Math.max(40,(player+cpu-1)*10))throw new Error("invalid_duration");
  }
- if(victory!==(player===25&&cpu<25))throw new Error("invalid_victory");
+ if(victory!==(matchEnded&&player>cpu))throw new Error("invalid_victory");
  const expectedBase=Math.max(0,player*100-cpu*50);
  const expectedBonus=Math.min(900,Math.floor(tenths/10))*4;
- const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
+ const expectedMultiplier=victory?1+Math.floor(Math.max(0,25-cpu)/5):1;
  const itemScore=verifiedVolleyballItemScore(result,tenths,player,cpu);
  const ordinary=Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore);
  let extra=0;
- if(result.bonusRule!==undefined||result.rallyHistory!==undefined||result.matchBonus!==undefined||result.matchBonusKind!==undefined){
+ if(deuce){
+  matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary,true);
+  for(const e of result.itemScoreEvents??[]){const prefix=result.rallyHistory.slice(0,e.player+e.cpu);if(prefix.split("P").length-1!==e.player)throw Error("invalid_rally_history");}
+ }
+ if(result.bonusRule!==undefined||(!deuce&&result.rallyHistory!==undefined)||result.matchBonus!==undefined||result.matchBonusKind!==undefined){
   if(result.bonusRule!=="fire_court_v1")throw Error("invalid_bonus_rule");
-  const computed=matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary);
+  const computed=matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary,deuce);
   if(result.matchBonus!==computed.points||result.matchBonusKind!==computed.kind)throw Error("invalid_match_bonus");
   for(const e of result.itemScoreEvents??[]){const prefix=result.rallyHistory.slice(0,e.player+e.cpu);if(prefix.split("P").length-1!==e.player)throw Error("invalid_rally_history");}
   extra=computed.points;
  }
  if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
-    final!==ordinary+extra)
+    final!==(deuce?Math.min(200000,ordinary+extra):ordinary+extra))
   throw new Error("invalid_score");
  return final;
 }
@@ -264,6 +274,7 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
    baseScore:result.baseScore,playBonus:result.survivalBonus,
    itemScore:result.itemScoreDelta??0,
    winMultiplier:result.multiplier,playedTenths:result.activeTenths,
+   ...(result.matchRule==="deuce_v1"?{matchRule:"deuce_v1"}:{}) ,
    ...(result.bonusRule==="fire_court_v1"?{bonusRule:result.bonusRule,matchBonus:result.matchBonus,matchBonusKind:result.matchBonusKind}:{})
   };
  }
@@ -371,7 +382,7 @@ Deno.serve(async (req:Request)=>{
         const selected=await resolveSchool(payload.school_id);
         if(!selected)return error("select_school",400,origin);
         if(!selected.eligible)return error("school_ineligible",409,origin);
-        return json({session:crypto.randomUUID(),school:selected,excluded:true},200,origin);
+        return json({session:crypto.randomUUID(),school:selected,excluded:true,...(game==="volleyball_25"?{matchRule:"deuce_v1"}:{})},200,origin);
       }
       if(payload.action==="submit"){
         const [top10,fastestTop10]=await Promise.all([
@@ -393,7 +404,7 @@ Deno.serve(async (req:Request)=>{
       const recent=await db("arcade_game_sessions?"+q);
       if(recent.length>=40)return error("too_many_plays",429,origin);
       const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash,school_id:selected.school_id,school_name:selected.school_name,difficulty:selected.difficulty,percentile_source_year:selected.source_year},"return=representation");
-      return json({session:rows[0].id,school:selected,...(game==="volleyball_25"&&MATCH_BONUS_ENABLED?{matchBonusRule:"fire_court_v1"}:{})},200,origin);
+      return json({session:rows[0].id,school:selected,...(game==="volleyball_25"?{matchRule:"deuce_v1"}:{}),...(game==="volleyball_25"&&MATCH_BONUS_ENABLED?{matchBonusRule:"fire_court_v1"}:{})},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
     const sessionId=payload.session;

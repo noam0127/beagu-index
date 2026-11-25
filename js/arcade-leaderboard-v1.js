@@ -107,6 +107,7 @@ class ArcadeLeaderboard{
     if(generation!==this.playGeneration)return null;
     if(data.school?.eligible!==true||typeof data.session!=="string")throw new Error("school_ineligible");
     this.session=data.session;
+    this.matchRule=this.game==="volleyball_25"&&data.matchRule==="deuce_v1"?"deuce_v1":null;
     this.matchBonusRule=this.game==="volleyball_25"&&data.matchBonusRule==="fire_court_v1"?"fire_court_v1":null;
     this.school={school_id:data.school.school_id,school_name:data.school.school_name,difficulty:data.school.difficulty};
     return this.session;
@@ -121,7 +122,7 @@ class ArcadeLeaderboard{
  }
  cancel(){
   // Any delayed start/record result belongs to the previous match.
-  this.playGeneration++;this.matchBonusRule=null;this.session=null;this.pendingStart=null;this.school=null;
+  this.playGeneration++;this.matchRule=null;this.matchBonusRule=null;this.session=null;this.pendingStart=null;this.school=null;
   this.score=0;this.stats=null;this.notice="";this.isSubmitting=false;this.shareResult=null;
   this.draw();
  }
@@ -148,13 +149,13 @@ class ArcadeLeaderboard{
     ?"관리자 플레이 · 일반 게임 기록과 통계에서 제외되었습니다."
     :data.ranked
     ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(finalScore)
-    :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
+    :data.timeRanked?"⏱ 승리 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
     :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
     :"이번 경기 "+displayScore(finalScore)+" · 역대 상위 100위 안에 기록됨";
     if(data.excluded!==true&&Number.isSafeInteger(data.score)&&data.score>=0){const medals=[];
-     if(stats?.victory===true)medals.push(game==="volleyball_25"?"25점 승리":"62세 정년 달성");
+     if(stats?.victory===true)medals.push(game==="volleyball_25"?"경기 승리":"62세 정년 달성");
      if(data.ranked===true&&Number.isSafeInteger(data.rank)&&data.rank>=1&&data.rank<=10)medals.push("최고 점수 TOP 10");
-     if(game==="volleyball_25"&&data.timeRanked===true&&Number.isSafeInteger(data.timeRank)&&data.timeRank>=1&&data.timeRank<=10)medals.push("25점 최단시간 TOP 10");
+     if(game==="volleyball_25"&&data.timeRanked===true&&Number.isSafeInteger(data.timeRank)&&data.timeRank>=1&&data.timeRank<=10)medals.push("승리 최단시간 TOP 10");
      this.shareResult={score:data.score,school:String(this.school?.school_name||""),medals};}
     return true;
   }catch(err){
@@ -253,13 +254,13 @@ class ArcadeLeaderboard{
   }
   if(this.game==="volleyball_25"){
    const headerTime=el("div","arcade-ranking-head");headerTime.style.marginTop="16px";
-   headerTime.append(el("strong","","⏱ 25점 승리 최단시간 TOP 10"),el("small","","25점 승리 경기만 · 빠른 시간순"));
+   headerTime.append(el("strong","","⏱ 경기 승리 최단시간 TOP 10"),el("small","","경기 승리 경기만 · 빠른 시간순"));
    content.append(headerTime);
    const timeLabels=el("div","arcade-rank-grid arcade-rank-label");
    ["순위","학교 · 난이도","완주 시간"].forEach(x=>timeLabels.append(el("span","",x)));
    content.append(timeLabels);
    if(!this.fastestBoard.length)content.append(el("div","arcade-rank-empty",
-     this.remote?"아직 25점 승리 시간 기록이 없습니다":"기록을 불러올 수 없습니다"));
+     this.remote?"아직 경기 승리 시간 기록이 없습니다":"기록을 불러올 수 없습니다"));
    else for(const [i,entry] of this.fastestBoard.entries()){
     const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
     school.append(schoolLink(entry),

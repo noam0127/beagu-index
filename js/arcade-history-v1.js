@@ -40,8 +40,8 @@
  function titleFor(row){
   const result=row.details||{};
   if(game==="volleyball_25"){
-   if(result.outcome==="victory")return ["25점 승리","win"];
-   if(result.outcome==="defeat")return ["25점 패배","loss"];
+   if(result.outcome==="victory")return [result.matchRule==="deuce_v1"&&result.cpuPoints>=24?"듀스 승리":"경기 승리","win"];
+   if(result.outcome==="defeat")return ["경기 패배","loss"];
    if(result.outcome==="stopped")return ["중간 종료","loss"];
   }else{
    if(result.outcome==="retired")return ["62세 정년 달성","win"];
@@ -78,7 +78,7 @@
    statistic(stats,"승리 배수",result.winMultiplier===undefined?null:"×"+number(result.winMultiplier));
    if(result.bonusRule==="fire_court_v1"&&Number.isSafeInteger(result.matchBonus)&&result.matchBonus>0)statistic(stats,"명경기 보너스","+"+number(result.matchBonus)+"점");
    statistic(stats,"플레이 시간",result.playedTenths===undefined?null:time(result.playedTenths));
-   statistic(stats,"25점 승리 시간",row.winTimeTenths===null||row.winTimeTenths===undefined?null:time(row.winTimeTenths));
+   statistic(stats,"경기 승리 시간",row.winTimeTenths===null||row.winTimeTenths===undefined?null:time(row.winTimeTenths));
   }else{
    statistic(stats,"종료 나이",result.endAge===undefined?null:number(result.endAge)+"세");
    statistic(stats,"버틴 시간",result.playedSeconds===undefined?null:number(result.playedSeconds)+"초");

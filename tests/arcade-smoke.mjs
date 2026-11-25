@@ -460,7 +460,7 @@ const pointSrc=volley.slice(pointStart,pointEnd);
 function pointCase(player,cpu,leftWins){
  const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true,winStreak:0,bestStreak:0,flash:0};
  return new Function("state","side",[
-  'const MATCH_TARGET=25,POINT_GAIN=100,POINT_LOSS=50;',
+  'const MATCH_TARGET=25,POINT_GAIN=100,POINT_LOSS=50;let rallyHistory="";const matchEnded=(p,c)=>Math.max(p,c)>=25;const matchTarget=()=>25;',
   'const cheerMilestones={5:"첫 고비",10:"10점",15:"15점",20:"20점",23:"23점",24:"24점"};',
   'const pointEncouragement=()=>"+100 또는 -50";',
   'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
@@ -514,7 +514,7 @@ const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
 assert.ok(Math.abs(serveSpeed("easy").vx)<Math.abs(serveSpeed("hard").vx));
 assert.ok(Math.abs(serveSpeed("hard").vx)<Math.abs(serveSpeed("extreme").vx));
 assert.ok(serveSpeed("extreme",false).vx<0);
-assert.match(volley,/state\.leftScore>=MATCH_TARGET\|\|state\.rightScore>=MATCH_TARGET/);
+assert.match(volley,/matchEnded\(state\.leftScore,state\.rightScore\)/);
 assert.doesNotMatch(volley,/id="volley-current-score"|id="player-energy"|id="cpu-energy"/);
 console.log("PASS: tier speeds, boss appearance, clean 25-point score HUD and two-ball serve");
 
