@@ -260,13 +260,23 @@
   window.dispatchEvent(new Event('beagu:level-state-change'));
   if(token)try{await request('logout',{},token)}catch(_){}
  });
+ // Only auto-open on initial entry to the challenge page after Lv.0 is known.
+ // Mark the entry handled before focusing: focus can trigger another level refresh.
+ let challengeEntryHandled=false;
+ function handleChallengeEntry(level){
+  if(challengeEntryHandled||!document.body.classList.contains('beagu-page-challenge'))return;
+  if(level===0&&!stored()){
+   challengeEntryHandled=true;
+   if(modal.hidden)open();
+  }else if(level===1||level===2){challengeEntryHandled=true;}
+ }
  window.addEventListener('beagu:level-state-updated',event=>{
   const n=event.detail?.level;
-  if(Number.isInteger(n)&&n>=0&&n<=2){verifiedToken=stored();verifiedLevel=n;paint(n);}
+  if(Number.isInteger(n)&&n>=0&&n<=2){verifiedToken=stored();verifiedLevel=n;paint(n);handleChallengeEntry(n);}
   else {if(verifiedToken!==stored()){verifiedLevel=null;verifiedToken='';}if(headerUI){headerUI.inline.hidden=true;header.classList.remove('beagu-header-code-visible');}badge.textContent=event.detail?.status==='checking'?'확인 중':'확인 불가';}
  });
  window.addEventListener('beagu:participation-open',open);
  const level=Number(badge.dataset.level);
- if(Number.isInteger(level)&&level>=0&&level<=2){verifiedToken=stored();verifiedLevel=level;paint(level);}
- else if(!stored()){verifiedLevel=0;paint(0);}
+ if(Number.isInteger(level)&&level>=0&&level<=2){verifiedToken=stored();verifiedLevel=level;paint(level);handleChallengeEntry(level);}
+ else if(!stored()){verifiedLevel=0;paint(0);handleChallengeEntry(0);}
 })();

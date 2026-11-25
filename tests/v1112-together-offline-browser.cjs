@@ -69,7 +69,7 @@ async function routes(page,tracker){
 async function goto(page,file){await page.goto(origin+'/'+file,{waitUntil:'domcontentloaded',timeout:30000});}
 async function waitText(page,sel,text){await page.waitForFunction(({sel,text})=>document.querySelector(sel)?.textContent.includes(text),{sel,text},{timeout:20000});}
 async function login(page,value,level){
- await page.locator('#beaguLevelState').click();
+ if(!await page.locator('#beaguParticipationOverlay').isVisible()) await page.locator('#beaguLevelState').click();
  await page.locator('#beaguParticipationCode').fill(value);
  await page.locator('#beaguParticipationSubmit').click();
  await page.locator('#beaguParticipationOverlay').waitFor({state:'hidden',timeout:15000});
@@ -112,6 +112,12 @@ async function search(page,level){
   await routes(page,tracker);
   await goto(page,'challenge.html');
   await page.locator('#challengePublicSurvey a').waitFor({state:'visible'});
+  await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
+  await page.locator('#beaguParticipationCode').waitFor({state:'visible'});
+  await page.keyboard.press('Escape');
+  await page.locator('#beaguParticipationOverlay').waitFor({state:'hidden'});
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
   assert.equal(await page.locator('#challengeProtected').isHidden(),true);
   assert.equal(tracker.identityRequests,0);
   await fit(page);
@@ -174,6 +180,8 @@ async function search(page,level){
   assert.ok(tracker.searchTiers.includes(1));
   tracker.count=0;tracker.promoted=false;
   await goto(page,'challenge.html');
+  await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.dataset.level==='1');
+  assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
   await login(page,code,2);
   await waitText(page,'#challengeReferralCount','0건');
   await waitText(page,'#togetherReferralState','Lv.2 인증 완료');

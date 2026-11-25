@@ -703,17 +703,37 @@
     },
     {
       "order": 26,
-      "version": "v1.11.14",
-      "name": "학교의 영광",
-      "scope": "Lv.0·1·2 검색 카드 통일 및 조회수 표시 / 2026 배구지수 백분위 막대·조사기록 연도 / 상세조회 분리 및 레벨별 학교체험 자동 선택 / 검증 점수 학교별 누적 집계 후보 및 기존 공개권한 보존 / Lv.2 공식 2026 기본정보 / v1.3 개별 재식별 심사",
+      "version": "v1.11.13.3",
+      "name": "챌린지 입장",
+      "scope": "Lv.0 챌린지 진입 시 참여코드 입력창 자동 표시, 기존 인증 유지",
       "status": "CANDIDATE_CI_PENDING",
-      "branch": "fix/v1114-school-glory-v13-integration",
+      "branch": "hotfix/v1.11.13.3-challenge-lv0",
       "dependencies": [
         "v1.11.13.2"
       ],
       "admin_registration": "NOT_REGISTERED",
       "production": "NOT_APPROVED",
       "rollback_sha": "b5d6873efe86dcc3c640ac87a344d7617f0cd048",
+      "tests": [
+        {
+          "name": "Official clean release and desktop/mobile Chromium entry regression",
+          "result": "PENDING"
+        }
+      ]
+    },
+    {
+      "order": 27,
+      "version": "v1.11.14",
+      "name": "학교의 영광",
+      "scope": "Lv.0·1·2 검색 카드 통일 및 조회수 표시 / 2026 배구지수 백분위 막대·조사기록 연도 / 상세조회 분리 및 레벨별 학교체험 자동 선택 / 검증 점수 학교별 누적 집계 후보 및 기존 공개권한 보존 / Lv.2 공식 2026 기본정보 / v1.3 개별 재식별 심사",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1114-school-glory-v13-integration",
+      "dependencies": [
+        "v1.11.13.3"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "bb814939a06892fdc08ae468ce0b055dba8d8668",
       "tests": [
         "2026-official-school-profiles.mjs",
         "2026-schoolinfo-browser.cjs",
@@ -724,7 +744,7 @@
       ]
     },
     {
-      "order": 27,
+      "order": 28,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -744,7 +764,7 @@
       "rollback_sha": null
     },
     {
-      "order": 28,
+      "order": 29,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -763,7 +783,7 @@
       "rollback_sha": null
     },
     {
-      "order": 29,
+      "order": 30,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -780,7 +800,7 @@
       "rollback_sha": null
     },
     {
-      "order": 30,
+      "order": 31,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

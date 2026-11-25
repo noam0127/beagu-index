@@ -137,6 +137,13 @@ async function hiddenCards(page){
    await headerState(page,0);await hiddenCards(page);
    for(const route of ['search.html','statistics.html','games.html','challenge.html']){
     await view(page,route);await headerState(page,0);await hiddenCards(page);
+    const overlay=page.locator('#beaguParticipationOverlay');
+    if(route==='challenge.html'){
+     await overlay.waitFor({state:'visible'});
+     await page.locator('#beaguParticipationCode').waitFor({state:'visible'});
+     await page.keyboard.press('Escape');
+     await overlay.waitFor({state:'hidden'});
+    }else assert.equal(await overlay.isHidden(),true);
    }
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv0.png',fullPage:false});
    await login(page,LV2,2);
