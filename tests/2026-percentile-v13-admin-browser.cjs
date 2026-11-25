@@ -1,0 +1,36 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{
+for(const width of [390,1440]){const page=await browser.newPage({viewport:{width,height:900}});try{
+await page.route('**/*',r=>r.abort());
+await page.setContent(fs.readFileSync('admin.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+await page.evaluate(()=>{const box=document.querySelector('#admin2026Box');document.body.replaceChildren(box);window.SUPABASE_URL='https://fixture.invalid';window.SUPABASE_PUBLISHABLE_KEY='fixture';window.supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:'fixture'}}})}};window.__calls=[];let reviewed=false;let decision=null;window.fetch=async(url,opts)=>{const b=JSON.parse(opts.body);window.__calls.push(b);let data={};switch(b.action){
+case 'percentile_v13_candidates':data={total:1,items:[{school_id:'1000002',school_name:'검증초등학교',percentile:20,valid_observations:1,teacher_total:7,review_complete:reviewed,decision_lv2:decision}]};break;
+case 'percentile_v13_preview':data={eligible_for_percentile_only_approval:reviewed?1:0};break;
+case 'percentile_v13_review':reviewed=Object.values(b.checks).every(Boolean);data={ok:true};break;
+case 'percentile_v13_decide':decision=b.decision;data={ok:true};break;
+case 'percentile_v13_scope':data={ok:true};break;
+case 'queue':data={items:[],summary:{total:0},total:0};break;
+case 'pipeline':data={status:{year:2026},levels:[{level:0},{level:1},{level:2}]};break;
+case 'bulk_verified':data={ok:true,preview:true,batch_candidates:0};break;
+default:data={items:[]};
+}return {ok:true,json:async()=>data}};});
+await page.addStyleTag({content:fs.readFileSync('styles/beagu-admin-v1.css','utf8')});
+await page.addScriptTag({content:fs.readFileSync('js/beagu-2026-admin-review.js','utf8')});
+const panel=page.locator('#adminPercentileV13');await page.locator('#admin2026Box > summary').click();
+await page.evaluate(()=>window.Beagu2026ReviewAdmin.mount('viewer'));assert.equal(await panel.isVisible(),false);
+await page.evaluate(()=>window.Beagu2026ReviewAdmin.mount('owner'));await panel.locator('summary').click();
+await panel.getByPlaceholder('자료 버전 (source_version)').fill('fixture-version');
+await panel.getByRole('button',{name:'후보 및 심사 상태 조회'}).click();
+const school=panel.locator('article');await school.waitFor();assert.equal(await school.getByRole('button',{name:'Lv.2 백분위 승인'}).isDisabled(),true);
+for(const el of await school.locator('input[type=checkbox]').all())await el.check();
+await school.locator('textarea').fill('실제로 확인한 가상 검토 근거입니다.');
+await school.getByRole('button',{name:'개별 검토 저장'}).click();
+await page.waitForFunction(()=>Array.from(document.querySelectorAll('#adminPercentileV13 button')).some(b=>b.textContent==='Lv.2 백분위 승인'&&!b.disabled));
+page.once('dialog',d=>d.dismiss());await school.getByRole('button',{name:'Lv.2 백분위 승인'}).click();
+assert.equal(await page.evaluate(()=>window.__calls.filter(x=>x.action==='percentile_v13_decide').length),0);
+page.once('dialog',d=>d.accept());await school.getByRole('button',{name:'Lv.2 백분위 승인'}).click();await school.getByRole('button',{name:'Lv.2 백분위 철회'}).waitFor();
+const calls=await page.evaluate(()=>window.__calls.filter(x=>x.action==='percentile_v13_decide'));assert.equal(calls.length,1);assert.equal(calls[0].confirmation,'APPROVE_PERCENTILE_ONLY');assert.equal(calls[0].level,2);
+page.once('dialog',d=>d.accept());await school.getByRole('button',{name:'Lv.2 백분위 철회'}).click();await page.waitForFunction(()=>window.__calls.some(x=>x.confirmation==='REVOKE_PERCENTILE_ONLY'));
+await page.evaluate(()=>window.Beagu2026ReviewAdmin.reset());assert.equal(await panel.isVisible(),false);assert.equal(await panel.locator('article').count(),0);
+console.log('PASS owner-only narrow approval Chromium',width);
+}finally{await page.close();}}}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1});

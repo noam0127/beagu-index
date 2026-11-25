@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
+import {projectOfficialProfiles2026} from '../_shared/official-school-profile-2026.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -122,6 +123,28 @@ Deno.serve(async(req:Request)=>{
     const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],1,recentIds.has(id))
      .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
     if(approved.length)out[id]=approved[0].value;
+   }
+   // Separate exact percentile-only approval; never relax the legacy question gate.
+   // Staggered rollout: absent/unavailable new RPC returns no new percentiles.
+   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:Number(session.access_level)});
+   if(!narrow.error&&narrow.data&&typeof narrow.data==='object'&&!Array.isArray(narrow.data)){
+     for(const id of ids){
+       const n=narrow.data[id];
+       if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
+     }
+   }
+   // The 2026 Schoolinfo profile is independent of teacher-survey consent.
+   // Do not load it at Lv.1, and never include unpublished survey values.
+   if(Number(session.access_level)===2){
+     const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
+       .select('school_id,disclosure_code,source_year,teacher_total,profile')
+       .in('school_id',ids).eq('source_year',2026).limit(20);
+     if(profileError){
+       console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
+       return send({values:out,official2026_status:'UNAVAILABLE'},200,origin);
+     }
+     return send({values:out,official2026:projectOfficialProfiles2026(profiles,ids,2),
+       official2026_status:'OK'},200,origin);
    }
    return send({values:out},200,origin);
   }

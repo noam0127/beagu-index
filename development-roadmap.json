@@ -744,6 +744,29 @@
     },
     {
       "order": 28,
+      "version": "v1.11.15",
+      "name": "학교의 영광",
+      "scope": "불꽃코트 변경 보존 / Lv.0·1·2 검색 카드 통합 / 2026 공식 학교 기본정보 / 공개기준 v1.3 심사 및 백분위 전용 승인·철회 / 운영 API 연결",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1115-school-glory-after-fire-court",
+      "dependencies": [
+        "v1.11.14"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "4c9e8262cf7ec8c65afbba4c6aceb9d41a64448e",
+      "tests": [
+        "2026-official-school-profiles.mjs",
+        "2026-schoolinfo-browser.cjs",
+        "2026-percentile-v13-final-assertions.sql",
+        "2026-percentile-v13-admin-browser.cjs",
+        "v1114-school-glory-browser.cjs",
+        "v11115-fire-court-validation.yml",
+        "clean-release-validation.yml"
+      ]
+    },
+    {
+      "order": 29,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -763,7 +786,7 @@
       "rollback_sha": null
     },
     {
-      "order": 29,
+      "order": 30,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -782,7 +805,7 @@
       "rollback_sha": null
     },
     {
-      "order": 30,
+      "order": 31,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -799,7 +822,7 @@
       "rollback_sha": null
     },
     {
-      "order": 31,
+      "order": 32,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
