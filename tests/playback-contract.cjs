@@ -10,7 +10,7 @@ g.cancel();time=1300;g.down(e());g.cancel();assert.equal(g.up(e()),false);assert
 const read=p=>fs.readFileSync(p,'utf8');const v=read('teacher-volleyball.html'),r=read('teacher-run.html');
 for(const s of [v,r]){assert.equal((s.match(/id="pause"/g)||[]).length,1);assert.match(s,/id="pause" class="arcade-playback"/);for(const m of s.matchAll(/<script>([\s\S]*?)<\/script>/g))new Function(m[1]);}
 assert.match(v,/if\(state.phase==="paused"\)return;/);assert.match(v,/pausedPhase=state.phase;state.phase="paused";releaseKeys\(true\)/);assert.match(v,/state.phase=pausedPhase/);assert.match(v,/if\(!preserveMomentum\)\{state.dashFrames=0;state.spikeBufferFrames=0;left.vy=0/);assert.match(v,/hasPlayerWings\(\)&&canPlayerJump\(\)/);assert.match(v,/15.8\*battle.allyJump/);
-assert.match(r,/tapGesture\.up\(e\)/);assert.match(r,/tapGesture\.move\(e\)/);assert.doesNotMatch(v,/volley-joystick|id="volley-spike"|id="volley-dash"/);assert.match(v,/id="volley-attack"/);assert.match(r,/isMysteryBuff\("wings"\)/);assert.match(r,/ctx.globalAlpha=.07/);assert.match(r,/lines.slice\(0,2\)/);assert.doesNotMatch(r,/id="run-fullscreen-pause"/);
+assert.match(r,/tapGesture\.up\(e\)/);assert.match(r,/tapGesture\.move\(e\)/);assert.doesNotMatch(v,/volley-joystick|id="volley-spike"|id="volley-dash"/);assert.doesNotMatch(v,/id="volley-attack"/);assert.match(v,/attackPointer=event.pointerId;requestSpike\(\)/);assert.match(r,/isMysteryBuff\("wings"\)/);assert.match(r,/ctx.globalAlpha=.84/);assert.match(r,/lines.slice\(0,2\)/);assert.doesNotMatch(r,/id="run-fullscreen-pause"/);
 const rail=read('js/arcade-scroll-rail-v1.js');assert.doesNotMatch(rail,/createElement|pointerdown/);assert.match(rail,/show:hide/);{const v=JSON.parse(read('release-info.json')).version;const candidate=JSON.parse(read('release-candidate.json')).version;const versions=JSON.parse(read('development-roadmap.json')).versions.map(x=>x.version);assert.equal(v,candidate);assert.ok(versions.includes('v1.4.0')&&versions.indexOf(v)>=versions.indexOf('v1.4.0'),'candidate includes feature release');}
 console.log('PASS: tap/drag/cancel, pause source contracts, old flight rules and retired rail');
 
@@ -22,7 +22,7 @@ assert.equal(t.limitX(12,295),5);t.up(1,false);assert.equal(t.axes(295,420,false
 t.down(3,{x:100,y:100},420);assert.equal(t.axes(210,420,true).y,-1);t.up(3,true);assert.equal(t.axes(210,420,true),null);
 t.down(4,{x:100,y:100},420);t.cancel(4);assert.equal(t.axes(210,420,false),null);assert.equal(t.takeJump(),false);
 assert.match(v,/if\(!canPlayerJump\(\)\)\{left.y=FLOOR-31;left.vy=0;\}/);assert.match(v,/canPlayerJump\(\)&&\(keys.jump\|\|keys.up\|\|touchJump\)/);
-assert.match(v,/if\(attackPointer!==null\)\{\s*aimDash\(inputX,inputY\);state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;/);
+assert.match(v,/if\(attackPointer!==null\)\{[\s\S]*?aimDash\(inputX,inputY\);else state.dashFrames=0;\s*state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;/);
 assert.match(v,/p.contactFrames=spike\|\|cpuSmash\?12:9/);
 console.log('PASS target touch jump, flight exception, pointer cancel, unlimited held attack and contact debounce');
 
@@ -82,7 +82,7 @@ const bc=rules.createBosses("normal");assert.equal(bc.advance(19.99).started,nul
 
 const team=rules.createAllies();assert.equal(team.canCooperate(0),false);for(let i=0;i<6;i++)assert.ok(team.join(0,()=>0));assert.equal(team.join(0,()=>0),null);assert.equal(team.count(),6);assert.equal(team.tick(1).length,0);assert.ok(team.tick(12).length>=5);assert.equal(team.cooperate(12),true);assert.equal(team.cooperate(12),false);assert.equal(team.cooldown(24),12);assert.equal(team.cooperate(36),true);assert.match(preview,/function cooperate\(\)/);assert.match(preview,/선생님들의 연대/);console.log('PASS ally roles, unique joining, timed support and cooperation cooldown');
 
-assert.match(shareSource,/data\.certificateLines/);assert.match(preview,/function drawRetirementScene/);assert.match(preview,/function playRetirementMusic/);assert.match(preview,/certificateLines:\["버전 4\.0/);assert.match(preview,/finalScore=recordPolicy\.score\(rawScore,/);console.log('PASS retirement scene, sound opt-in, certificate details and consistent early-stop score');
+assert.match(shareSource,/data\.metrics\.slice\(0,6\)/);assert.match(preview,/function drawRetirementScene/);assert.match(preview,/function playRetirementMusic/);assert.match(preview,/metrics:\["최종 "/);assert.match(preview,/finalScore=recordPolicy\.score\(rawScore,/);console.log('PASS retirement scene, sound opt-in, certificate details and consistent early-stop score');
 
 const rw={};vm.runInNewContext(read('js/teacher-run-4-records-v1.js'),{window:rw});const rp=rw.BeaguRun4Records;
 const rr={version:'4.0',game:rp.game,difficulty:'normal',baseScore:1000,score:3000,survivalSeconds:190,age:62,victory:true,bossIds:['confusion','final'],maxCombo:10,hits:2,crises:1,leaveDays:8,allies:2};
