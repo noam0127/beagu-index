@@ -50,6 +50,7 @@ jobs:
           node tests/v11117-game-inventory.mjs
           node tests/v11117-public-school-basics.mjs
           node tests/v11118-historical-mean-sort.mjs
+          node tests/v11118-official-basics-sort.mjs
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-release-consent-gate.mjs
@@ -227,3 +228,14 @@ jobs:
           trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
           for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
           python3 tests/v11118-schoolinfo-import.py "$c"
+
+      - name: Verify official 2026 display and sorting in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          c="beagu-basics-sort-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          for f in tests/v11118-historical-mean-fixture.sql tests/v11118-official-basics-sort-fixture.sql supabase/sql/v11118_official_basics_ranked_schools.sql tests/v11118-official-basics-sort-assertions.sql; do
+            docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres < "$f"
+          done

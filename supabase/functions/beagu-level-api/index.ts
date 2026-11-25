@@ -248,6 +248,12 @@ Deno.serve(async(req:Request)=>{
      if(rankError||!Array.isArray(ranked?.schools)||!Number.isSafeInteger(ranked.total))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
      return send({schools:ranked.schools,total:ranked.total,page:pagination,sort,direction,nulls:'last'},200,origin);
    }
+   // Match the displayed official facts and the global sort before pagination.
+   if(['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(sort)){
+     const {data:ranked,error:rankError}=await admin.rpc('beagu_official_basics_ranked_schools_v1',{p_keyword:searchText,p_region:region,p_office:office,p_sort:sort,p_direction:direction,p_page:pagination});
+     if(rankError||!Array.isArray(ranked?.schools)||!Number.isSafeInteger(ranked.total))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+     return send({schools:ranked.schools,total:ranked.total,page:pagination,sort,direction,nulls:'last'},200,origin);
+   }
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.

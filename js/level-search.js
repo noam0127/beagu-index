@@ -781,13 +781,16 @@
     if(![1,2].includes(viewerTier)||Number(card.dataset.accessLevel)!==viewerTier)return;
     const facts=card.querySelector('.glory-facts');
     if(!facts)return;
-    const ready=profile?.source_year===2026;
+    // For the three official metric sorts, freeze the exact server-ranked
+    // snapshot for all three facts; a later percentile fetch cannot reorder it.
+    const ranked=school?.official_basics_ranked===true;
+    const ready=!ranked&&profile?.source_year===2026;
     const number=(v,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
     const legacy=(v,max)=>v!==null&&v!==undefined&&v!==''&&number(Number(v),max)?Number(v):null;
     const fields=[
       ['student_count',ready&&number(profile.student_count,100000)?profile.student_count:null,legacy(school?.student_count,100000),Number(school?.student_reference_year),'명'],
-      ['male_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.male_teacher_ratio,100)?profile.male_teacher_ratio:null,legacy(school?.male_teacher_ratio,100),2024,'%'],
-      ['junior_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.second_grade_teacher_ratio,100)?profile.second_grade_teacher_ratio:null,legacy(school?.junior_teacher_ratio,100),2024,'%']
+      ['male_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.male_teacher_ratio,100)?profile.male_teacher_ratio:null,legacy(school?.male_teacher_ratio,100),ranked?Number(school?.male_teacher_reference_year):2024,'%'],
+      ['junior_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.second_grade_teacher_ratio,100)?profile.second_grade_teacher_ratio:null,legacy(school?.junior_teacher_ratio,100),ranked?Number(school?.junior_teacher_reference_year):2024,'%']
     ];
     let all2026=true;
     for(const [key,latest,previous,previousYear,unit] of fields){
@@ -797,7 +800,7 @@
       const year=latest!==null?2026:previousYear;
       const known=Number.isInteger(year)&&year>=2000&&year<=2026;
       if(value===null||year!==2026)all2026=false;
-      item.querySelector('.glory-fact-value').textContent=value===null?'자료 없음':value.toLocaleString('ko-KR',{maximumFractionDigits:1})+unit;
+      item.querySelector('.glory-fact-value').textContent=value===null?'자료 없음':value.toLocaleString('ko-KR',{maximumFractionDigits:ranked&&unit==='%'?2:1})+unit;
       let source=item.querySelector('.glory-fact-year');
       if(!source){source=make('span','glory-fact-year');item.append(source);}
       source.textContent=value===null?'공식 자료 미확인':known?year+'년 기준':'기준연도 미확인';
@@ -805,7 +808,7 @@
     let heading=card.querySelector('.official-school-basics-2026');
     if(!heading){heading=make('h3','official-school-basics-2026');facts.before(heading);}
     heading.textContent=all2026?'2026 학교 기본정보':'학교 기본정보';
-    heading.title=status==='UNAVAILABLE'?'2026 공식자료 조회 실패':status==='LOADING'?'2026 공식자료 확인 중':'확인된 기준연도의 세 가지 지표만 표시';
+    heading.title=ranked?'정렬에 사용된 학교정보와 동일한 값':status==='UNAVAILABLE'?'2026 공식자료 조회 실패':status==='LOADING'?'2026 공식자료 확인 중':'확인된 기준연도의 세 가지 지표만 표시';
   }
   function loadPagePercentiles(list,requestId){
     const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
