@@ -848,7 +848,8 @@ assert.match(shared,/arcade-history\.html\?game=/,"both games have an accessible
 assert.match(backend,/function gameHistory\(game:Game,tier:string\|null,page:number\)/,"history API is implemented");
 assert.match(backend,/maxRecords:100/,"history declares its TOP100 limit");
 assert.match(backend,/order:"score\.desc,created_at\.asc,id\.asc"/,"history is ranked by high score, not just date");
-assert.match(backend,/Number\(rawPage\)>\(ARCHIVE_ENABLED\?10000:4\)/,"legacy history retains four-page limit; enabled archive has a bounded page limit");
+assert.match(backend,/if\(!\/\^\[1-4\]\$\/\.test\(rawPage\)\)return error\("invalid_page",400,origin\)/,"legacy history retains four-page limit");
+assert.doesNotMatch(backend,/ARCHIVE_ENABLED|MATCH_BONUS_ENABLED/,"deferred archive and new match-bonus code not enabled");
 assert.match(backend,/arcade_fastest25_records/,"fastest win TOP10 persists separately from score TOP100");
 assert.match(backend,/recorded,score,top10/,"API returns whether result survived TOP100 pruning");
 console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");

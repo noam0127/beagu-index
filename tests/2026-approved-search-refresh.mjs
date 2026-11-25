@@ -42,7 +42,8 @@ const compare=read('js/statistics-compare.js');
 for(const frontend of [publicSearch,report,compare]){
   assert.match(frontend,/window\.setInterval\(refreshVisible2026,60000\)/);
   assert.match(frontend,/document\.visibilityState!=='visible'/);
-  if(frontend!==publicSearch)assert.match(frontend,/from\('beagu_school_report_yearly'\)/);
+  if(frontend===report)assert.match(frontend,/from\('beagu_school_report_yearly'\)/);
+  if(frontend===compare)assert.match(frontend,/authRequest\('percentiles',\{schoolIds:requested\},token\)/);
 }
 assert.match(publicSearch,/async function readPublic2026\(\)\{return new Map\(\);\}/);
 assert.match(publicSearch,/locked:true,viewerTier:0/);
