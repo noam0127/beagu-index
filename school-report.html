@@ -230,7 +230,7 @@
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="학교 선택 횟수 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span><a id="reportPostitLink" href="postit.html" class="postit-quick-link postit-lv2-link">▤ 포스트잇</a><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
     <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 등급</h3><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">레벨1 인증</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><details class="beagu-inline-disclosure"><summary>공개 범위</summary><p>인증 후에도 공개 기준을 충족한 항목만 표시합니다. 2026년 Q51 자유서술은 비공개입니다.</p></details></section>
-    <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div></section>
+    <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><div id="beaguYearGraph" style="width:100%;max-width:480px;margin:0 auto"></div></section>
     <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
       <div><strong>2026년 최신 조사</strong><p id="latestYearMessage" aria-live="polite">2026년 학교별 공개 승인 상태를 확인 중입니다.</p></div>
     </section>
@@ -257,6 +257,7 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
 <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
+<script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
 <script type="application/json" id="embeddedCatalog">{
   "sourceNote": "2023 편집본·2024/2025 편집본 및 각 연도 원자료, 2026 수정5 응답 시트의 실제 열 제목을 반영. 보기 목록은 원문으로 확인된 일부에만 제공함.",
@@ -1747,7 +1748,13 @@
         : current.approved
           ? '2026년 공개 승인 자료를 확인할 수 있습니다. 아래 2026년 카드를 선택하세요.'
           : '미공개 · 2026년 학교별 통계는 아직 공개 승인되지 않았습니다. 과거 승인 기록은 계속 열람할 수 있습니다.';
-    renderYearGrid();renderYearBody();
+    renderYearGrid();
+    const graph=$('beaguYearGraph');
+    if(graph&&typeof percentileChart==='function'){
+      const values=[2023,2024,2025,2026].map(y=>{const p=num(yearData(y).percentile);return p!==null&&p>=0&&p<=100?p:null});
+      graph.innerHTML=percentileChart(values,{blank2026:values[3]===null});
+    }
+    renderYearBody();
   }
   function renderYearGrid(){
     const el=$('yearGrid');el.replaceChildren();
