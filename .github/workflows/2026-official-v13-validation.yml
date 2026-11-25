@@ -1,7 +1,7 @@
 name: 2026 official school profiles and percentile v1.3 isolated validation
 on:
   push:
-    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated]
+    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only]
   workflow_dispatch:
 permissions:
   contents: read
