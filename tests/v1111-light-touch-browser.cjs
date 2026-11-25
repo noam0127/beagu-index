@@ -39,7 +39,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  try{
   let body=await fs.readFile(p);
   if(p==='js/run4-official-client-v1.js'&&officialFixture)body=body.toString('utf8').replace('enabled:false,endpoint:','enabled:true,endpoint:');
-  if(p==='teacher-run-4-preview.html'){
+  if(p==='teacher-run-4-preview.html'||p==='teacher-run.html'){
    if(u.searchParams.get('replay_fixture')==='1')return route.fulfill({contentType:'text/html',body:instrumentTrustedSource(body.toString('utf8'))});
    // Fixture-only accelerated clock. Production game code is not instrumented.
    // Restore HP to isolate lifecycle integration from stochastic survival balance.
@@ -187,11 +187,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(tier===2){
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   selectedSchool={...selectedSchool,difficulty:'easy',eligible:true};
-  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id);
+  await page.goto(origin+'/teacher-run.html?school_id='+selectedSchool.school_id);
   await page.locator('#teacher-run-protected').waitFor({state:'visible'});
   await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
   await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).click();
   await page.waitForFunction(()=>window.__run4Fixture?.snapshot().state==='playing');
+  assert.equal(await page.locator('.hud').isVisible(),false);assert.equal(await page.locator('.arcade-survival-health').isVisible(),false);assert.equal(await page.locator('#run-fullscreen-health-progress').isVisible(),true);assert.equal(await page.locator('#run-fullscreen-situation').isVisible(),false);
   let result=await page.evaluate(()=>window.__run4Fixture.advance(25.01));
   assert.equal(result.state,'between');assert.ok(Math.abs(result.clock-25)<.06);assert.equal(result.leave.pending[0].days,3);
   assert.equal(await page.locator('#choices button').count(),3);
@@ -206,8 +207,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   }
   result=await page.evaluate(()=>window.__run4Fixture.advance(190));
   assert.equal(result.state,'over');assert.equal(result.clock,190);assert.match(await page.locator('#overlayTitle').innerText(),/정년퇴직/);
-  assert.equal(await page.locator('#choices button').count(),2);assert.match(await page.locator('#overlayDesc').innerText(),/보스 .*\/5/);
-  assert.match(await page.locator('#overlayDesc').innerText(),/교실을 지켜왔습니다/);
+  assert.equal(await page.locator('#choices button').count(),2);assert.match(await page.locator('.arcade-result-metrics').innerText(),/보스 [0-5]\/5/);
+  assert.match(await page.locator('#overlayDesc').innerText(),/62세 정년 달성/);assert.equal(await page.locator('.arcade-result-metrics span').count(),4);
   await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
   assert.equal(await page.locator('.arcade-result-brag').getAttribute('href'),'https://indischool.com/tweets/channels/lounge');
   await page.getByRole('button',{name:'↻ 다시 하기',exact:true}).click();

@@ -63,7 +63,7 @@
      event.origin!==window.location.origin||event.data?.type!=='arcade:fullscreen-state')return;
   setFallback(event.data.active===true);
  });
- if(area.classList.contains('court'))window.addEventListener('beagu:volley-landscape',event=>{
+ if(area.matches?.('.court'))window.addEventListener('beagu:volley-landscape',event=>{
   if(event.detail===true&&!active()){autoLandscape=true;setFallback(true);}
   else if(event.detail===false&&autoLandscape){autoLandscape=false;setFallback(false);}
  });

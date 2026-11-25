@@ -133,7 +133,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11112">
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
-<link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=1">
+<link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-run">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -292,7 +292,7 @@ async function refreshOfficial(){
   if(!rows.length){const li=document.createElement("li");li.textContent="검증된 공식 기록이 없습니다.";host.append(li);}
  }catch(_){if(seq!==boardSerial)return;const li=document.createElement("li");li.textContent="공식 기록을 조회할 수 없습니다.";host.append(li);}
 }
-if(recordingMode&&official.enabled){$("run4-official-controls").hidden=false;officialStatus("공식 경기 모드를 선택할 수 있습니다.");$("run4-official-submit").addEventListener("click",submitOfficial);$("run4-official-refresh").addEventListener("click",refreshOfficial);}
+if(recordingMode&&official.enabled){$("run4-official-panel").hidden=false;$("run4-official-controls").hidden=false;officialStatus("공식 경기 모드를 선택할 수 있습니다.");$("run4-official-submit").addEventListener("click",submitOfficial);$("run4-official-refresh").addEventListener("click",refreshOfficial);}
 
 const recordPolicy=window.BeaguRun4Records;
 const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave(),growth=rules.createGrowth(),effects=rules.createEffects(),bosses=rules.createBosses(),allies=rules.createAllies();
@@ -1176,8 +1176,9 @@ function drawBoss(){
  ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(bossX,recordingMode?102:70,28,0,Math.PI*2);ctx.fill();
  ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText(b.icon,bossX,recordingMode?113:81);
  const width=Math.min(W*.54,260),x=(W-width)/2;
- roundRect(x,8,width,16,8,"#27334f");roundRect(x,8,Math.max(0,width*b.hp/b.maxHP),16,8,"#ed9b78");
- ctx.fillStyle="#21314c";ctx.font="bold 12px sans-serif";ctx.fillText(b.name+" · "+Math.ceil(b.hp)+"/"+b.maxHP,W/2,41,width);
+ const barY=recordingMode?129:103;
+ roundRect(x,barY,width,7,4,"#27334f");roundRect(x,barY,Math.max(0,width*b.hp/b.maxHP),7,4,"#ed9b78");
+ ctx.fillStyle="#21314c";ctx.font="bold 12px sans-serif";ctx.fillText(b.name+" · "+Math.ceil(b.hp)+"/"+b.maxHP,W/2,barY+20,width);
  for(const p of bossProjectiles){ctx.fillStyle=p.friendly?"#fff4b0":"#c25d65";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
  ctx.restore();
 }

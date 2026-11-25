@@ -32,6 +32,17 @@ const wide=await browser.newPage({viewport:{width:844,height:390},hasTouch:true,
  const bounds=await wide.locator('#game').boundingBox();assert(bounds&&Math.abs(bounds.width-844)<2&&Math.abs(bounds.height-390)<2);assert.deepEqual(await wide.locator('.arcade-volley-fullscreen-hud strong').allTextContents(),['8','12']);assert.equal(await wide.locator('#game').evaluate(e=>getComputedStyle(e).objectFit),'fill');
  await wide.evaluate(()=>window.dispatchEvent(new CustomEvent('beagu:volley-landscape',{detail:false})));assert.equal(await wide.locator('.arcade-fullscreen-fallback').count(),0);
 }finally{await wide.close();}
+// Survival and volleyball minimal HUD in portrait/landscape, in-page and CSS fullscreen.
+const minimal=await fs.readFile('styles/arcade-minimal-v11112.css','utf8'),leaveCss=await fs.readFile('styles/teacher-run-4-leave.css','utf8');
+for(const [width,height] of [[390,700],[844,390]])for(const expanded of [false,true])for(const survival of [false,true]){
+ const p=await browser.newPage({viewport:{width,height},hasTouch:true,isMobile:true});try{
+ const kind=survival?'run':'volley',stage=survival?'stage':'court',hud=survival?'<div class="arcade-fullscreen-hud arcade-run-fullscreen-hud"><div class="arcade-run-fullscreen-heading" hidden>HP numbers</div><div class="arcade-run-fullscreen-track" id="hp"><div class="arcade-run-fullscreen-fill"></div></div><div class="arcade-fullscreen-subline" hidden>score</div></div>':'<div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud"><strong>8</strong><strong>12</strong></div>';
+ await p.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}canvas{display:block;width:100%;height:300px}.stage,.court{position:relative}</style><div id="school">학교명 검색</div><div class="scoreboard" hidden>old</div><div class="hud" hidden>old</div><div class="'+stage+' arcade-game-viewport '+(expanded?'arcade-fullscreen-fallback':'')+'">'+hud+'<canvas id="game" width="900" height="500"></canvas></div>');
+ await p.evaluate(kind=>document.body.classList.add('beagu-minimal-'+kind),kind);await p.addStyleTag({content:fullscreenCss+'\n'+leaveCss+'\n'+minimal});
+ const canvas=await p.locator('#game').boundingBox(),header=await p.locator(survival?'#hp':'.arcade-volley-fullscreen-hud').boundingBox();assert(canvas&&header&&header.width>0&&header.y>=canvas.y-1&&header.y+header.height<=canvas.y+canvas.height+1,JSON.stringify({width,height,expanded,survival,canvas,header}));assert.equal(await p.locator('.scoreboard,.hud').evaluateAll(els=>els.every(e=>getComputedStyle(e).display==='none')),true);
+ if(survival){assert.equal(await p.locator('.arcade-run-fullscreen-heading,.arcade-fullscreen-subline').evaluateAll(els=>els.every(e=>getComputedStyle(e).display==='none')),true);}
+ }finally{await p.close();}
+}
 // Browser integration: actual canvas pixels, both result layouts, PNG and clipboard fallback.
 const share=await fs.readFile('js/arcade-result-share-v1.js','utf8'),shareCss=await fs.readFile('styles/arcade-result-share-v1.css','utf8');
 for(const compact of [false,true]){

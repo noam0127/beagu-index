@@ -12,3 +12,6 @@ html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-
 html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{grid-row:1!important}
 html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>.overlay{top:0!important}
 @media(max-width:600px) and (orientation:portrait){html body.beagu-minimal-run .stage:not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>#game{height:clamp(420px,65svh,570px)!important}}
+
+html body.beagu-minimal-run .stage>.arcade-run-fullscreen-hud{max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+@media(max-width:600px) and (orientation:portrait){html body.beagu-minimal-run.arcade-run-game-playing .stage:not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>#game{height:min(570px,calc(var(--arcade-run-parent-visible-height,100svh) - 32px),max(420px,65svh))!important}}
