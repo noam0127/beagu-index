@@ -82,7 +82,7 @@
  ]);
  function careerHazards(stage,tier="hard"){
   const r=hazardRounds[Math.max(0,Math.min(4,Math.floor(stage)||0))],t=hazardTiers[tier]||hazardTiers.hard;
-  return {students:r.students===0?0:Math.max(1,Math.round(t.students*r.students)),rushEvery:t.rushEvery*r.rushInterval,papers:Math.min(24,Math.max(1,Math.round(t.papers*r.papers))),paperEvery:t.paperEvery*r.paperInterval,paperSpeed:t.paperSpeed,homing:t.homing,sides:r.sides,health:r.health};
+  return {students:r.students===0?0:Math.max(1,Math.round(t.students*r.students)),rushEvery:t.rushEvery*r.rushInterval,papers:Math.min(24,Math.max(r.sides,Math.round(t.papers*r.papers))),paperEvery:t.paperEvery*r.paperInterval,paperSpeed:t.paperSpeed,homing:t.homing,sides:r.sides,health:r.health};
  }
  // All entry edges use the same world geometry in the player and replay worker.
  function edgePoint(side,f,w,h,margin=22){
