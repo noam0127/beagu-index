@@ -668,6 +668,24 @@
     },
     {
       "order": 24,
+      "version": "v1.11.13.1",
+      "name": "조사자료 정돈",
+      "scope": "관리자 2026 조사자료 통합 접이식 상자, 학교별 검수·일괄 승인·레벨별 승인·수집 기록·신고, 기존 공개 조건 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1.11.13-admin-2026-compact",
+      "dependencies": [
+        "v1.11.13"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "ae0f76259001bd168394a49bc1b1112efbbad0a0",
+      "tests": [
+        "2026-level-final-approval-ui.cjs",
+        "admin-2026-compact-browser.cjs"
+      ]
+    },
+    {
+      "order": 25,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -687,7 +705,7 @@
       "rollback_sha": null
     },
     {
-      "order": 25,
+      "order": 26,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -706,7 +724,7 @@
       "rollback_sha": null
     },
     {
-      "order": 26,
+      "order": 27,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -723,7 +741,7 @@
       "rollback_sha": null
     },
     {
-      "order": 27,
+      "order": 28,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
