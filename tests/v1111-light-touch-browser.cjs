@@ -12,6 +12,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='school_like_state')return route.fulfill({status:200,headers:cors,body:JSON.stringify({canLike:false,schools:route.request().postDataJSON().schoolIds.map(school_id=>({school_id,likes:0,liked:false}))})});
+ if(a==='public_school_basics_2026')return route.fulfill({status:200,headers:cors,body:JSON.stringify({official2026:{}})});
  if(a==='login')return route.fulfill({status:200,headers:cors,body:JSON.stringify({level:tier,token:'b'.repeat(64)})});
  if(a==='verify')data={level:tier,provisional:false};
  else if(a==='ranked_schools'){const b=route.request().postDataJSON();sorted ||= b.sort==='housing_price_won';data={schools:fixture.map(({housing_price_won,...v})=>tier===2?{...v,housing_price_won}:v),total:fixture.length};}

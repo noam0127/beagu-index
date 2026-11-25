@@ -26,3 +26,19 @@ jobs:
           psql_local < tests/school-likes-assertions.sql
       - name: Verify client and tier wiring
         run: node tests/school-likes-contract.mjs
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Install pinned Chromium test tooling
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else timeout 120s npx playwright install chromium --only-shell; fi
+      - name: Verify offline browser likes and public sorting
+        run: node tests/school-likes-browser.cjs
