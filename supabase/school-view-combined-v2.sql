@@ -59,7 +59,7 @@ revoke all on function public.beagu_record_school_view_v2(text,uuid,uuid,text) f
 grant execute on function public.beagu_record_school_view_v2(text,uuid,uuid,text) to anon,authenticated,service_role;
 -- Preserve previous ranking RPC and history. Only post-cutover accepted combined increments enter v2.
 create or replace function public.beagu_school_interest_rankings_v2()
-returns jsonb language sql stable security invoker set search_path='' as $
+returns jsonb language sql stable security invoker set search_path='' as $$
  with counts as (
   select school_id,
    count(*) filter(where counted_at>=now()-interval '72 hours') as current_views,
@@ -77,7 +77,7 @@ returns jsonb language sql stable security invoker set search_path='' as $
  select pg_catalog.jsonb_build_object('rising',coalesce((select pg_catalog.jsonb_agg(
   pg_catalog.jsonb_build_object('school_id',school_id,'school_name',school_name,'region',region,'visitors',current_views,'growth',growth)
   order by growth desc,current_views desc,school_name,school_id) from rising),'[]'::jsonb),'window_hours',72);
-$;
+$$;
 revoke all on function public.beagu_school_interest_rankings_v2() from public,anon,authenticated;
 grant execute on function public.beagu_school_interest_rankings_v2() to service_role;
 commit;
