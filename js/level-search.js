@@ -610,7 +610,7 @@
 
   function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren();
-    if(year===2026&&Number(viewerTier)!==2){host.append(make('p','beagu-year-release-note','2026 배구지수는 Lv.2 승인 자료만 공개합니다.'));return;}
+    if(year===2026&&![1,2].includes(Number(viewerTier))){host.append(make('p','beagu-year-release-note','2026 배구지수는 Lv.1 이상 승인 자료만 공개합니다.'));return;}
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
     heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
@@ -827,7 +827,7 @@
       if(serial!==requestId)return;
       for(const id of ids){
         const n=result.values?.[id];
-        current2026.set(id,viewerTier===2&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
+        current2026.set(id,[1,2].includes(viewerTier)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
           ?{status:'published',value:n}:{status:'unpublished'});
       }
       refresh();
@@ -852,8 +852,8 @@
     section.append(make('h3','school-history-heading','연도별 배구지수 백분위'));
     const historical=asPublicPercentiles(school),current=current2026.get(String(school.school_id));
     const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100;
-    const values=tier===2?[...historical,valid(current?.value)?current.value:null]:historical.slice(0,3);
-    const years=tier===2?YEARS:[2023,2024,2025];
+    const values=[1,2].includes(tier)?[...historical,valid(current?.value)?current.value:null]:historical.slice(0,3);
+    const years=[1,2].includes(tier)?YEARS:[2023,2024,2025];
     const grid=make('div','percentile-grid');
     for(const year of years){
       const cell=make('div','percentile-cell');cell.dataset.year=String(year);
@@ -875,7 +875,7 @@
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren(yearlyPercentileHistory(school,viewerTier));
-    const allowedYears=viewerTier===2?YEARS:YEARS.filter(year=>year!==2026);
+    const allowedYears=[1,2].includes(viewerTier)?YEARS:YEARS.filter(year=>year!==2026);
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
     const prefix='beagu-history-'+String(school.school_id);
@@ -927,7 +927,7 @@
       });
     }
     for(const [index,year] of allowedYears.entries()){
-      const button=make('button','',year===2026&&Number(viewerTier)>=2?'2026년 · 최신':year+'년');
+      const button=make('button','',year===2026&&Number(viewerTier)>=1?'2026년 · 최신':year+'년');
       button.id=prefix+'-tab-'+year;
       button.type='button';
       button.dataset.year=String(year);
@@ -977,10 +977,10 @@
     const firstAvailable=[2026,2025,2024,2023].find(year=>
       reviewedYears.has(year)||
       (Array.isArray(rows)?rows:[]).some(row=>
-        Number(row.year)===year&&Number(row.access_level)<=level&&
+        Number(row.year)===year&&Number(row.access_level)<=viewerTier&&
         (Array.isArray(row.summary?.metrics)?row.summary.metrics:[]).length>0));
     // Lv.2 opens newest reviewed data. Never bypass the signed publication gate.
-    choose(viewerTier===2&&(current2026.get(String(school.school_id))?.status==='published'||firstAvailable===2026)?2026:2025);
+    choose([1,2].includes(viewerTier)&&(current2026.get(String(school.school_id))?.status==='published'||firstAvailable===2026)?2026:2025);
   }
 
   function render(list, total, sortValue='school_name_asc') {
@@ -1120,7 +1120,7 @@
   // itself a release; server review and the 2026 24-hour cooldown still apply.
   // Never poll private Google Sheets or expose school-specific response counts.
   async function refreshApproved2026OnScreen(){
-    if(viewerTier!==2||refreshingReleased2026||!session||$('searchPanel').hidden||
+    if(![1,2].includes(viewerTier)||refreshingReleased2026||!session||$('searchPanel').hidden||
        document.visibilityState!=='visible'||!visiblePageSchools.length)return;
     refreshingReleased2026=true;
     const requestId=serial;
