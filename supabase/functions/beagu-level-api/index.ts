@@ -175,6 +175,8 @@ Deno.serve(async(req:Request)=>{
    // Once the new endpoint is deployed, a missing hold RPC fails closed for all 2026 values.
    if(hidden.error||!Array.isArray(hidden.data))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
    if(!auto.error&&auto.data&&typeof auto.data==='object'&&!Array.isArray(auto.data))for(const id of ids){const n=auto.data[id];if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
+   const manual=await admin.rpc('beagu_2026_master_values_v1',{p_ids:ids,p_level:Number(session.access_level)});
+   if(!manual.error&&manual.data&&typeof manual.data==='object'&&!Array.isArray(manual.data))for(const id of ids){const n=manual.data[id];if(typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
    for(const id of hidden.data)delete out[id];
    return await sendSchoolProfiles(out);
 
@@ -579,6 +581,12 @@ Deno.serve(async(req:Request)=>{
   rows.push(...facts);
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
+  }
+  const manual=await admin.rpc('beagu_2026_master_values_v1',{p_ids:[id],p_level:level});
+  const manualValue=manual.error?null:manual.data?.[id];
+  if(typeof manualValue==='number'&&Number.isFinite(manualValue)&&manualValue>=0&&manualValue<=100){
+   for(const row of rows as any[])if(Number(row.year)===2026&&Array.isArray(row.summary?.metrics))row.summary.metrics=row.summary.metrics.filter((m:any)=>m.key!=='percentile');
+   rows.push({year:2026,access_level:level,summary:{metrics:[{key:'percentile',label:'배구지수 백분위',value:manualValue,unit:'%'}]}});
   }
   const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
