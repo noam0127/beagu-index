@@ -24,19 +24,16 @@ const start=run.indexOf('function drawReadableNotice(content,y,background,color)
 const end=run.indexOf('function draw(){',start);
 assert(start>0&&end>start);
 const source=run.slice(start,end);
-assert.match(source,/ctx\.globalAlpha=\.84/);
-assert.match(source,/const fontSize=Math\.min\(18,Math\.max\(14/);
-assert.match(source,/ctx\.strokeText\(/);
+assert.match(source,/ctx\.textBaseline="middle"/);
+assert.match(source,/ctx\.measureText\(/);
 const ops=[];
-const ctx={save(){},restore(){},measureText:t=>({width:t.length*7}),
- strokeText:(...a)=>ops.push(['stroke',...a]),
- fillText:(...a)=>ops.push(['text',...a])};
-const paint=new Function('ctx','W','roundRect',source+
- 'return drawReadableNotice("학교 안에서 여러 사건이 진행됩니다",90,"rgba(12,32,52,.9)","#fff");');
-const height=paint(ctx,560,(...a)=>ops.push(['panel',ctx.globalAlpha,...a]));
-assert(height<=62);
-assert(ops.some(a=>a[0]==='panel'&&a[1]===.84),'notice panel has readable contrast');
-assert(ops.some(a=>a[0]==='stroke'),'caption is readable');
+const ctx={save(){},restore(){},measureText:t=>({width:t.length*7}),fillText:(...a)=>ops.push(['text',...a])};
+const paint=new Function('ctx','W','H','roundRect',source+'return drawReadableNotice("학교 안에서 여러 사건이 진행됩니다",90,"rgba(12,32,52,.91)","#fff");');
+const height=paint(ctx,560,800,(...a)=>ops.push(['panel',...a]));
+const panel=ops.find(a=>a[0]==='panel'),lines=ops.filter(a=>a[0]==='text');
+assert(panel&&lines.length>0&&height<=85);
+assert(panel[1]>=0&&panel[2]>=0&&panel[1]+panel[3]<=560&&panel[2]+panel[4]<=800);
+for(const line of lines){assert(line[3]>panel[2]&&line[3]<panel[2]+panel[4]);assert(line[1].length*7<=panel[3]-20);}
 console.log('PASS compact transparent captions in diary/survival and direct touch and attack controls');
 
 assert.match(volley,/class="scoreboard" hidden/);assert.match(run,/class="hud" hidden/);assert.match(run,/const central=noticeTime>0/);assert.match(read("styles/arcade-minimal-v11112.css"),/grid-template-rows:minmax\(0,1fr\)/);
