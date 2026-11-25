@@ -117,7 +117,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261123-survival-contain1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=11116-contain">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=11115-recommend">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
@@ -216,12 +216,12 @@ canvas{height:400px;cursor:default}
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
-<script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
+<script src="js/arcade-school-picker-v1.js?v=11116-recommend-fix"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
-<script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
+<script src="js/arcade-fire-court-bgm-v1.js?v=11116-audio"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
 <script src="js/teacher-run-4-rules.js?v=11115-qualification"></script>
@@ -416,8 +416,8 @@ function resetMystery(){
 let chalkShots=[],chalkHelpers=[],chalkCooldown=0,shackle={x:245,dir:-1};
 let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false,earlyMilestones=new Set(),lastSafeLane=-1;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
-let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
-try{best=Number(localStorage.getItem("teacherRun4PreviewBestV1"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
+let last=0,shake=0,notice="",noticeTime=0,soundOn=true,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
+try{best=Number(localStorage.getItem("teacherRun4PreviewBestV1"))||0;const soundSetting=localStorage.getItem("teacherRunSoundV2");if(soundSetting!==null)soundOn=soundSetting==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
 $("sound").textContent=soundOn?"🔊":"🔇";
 $("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
