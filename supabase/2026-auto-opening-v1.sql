@@ -131,9 +131,9 @@ where x.action='REAGGREGATE';
 revoke all on beagu_private.beagu_2026_vi13_request_state from public,anon,authenticated;
 grant select on beagu_private.beagu_2026_vi13_request_state to service_role;
 create or replace function public.beagu_2026_vi13_pending()
-returns integer language sql stable security invoker set search_path='' as $
+returns integer language sql stable security invoker set search_path='' as $vi13_pending$
 select count(*)::integer from beagu_private.beagu_2026_vi13_request_state where state='PENDING'
-$;
+$vi13_pending$;
 revoke all on function public.beagu_2026_vi13_pending() from public,anon,authenticated;
 grant execute on function public.beagu_2026_vi13_pending() to service_role;
 
