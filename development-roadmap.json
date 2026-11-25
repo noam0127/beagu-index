@@ -683,6 +683,21 @@
     },
     {
       "order": 25,
+      "version": "v1.11.15",
+      "name": "불꽃코트",
+      "scope": "두 게임 난이도별 학교 추천·듀스·승패·생애주기·보스·아이템·1급 정교사 자격·기록 보존 후보",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.11.15-fire-court",
+      "dependencies": [
+        "v1.11.14"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "a0be01bb767a69dd9305849dde0aac617eca7188",
+      "tests": []
+    },
+    {
+      "order": 26,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -702,7 +717,7 @@
       "rollback_sha": null
     },
     {
-      "order": 26,
+      "order": 27,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -721,7 +736,7 @@
       "rollback_sha": null
     },
     {
-      "order": 27,
+      "order": 28,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -738,7 +753,7 @@
       "rollback_sha": null
     },
     {
-      "order": 28,
+      "order": 29,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
