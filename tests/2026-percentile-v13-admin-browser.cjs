@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{
 for(const width of [390,1440]){const page=await browser.newPage({viewport:{width,height:900}});try{
 await page.route('**/*',r=>r.abort());
-await page.setContent(fs.readFileSync('admin.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+await page.setContent(fs.readFileSync('tests/fixtures/admin-v1115-legacy.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
 await page.evaluate(()=>{const box=document.querySelector('#admin2026Box');document.body.replaceChildren(box);window.SUPABASE_URL='https://fixture.invalid';window.SUPABASE_PUBLISHABLE_KEY='fixture';window.supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:'fixture'}}})}};window.__calls=[];let reviewed=false;let decision=null;window.fetch=async(url,opts)=>{const b=JSON.parse(opts.body);window.__calls.push(b);let data={};switch(b.action){
 case 'percentile_v13_candidates':data={total:1,items:[{school_id:'1000002',school_name:'검증초등학교',percentile:20,valid_observations:1,teacher_total:7,review_complete:reviewed,decision_lv2:decision}]};break;
 case 'percentile_v13_preview':data={eligible_for_percentile_only_approval:reviewed?1:0};break;

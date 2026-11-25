@@ -80,6 +80,12 @@ Deno.serve(async(req:Request)=>{
  }
  const school=String(body.school_id||"");
  if(!/^[A-Z0-9]{7}$/.test(school))return send(origin,400,{error:"INVALID_SCHOOL"});
+ if(action==="simple_report"){
+ const detail=typeof body.detail==="string"?body.detail.trim():"";
+ if(detail.length<12||detail.length>500||/[<>\u0000-\u001f]/.test(detail))return send(origin,400,{error:"INVALID_FEEDBACK"});
+ const {data,error}=await db.rpc("beagu_2026_simple_report",{p_school:school,p_detail:detail,p_actor_hash:await actorHash(req)});
+ return error?send(origin,409,{error:"NOT_ELIGIBLE_OR_RATE_LIMITED"}):send(origin,202,{ok:true,request_id:data});
+ }
  if(action==="status"){
  const {data,error}=await db.from("beagu_2026_results_snapshot").select("school_response_rows,school_match_status")
  .eq("school_id",school).maybeSingle();

@@ -804,6 +804,26 @@
     },
     {
       "order": 31,
+      "version": "v1.11.15.3",
+      "name": "자동개방",
+      "scope": "2026 자동 공개·예외 관리·신고·재집계 / v1.11.15.2 학교정보 공개 및 Lv.1 2026 설문 차단 유지 / Q31 비공개",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v111153-auto-opening-integrated",
+      "dependencies": [
+        "v1.11.15.2"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "cb1c15bc8d983264480693777dce90c5a9fb949f",
+      "tests": [
+        "2026-auto-opening-assertions.sql",
+        "2026-vi13-reaggregation-assertions.sql",
+        "2026-auto-opening-browser.cjs",
+        "2026-schoolinfo-browser.cjs"
+      ]
+    },
+    {
+      "order": 32,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -823,7 +843,7 @@
       "rollback_sha": null
     },
     {
-      "order": 32,
+      "order": 33,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -842,7 +862,7 @@
       "rollback_sha": null
     },
     {
-      "order": 33,
+      "order": 34,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -859,7 +879,7 @@
       "rollback_sha": null
     },
     {
-      "order": 34,
+      "order": 35,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
