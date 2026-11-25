@@ -31,7 +31,7 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count','like_count']);
   let sortDirection='asc';
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
@@ -323,7 +323,7 @@
   $('regionSort').addEventListener('change',()=>{
     if(!SORTS.has($('regionSort').value))return;
     // "조회수" defaults to most viewed first; the arrow still toggles either direction.
-    if($('regionSort').value==='view_count'){
+    if(['view_count','like_count'].includes($('regionSort').value)){
       sortDirection='desc';
       updateSortDirection();
     }
@@ -1055,6 +1055,7 @@
     }
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
+    void window.BeaguSchoolLikes?.refreshCards(host);
     void window.BeaguSchoolViewCounts?.refreshCards(host);
     void window.BeaguSchoolGamePoints?.refreshCards(host);
   }

@@ -38,6 +38,22 @@ Deno.serve(async(req:Request)=>{
  try{const reader=req.body?.getReader();if(!reader)throw Error();let size=0,raw='';const decoder=new TextDecoder();while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){await reader.cancel();return send({error:'TOO_LARGE'},413,origin);}raw+=decoder.decode(part.value,{stream:true});}body=JSON.parse(raw+decoder.decode());}catch{return send({error:'INVALID_JSON'},400,origin);}
  if(!body||typeof body!=='object'||Array.isArray(body))return send({error:'INVALID_BODY'},400,origin);
  try{
+  if(body.action==='school_like_state'||body.action==='school_like_add'){
+   const ids=body.action==='school_like_add'?[body.schoolId]:body.schoolIds;
+   if(!Array.isArray(ids)||ids.length<1||ids.length>20||ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const raw=(req.headers.get('X-Beagu-Session')||'').trim();
+   const digest=/^[a-f0-9]{64}$/.test(raw)?await hash(raw):'';
+   const {data,error}=body.action==='school_like_add'?await admin.rpc('beagu_school_like_add_v1',{p_school_id:ids[0],p_digest:digest}):await admin.rpc('beagu_school_like_state_v1',{p_school_ids:ids,p_digest:digest});
+   if(error)return send({error:'SCHOOL_LIKES_UNAVAILABLE'},503,origin);
+   if(data?.error)return send({error:data.error},data.error==='INVALID_SCHOOL'?400:403,origin);
+   return send(data,200,origin);
+  }
+  if(body.action==='public_school_like_search'){
+   const q=typeof body.searchText==='string'?body.searchText.trim():'',region=typeof body.region==='string'?body.region.trim():'',office=typeof body.office==='string'?body.office.trim():'',direction=body.direction,page=body.page;
+   if(q.length>80||region.length>24||office.length>100||/[\x00-\x1f]/.test(q+region+office)||(!q&&!region)||(!region&&office)||!['asc','desc'].includes(String(direction))||typeof page!=='number'||!Number.isInteger(page)||page<0||page>500)return send({error:'INVALID_SEARCH_FILTER'},400,origin);
+   const {data,error}=await admin.rpc('beagu_school_like_search_v1',{p_keyword:q,p_region:region,p_office:office,p_direction:direction,p_page:page});
+   return error?send({error:'SCHOOL_LIKES_UNAVAILABLE'},503,origin):send(data,200,origin);
+  }
   // No survey fields or protected prices are available through this public action.
   if(body.action==='public_school_basics_2026'){
    const ids=body.schoolIds;
@@ -211,7 +227,7 @@ Deno.serve(async(req:Request)=>{
    const sort=typeof body.sort==='string'?body.sort:'school_name';
    const direction=typeof body.direction==='string'?body.direction:(sort==='school_name'||sort==='address'?'asc':'desc');
    const pagination=Number(body.page);
-   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
+   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count','like_count']);
    if(!sorts.has(sort)||!['asc','desc'].includes(direction)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
       searchText.length>80||region.length>24||office.length>100||
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
@@ -223,6 +239,18 @@ Deno.serve(async(req:Request)=>{
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
+   if(sort==='like_count'){
+    const {data:ranked,error:rankError}=await admin.rpc('beagu_school_like_search_v1',{p_keyword:searchText,p_region:region,p_office:office,p_direction:direction,p_page:pagination});
+    if(rankError||!Array.isArray(ranked?.schools))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+    const ids=ranked.schools.map((r:any)=>r.school_id);
+    if(!ids.length)return send({schools:[],total:ranked.total,page:pagination,sort,direction},200,origin);
+    const hydrate=(table:string)=>admin.from(table).select('school_id,school_kind,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count,housing_price_won').in('school_id',ids);
+    let result=await hydrate('beagu_lv1_school_sort_cache_v1');
+    if(result.error)result=await hydrate('beagu_lv1_school_sort_index');
+    if(result.error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+    const map=new Map((result.data||[]).map((r:any)=>[r.school_id,r]));
+    return send({schools:ranked.schools.map((r:any)=>({...r,...(map.get(r.school_id)||{})})),total:ranked.total,page:pagination,sort,direction},200,origin);
+   }
    const rankedQuery=(table:string)=>{
      let query=admin.from(table)
        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=1?',housing_price_won':''),{count:'exact'});
