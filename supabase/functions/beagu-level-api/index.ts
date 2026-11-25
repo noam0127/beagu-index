@@ -38,6 +38,20 @@ Deno.serve(async(req:Request)=>{
  try{const reader=req.body?.getReader();if(!reader)throw Error();let size=0,raw='';const decoder=new TextDecoder();while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){await reader.cancel();return send({error:'TOO_LARGE'},413,origin);}raw+=decoder.decode(part.value,{stream:true});}body=JSON.parse(raw+decoder.decode());}catch{return send({error:'INVALID_JSON'},400,origin);}
  if(!body||typeof body!=='object'||Array.isArray(body))return send({error:'INVALID_BODY'},400,origin);
  try{
+  if(body.action==='home_ranking_2026'){
+   if(Object.keys(body).length!==1)return send({error:'INVALID_RANKING_REQUEST'},400,origin);
+   // Never trust a browser-supplied level. An absent, expired or revoked token sees only TOP 10.
+   const verified=await check(req);
+   const tier=Number(verified?.access_level);
+   const level=tier===2?2:tier===1?1:0;
+   const limit=level===2?100:level===1?30:10;
+   const {data,error}=await admin.rpc('beagu_2026_manual_home_rank',{p_level:level});
+   if(error||!data||data.year!==2026||data.limit!==limit||!Array.isArray(data.rows)||data.rows.length>limit)
+     return send({error:'RANKING_UNAVAILABLE'},503,origin);
+   // Explicit field projection, even if a backend schema changes.
+   const rows=data.rows.map((r:any)=>({rank:r.rank,school_id:r.school_id,school_name:r.school_name,sido:r.sido,support_office:r.support_office,percentile:r.percentile}));
+   return send({year:2026,limit,updated_at:data.updated_at,rows},200,origin);
+  }
   if(body.action==='login'){
    // Database-backed global limiter cannot be evaded with forged IP headers.
    const {data:permitted,error:limitError}=await admin.rpc('beagu_consume_login_budget');
