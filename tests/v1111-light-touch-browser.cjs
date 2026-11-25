@@ -140,14 +140,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.waitForFunction(()=>document.querySelector('#start')?.textContent.includes('여기까지 기록'));
  assert.equal(startedSchool,selectedSchool.school_id);
  if(tier===0){
-  await page.locator('#volley-attack').waitFor({state:'visible'});
-  assert.equal(await page.locator('#volley-joystick,#volley-spike,#volley-dash').count(),0);
-  const boxes=await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect();return {courtBottom:r('#game').bottom,attackTop:r('#volley-attack').top,pauseTop:r('#pause').top}});
-  assert.ok(boxes.attackTop>=boxes.courtBottom-1&&boxes.pauseTop>=boxes.courtBottom-1,JSON.stringify(boxes));
-  await page.evaluate(()=>document.querySelector('#volley-attack').dispatchEvent(new PointerEvent('pointerdown',{pointerId:32,pointerType:'touch',bubbles:true,cancelable:true})));
-  assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'true');
-  await page.evaluate(()=>document.querySelector('#volley-attack').dispatchEvent(new PointerEvent('pointercancel',{pointerId:32,pointerType:'touch',bubbles:true})));
-  assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('#volley-joystick,#volley-spike,#volley-dash,#volley-attack').count(),0);
+  assert.equal(await page.locator('.scoreboard').isVisible(),false);
+  assert.equal(await page.locator('.volley-progress').isVisible(),false);
+  assert.equal(await page.locator('.arcade-volley-fullscreen-hud').isVisible(),true);
+  const boxes=await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect();return {court:r('.court').top,score:r('.arcade-volley-fullscreen-hud').top,canvas:r('#game').top}});assert.ok(boxes.score>=boxes.court&&boxes.score>=boxes.canvas,JSON.stringify(boxes));
+  await page.evaluate(()=>{const canvas=document.querySelector('#game'),r=canvas.getBoundingClientRect();for(const type of ['pointerdown','pointermove','pointercancel'])canvas.dispatchEvent(new PointerEvent(type,{pointerId:32,pointerType:'touch',clientX:r.left+r.width*.25,clientY:r.top+r.height*.4,bubbles:true,cancelable:true}));});
   await page.waitForTimeout(5000);
   await page.locator('#start').click();
   await page.locator('.arcade-result-full').waitFor({state:'visible'});
