@@ -43,4 +43,20 @@ for(const p of ['teacher-volleyball.html','teacher-run.html','teacher-run-4-prev
 assert.match(read('teacher-volleyball.html'),/volleyballStage\(state.leftScore,state.rightScore\)/);
 assert.match(read('teacher-run.html'),/bgm.setStage\(state==="starting"\|\|state==="ready"\?0:stage\)/);
 assert.match(read('js/run4-official-client-v1.js'),/enabled:false/);
+// Simulate iOS interrupted context and a resume promise that remains pending until a trusted touch.
+const pendingEvents=new Map(),pendingTimers=new Map();let resumed=0,instance;
+class InterruptedContext extends Context{
+ constructor(){super();this.state='interrupted';this.listeners=new Map();instance=this;}
+ addEventListener(n,f){this.listeners.set(n,f)} removeEventListener(n){this.listeners.delete(n)}
+ resume(){resumed++;if(resumed===1)return new Promise(()=>{});this.state='running';this.listeners.get('statechange')?.();return Promise.resolve();}
+}
+const isolatedWindow={AudioContext:InterruptedContext},isolatedDocument={hidden:false,addEventListener(n,f){pendingEvents.set(n,f)},removeEventListener(n){pendingEvents.delete(n)}};
+vm.runInNewContext(read('js/arcade-fire-court-bgm-v1.js'),{window:isolatedWindow,document:isolatedDocument,setInterval(f,ms){pendingTimers.set(++id,{f,ms});return id;},clearInterval(i){pendingTimers.delete(i);}});
+const interrupted=isolatedWindow.BeaguFireCourtBgm.create('volleyball');
+interrupted.sync(true);assert.equal(resumed,1);assert.equal(pendingTimers.size,0);
+pendingEvents.get('pointerup')({isTrusted:false});assert.equal(resumed,1);
+pendingEvents.get('touchend')({isTrusted:true});await Promise.resolve();assert.equal(resumed,2);assert.equal(pendingTimers.size,1);
+instance.state='interrupted';instance.listeners.get('statechange')();assert.equal(pendingTimers.size,0);
+pendingEvents.get('pointerup')({isTrusted:true});await Promise.resolve();assert.equal(pendingTimers.size,1);
+interrupted.sync(false);assert.equal(pendingTimers.size,0);interrupted.dispose();assert.equal(pendingEvents.size,0);
 console.log('PASS fire-court stage timing, distinct music, mute, pause, tab visibility, reset and disposal; official write disabled');
