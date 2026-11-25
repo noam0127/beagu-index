@@ -32,3 +32,8 @@ body:is(.beagu-page-search,.beagu-page-lv1) #results .school-glory-card .glory-a
 body:is(.beagu-page-search,.beagu-page-lv1) #results .school-glory-card .glory-actions .view-button:hover{background:#eef4fb}
 .glory-actions a:focus-visible,.glory-actions button:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
 .glory-actions .beagu-mbti-badge.is-ready .beagu-mbti-text{color:#168447}
+
+.glory-fallback-note{margin:5px 0 0;font-size:11px;color:#64748b}.beagu-yearly-percentiles{margin:8px 0 14px;padding:12px;border:1px solid #dbe3ea;border-radius:12px}.beagu-yearly-percentiles .percentile-cell{display:grid;gap:5px}.beagu-yearly-percentiles .percentile-cell span{font-size:12px}.beagu-yearly-percentiles .percentile-cell strong{font-size:16px}.beagu-yearly-percentiles .percentile-graph{max-width:440px;margin:8px auto}.beagu-yearly-percentiles .percentile-graph svg{display:block;width:100%;height:auto}
+
+/* Compact, always visible basic facts; no disclosure triangle or second grid. */
+.school-glory-card>.official-school-basics-2026{font-size:12px;font-weight:750;margin:4px 0 7px;padding:0;line-height:1.4;background:none;border:0}.school-glory-card>.glory-facts{grid-template-columns:repeat(3,minmax(0,1fr))}.glory-fact-year{font-size:10px;color:#64748b;line-height:1.25}.glory-fact-year:empty{display:none}

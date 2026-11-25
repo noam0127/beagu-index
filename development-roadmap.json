@@ -785,6 +785,25 @@
     },
     {
       "order": 30,
+      "version": "v1.11.15.2",
+      "name": "학교정보 공개 개선",
+      "scope": "2026 학교알리미 기본정보 Lv.1·2 공개 / Lv.1 2025 배구지수만 표시 및 2026 학교별 조사 API 차단 / Lv.2 2026 승인 백분위 우선·없으면 2025 백분위 / 상세조회 중복 기본정보 제거·연도별 백분위 복원 / 기존 공개 권한 및 Q31 비공개 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v111152-school-visibility-integrated",
+      "dependencies": [
+        "v1.11.15.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "ecbb441b3f356ea457497b1ae26c71cc4c56d651",
+      "tests": [
+        "2026-official-school-profiles.mjs",
+        "2026-schoolinfo-browser.cjs",
+        "2026-public-revalidation-fail-closed.mjs"
+      ]
+    },
+    {
+      "order": 31,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -804,7 +823,7 @@
       "rollback_sha": null
     },
     {
-      "order": 31,
+      "order": 32,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -823,7 +842,7 @@
       "rollback_sha": null
     },
     {
-      "order": 32,
+      "order": 33,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -840,7 +859,7 @@
       "rollback_sha": null
     },
     {
-      "order": 33,
+      "order": 34,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

@@ -1,11 +1,11 @@
 // Only independently public Schoolinfo fields. Never survey-derived values.
-// A verified Lv.2 server session is required before this projection is emitted.
+// A verified Lv.1 or Lv.2 server session is required before this projection is emitted.
 const TEXT_KEYS=Object.freeze(['school_name','education_office','support_office','region','establishment','branch_school','closed','suspended','road_address','address_detail','homepage','opening_anniversary','established_date','school_characteristic','establishment_type','school_phone','school_fax','coeducation','legal_dong_code','latitude','longitude']);
 const COUNT_KEYS=Object.freeze(['teacher_total','male_teachers','female_teachers','teachers_on_leave','principals','vice_principals','lead_teachers','general_teachers','fixed_term_teachers','first_grade_teachers','second_grade_teachers']);
 const textValue=v=>typeof v==='string'&&v.length>0&&v.length<=1500&&!/[<>\u0000-\u001f]/.test(v)?v:null;
 const count=v=>Number.isInteger(v)&&v>=0&&v<=10000?v:null;
 export function projectOfficialProfiles2026(rows,ids,tier){
- if(Number(tier)!==2)return null;
+ if(![1,2].includes(Number(tier)))return null;
  const allowed=new Set(Array.isArray(ids)?ids.filter(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id)):[]);
  const output=Object.create(null);
  for(const row of Array.isArray(rows)?rows:[]){
