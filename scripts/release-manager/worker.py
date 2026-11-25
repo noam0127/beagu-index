@@ -92,7 +92,7 @@ def stamp_release_metadata(target, sha, environment):
     if not file.is_file():
         return
     meta = json.loads(file.read_text(encoding="utf8"))
-    if meta.get("schema") != 1 or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", meta.get("version", "")):
+    if meta.get("schema") != 1 or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?", meta.get("version", "")):
         raise RuntimeError("Invalid release metadata")
     if not SHA.fullmatch(sha):
         raise RuntimeError("Invalid release SHA")
