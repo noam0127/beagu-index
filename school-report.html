@@ -1395,11 +1395,10 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     try{
       const request=client().from('beagu_school_report_yearly')
         .select('survey_year,percentile').eq('school_id',id).eq('publication_status','PUBLISHED');
-      const result=state.tier===0?{data:[],error:null}:await (latestOnly?request.eq('survey_year',2026):request);
+      const result=state.tier===0||latestOnly?{data:[],error:null}:await request.in('survey_year',[2023,2024,2025]);
       if(result.error)throw result.error;
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
-      state.years['2026'].percentile=null;
-      state.years['2026'].approved=false;
+      if(state.tier===0){state.years['2026'].percentile=null;state.years['2026'].approved=false;}
       for(const row of result.data||[]){
         const y=Number(row.survey_year),p=num(row.percentile);
         if([2023,2024,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
@@ -1490,6 +1489,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       const r=await tierCall('school',{schoolId:id,viewLevel:requested});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       if(Number(r.level)!==requested)throw Error('REPORT_TIER_MISMATCH');
+      const p=await tierCall('percentiles',{schoolIds:[id]});
+      if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
+      const latest=p.values?.[id];state.years['2026'].percentile=typeof latest==='number'&&latest>=0&&latest<=100?latest:null;state.years['2026'].approved=state.years['2026'].percentile!==null;
       if(!latestOnly)state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
       state.years['2026'].items={};
       state.approvedSummary['2026']=[];
@@ -1586,6 +1588,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         // Fail closed: the old school-level answers might have been revoked
         // since they were first displayed. Leave older verified years intact.
         state.years['2026'].items={};
+        state.years['2026'].percentile=null;state.years['2026'].approved=false;
         state.approvedSummary['2026']=[];
         render();
         console.warn('인증된 집계 DB 조회 실패 · 2026 결과 숨김',error);

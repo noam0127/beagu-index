@@ -246,6 +246,7 @@
       /^[A-Z0-9]{7}$/.test(id) &&
       (refresh || !state.public2026Checked.has(id)) && !state.public2026Loading.has(id));
     if(!requested.length || typeof supabaseClient==='undefined')return;
+    if(!state.sessionToken||state.authLevel<1)return;
     requested.forEach(id=>{
       state.public2026.delete(id);
       state.public2026Checked.delete(id);
@@ -254,26 +255,10 @@
     });
     renderTable();
     try{
-      const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
-        .select('school_id,survey_year,percentile')
-        .in('school_id',requested)
-        .eq('survey_year',2026)
-        .eq('publication_status','PUBLISHED')
-        .limit(requested.length);
-      if(error)throw error;
-      requested.forEach(id=>{
-        state.public2026.delete(id);
-        state.public2026Error.delete(id);
-      });
-      for(const row of Array.isArray(data)?data:[]){
-        const id=String(row?.school_id||'');
-        const raw=row?.percentile;
-        if(raw===null||raw===undefined||raw==='')continue;
-        const value=Number(raw);
-        if(!requested.includes(id)||Number(row?.survey_year)!==2026||
-           !Number.isFinite(value)||value<0||value>100)continue;
-        state.public2026.set(id,value);
-      }
+      const token=state.sessionToken,epoch=state.authEpoch;
+      const result=state.authLevel>=1&&token?await authRequest('percentiles',{schoolIds:requested},token):{values:{}};
+      if(epoch!==state.authEpoch||token!==state.sessionToken)return;
+      for(const id of requested){state.public2026.delete(id);state.public2026Error.delete(id);const v=result.values?.[id];if(typeof v==='number'&&v>=0&&v<=100)state.public2026.set(id,v);}
       requested.forEach(id=>state.public2026Checked.add(id));
     }catch(error){
       console.warn('2026년 공개 승인 기록 조회 실패',error);
