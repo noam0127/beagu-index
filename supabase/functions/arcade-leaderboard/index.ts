@@ -26,7 +26,7 @@ function json(data: unknown, status = 200, origin = "https://baeguindex.com"): R
 function error(code: string, status: number, origin: string) { return json({error:code}, status, origin); }
 function isGame(x: unknown): x is Game { return typeof x === "string" && VALID_GAMES.has(x); }
 const RANK_TIERS=new Set(["easy","normal","hard","very_hard","extreme"]);
-function rankTier(x:unknown):string|null{return typeof x==="string"&&RANK_TIERS.has(x)?x:null;}
+function rankTier(x:unknown):Difficulty|null{return typeof x==="string"&&RANK_TIERS.has(x)?x as Difficulty:null;}
 function int(x: unknown, min: number, max: number) {
   return typeof x === "number" && Number.isInteger(x) && x >= min && x <= max;
 }
