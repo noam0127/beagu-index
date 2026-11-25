@@ -34,7 +34,7 @@ office.addEventListener('change',e=>{
  if(!e.isTrusted||panel.hidden||office.disabled||!region.value||!office.value)return;
  const v=window.beaguVisitor;if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(String(v||'')))return;
  // A real office selection completes the pair. No calls on province-only changes, pagination or rerenders.
- void client.rpc('beagu_record_region_interest_v1',{p_region:region.value,p_office:office.value,p_visitor:v}).catch(()=>{});
+ void Promise.resolve(client.rpc('beagu_record_region_interest_v1',{p_region:region.value,p_office:office.value,p_visitor:v})).catch(()=>{});
 });
 new MutationObserver(mode).observe(panel,{attributes:true,attributeFilter:['hidden']});
 setInterval(()=>{if(visible())void load(true);},900000);
