@@ -276,16 +276,16 @@
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-gamecodefix1">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
+<script defer src="js/beagu-participation-auth-v2.js?v=11113-minimal"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
-<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-card">
+<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=11113-minimal">
 </head>
 
 <body class="beagu-ui-page beagu-page-home">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
-<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html" aria-current="page">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html" aria-current="page">홈</a><a href="search.html">검색</a><a href="statistics.html">비교</a><a href="games.html">플레이</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 
   
@@ -321,17 +321,17 @@
 
     <div class="beagu-home-actions"><a class="data-access-link" href="search.html">학교 검색하기</a><a class="survey-access-link" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여하기</a></div>
 <section class="beagu-home-showcase" id="beaguTodaySchools" aria-labelledby="beaguTodayTitle">
-<div class="beagu-home-showcase-head"><h2 id="beaguTodayTitle">오늘의 학교</h2><span>새로고침마다 변경</span></div>
+<div class="beagu-home-showcase-head"><h2 id="beaguTodayTitle">오늘의 학교</h2></div>
 <p class="beagu-home-showcase-status" data-today-status role="status">공개된 2025년 자료에서 학교를 선정하는 중입니다.</p>
 <div class="beagu-home-school-grid"><article class="beagu-home-school beagu-home-school--high" data-today-high aria-label="상위권 학교"></article><article class="beagu-home-school beagu-home-school--low" data-today-low aria-label="하위권 학교"></article></div>
-<p class="beagu-home-school-note">검증·공개된 2025년 백분위 기준이며 학교 전체에 대한 평가를 뜻하지 않습니다.</p></section>
+</section>
 
 
 
 
 
     <section class="card light-touch-visit" aria-label="방문 통계">
-      <h2>방문한 선생님</h2>
+      
       <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center">
         <div>오늘<br><strong data-stat="today" aria-live="polite">집계 중</strong></div>
         <div>월간<br><strong data-stat="month" aria-live="polite">집계 중</strong></div>
@@ -343,14 +343,14 @@
 <div id="beaguHomeNoticeBody" class="beagu-notice-common" hidden></div>
 <div id="beaguTierNotice" class="beagu-tier-notice" hidden><strong id="beaguTierNoticeLabel"></strong><p id="beaguTierNoticeBody"></p></div>
 <p id="beaguNoticeError" role="status" hidden></p>
-<button id="courtNoticeToggle" type="button" aria-expanded="false" aria-controls="beaguHomeNoticeBody beaguTierNotice beaguNoticeError">더 보기</button>
+
 </section>
   </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-home-notice-public-v1.js?v=160b"></script>
-<script defer src="js/beagu-home-schools-v1.js?v=11111-refresh"></script>
+<script defer src="js/beagu-home-notice-public-v1.js?v=11113-minimal"></script>
+<script defer src="js/beagu-home-schools-v1.js?v=11113-minimal"></script>
 <script defer src="js/beagu-court-tidy-v1110.js?v=1110"></script>
 
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
