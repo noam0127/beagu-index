@@ -36,6 +36,8 @@ jobs:
           run_sql < supabase/2026-official-school-profiles-v1.sql
           run_sql < supabase/2026-percentile-only-review-v13.sql
           run_sql < tests/2026-percentile-v13-assertions.sql
+          run_sql < supabase/2026-percentile-only-final-v13.sql
+          run_sql < tests/2026-percentile-v13-final-assertions.sql
   browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

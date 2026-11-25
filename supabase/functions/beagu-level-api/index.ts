@@ -124,6 +124,15 @@ Deno.serve(async(req:Request)=>{
      .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
     if(approved.length)out[id]=approved[0].value;
    }
+   // Separate exact percentile-only approval; never relax the legacy question gate.
+   // Staggered rollout: absent/unavailable new RPC returns no new percentiles.
+   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:Number(session.access_level)});
+   if(!narrow.error&&narrow.data&&typeof narrow.data==='object'&&!Array.isArray(narrow.data)){
+     for(const id of ids){
+       const n=narrow.data[id];
+       if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
+     }
+   }
    // The 2026 Schoolinfo profile is independent of teacher-survey consent.
    // Do not load it at Lv.1, and never include unpublished survey values.
    if(Number(session.access_level)===2){

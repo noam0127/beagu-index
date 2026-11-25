@@ -13,7 +13,9 @@ create table public.beagu_school_report_yearly(
 create table public.beagu_admin_accounts(user_id uuid primary key,role text,enabled boolean);
 create function public.beagu_admin_active_mfa_session(uuid,uuid) returns boolean language sql stable
  as $$ select $1='11111111-1111-1111-1111-111111111111'::uuid and $2='22222222-2222-2222-2222-222222222222'::uuid $$;
-create table beagu_private.beagu_2026_civic_publication_hold(school_id text,active boolean);
+create table beagu_private.beagu_2026_civic_publication_hold(school_id text,active boolean,updated_at timestamptz default clock_timestamp());
+create table beagu_private.beagu_2026_level_release_approvals(access_level integer primary key,updated_at timestamptz not null);
+grant select on beagu_private.beagu_2026_level_release_approvals to service_role;
 grant select on public.schools,public.beagu_school_report_yearly,public.beagu_admin_accounts,
  beagu_private.beagu_2026_civic_publication_hold to service_role;
 insert into public.schools values('1000001'),('1000002'),('1000003');

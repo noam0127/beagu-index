@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -88,6 +88,37 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  // Percentile-only review and decision routes use the existing verified owner MFA.
+  if(String(input.action).startsWith("percentile_v13_")){
+   const version=typeof input.source_version==="string"?input.source_version:"";
+   if(version.length<8||version.length>160)return send(origin,400,{error:"invalid_source_version"});
+   let rpc="",args:Record<string,unknown>={p_version:version};
+   const note=typeof input.note==="string"?input.note.trim():"";
+   if(input.action==="percentile_v13_preview"){rpc="beagu_2026_percentile_v13_preview";}
+   else if(input.action==="percentile_v13_scope"){
+    if(!["PENDING","INCOMPATIBLE","COMPATIBLE"].includes(String(input.decision))||typeof input.notice_compatible!=="boolean"||typeof input.anonymous_scope_reviewed!=="boolean"||note.length<12||note.length>500||/[<>]/.test(note))
+      return send(origin,400,{error:"invalid_scope_review"});
+    rpc="beagu_2026_percentile_v13_scope_review";
+    Object.assign(args,{p_actor:actor,p_session:claims.session_id,p_decision:input.decision,p_notice_compatible:input.notice_compatible,p_anonymous_scope_reviewed:input.anonymous_scope_reviewed,p_note:note});
+   }else{
+    const id=input.school_id,n=input.percentile,count=input.valid_observations;
+    if(typeof id!=="string"||!/^[A-Z0-9]{7}$/.test(id)||typeof n!=="number"||!Number.isFinite(n)||n<0||n>100||typeof count!=="number"||!Number.isSafeInteger(count)||count<1)return send(origin,400,{error:"invalid_exact_candidate"});
+    Object.assign(args,{p_school:id,p_expected_percentile:n,p_expected_observations:count,p_actor:actor,p_session:claims.session_id});
+    if(input.action==="percentile_v13_review"){
+     const checks=input.checks;
+     if(!checks||typeof checks!=="object"||Array.isArray(checks)||note.length<12||note.length>500||/[<>]/.test(note))return send(origin,400,{error:"invalid_school_review"});
+     rpc="beagu_2026_percentile_v13_school_review";
+     Object.assign(args,{p_checks:checks,p_note:note});
+    }else{
+     if(![1,2].includes(Number(input.level))||typeof input.level!=="number"||!["APPROVE","REVOKE"].includes(String(input.decision))||input.confirmation!==String(input.decision)+"_PERCENTILE_ONLY")return send(origin,400,{error:"explicit_percentile_decision_required"});
+     rpc="beagu_2026_percentile_v13_decide";
+     Object.assign(args,{p_level:input.level,p_action:input.decision,p_confirmation:input.confirmation});
+    }
+   }
+   const {data,error}=await db.rpc(rpc,args);
+   if(error||!data)return send(origin,409,{error:"percentile_v13_checks_failed"});
+   return send(origin,200,data);
+  }
   if(input.action==="bulk_verified"){
     const preview=input.preview===true;
     const limit=input.limit===undefined?400:input.limit;
