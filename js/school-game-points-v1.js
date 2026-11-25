@@ -18,6 +18,8 @@ async function refreshCards(host){
    for(const n of nodes){
     if(!n.isConnected||!totals.has(n.dataset.schoolGamePoints))continue;
     n.textContent=totals.get(n.dataset.schoolGamePoints).toLocaleString('ko-KR')+' P';
+    n.title='보존된 과거 점수와 집계 시작 이후 검증된 점수의 합계 · 삭제된 과거 기록 제외';
+    n.setAttribute('aria-label',n.textContent+' · '+n.title);
    }
   }catch(_){/* Never invent a total. */}
  }
