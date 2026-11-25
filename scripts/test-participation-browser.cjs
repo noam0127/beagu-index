@@ -64,6 +64,24 @@ async function login(page,code,expected){
  await page.locator('.beagu-header-code button').click();
  await headerState(page,expected);
 }
+async function resultSave(page,compact){
+ await page.addScriptTag({url:origin+'/js/arcade-result-share-v1.js'});
+ await page.evaluate(compact=>{
+  const canvas=document.createElement('canvas');canvas.width=320;canvas.height=200;
+  canvas.getContext('2d').fillRect(0,0,320,200);
+  const host=document.createElement('div');host.id='result-save-fixture';host.style.cssText='position:fixed;inset:0;z-index:9999;background:#183751;color:white;';document.body.append(host);
+  window.BeaguArcadeResult.create(host,canvas,{compact}).show({game:'테스트',title:'게임 결과',detail:'',metrics:['점수 2500']});
+ },compact);
+ const button=page.locator('#result-save-fixture .arcade-result-save');await button.waitFor({state:'visible'});
+ assert.equal(await button.innerText(),'💾 게임결과 저장');
+ await page.waitForFunction(()=>!document.querySelector('#result-save-fixture .arcade-result-save').disabled);
+ assert.equal(await page.locator('#result-save-fixture .arcade-result-copy,#result-save-fixture .arcade-result-download').count(),0);
+ const [download]=await Promise.all([page.waitForEvent('download'),button.click()]);
+ assert.equal(download.suggestedFilename(),'baegu-game-result.png');
+ const bytes=await fs.readFile(await download.path());
+ assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+ await page.locator('#result-save-fixture').evaluate(n=>n.remove());
+}
 async function hiddenCards(page){
  for(const card of await page.locator('#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,#lv2UpgradeCard,#compareLv2Upgrade,#playLv2Upgrade').all())assert.equal(await card.isVisible(),false,'Retired body code card must be hidden');
 }
@@ -124,6 +142,7 @@ async function hiddenCards(page){
    await login(page,LV2,2);
    await open(page);await page.keyboard.press('Escape');
    assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
+   await resultSave(page,false);await resultSave(page,true);
    const authErrors=errors.filter(e=>e.includes('beagu-participation-auth-v2'));
    assert.deepEqual(authErrors,[],'No shared UI exceptions');
    await ctx.close();
