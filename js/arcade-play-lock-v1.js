@@ -3,6 +3,7 @@
 (() => {
   "use strict";
   let active=false, previous=null, scrollY=0,maxScrollY=0;
+  const mobileInput=()=>Boolean(window.matchMedia?.("(pointer: coarse) and (hover: none)").matches);
   const embedded=window.parent!==window;
   function standaloneLock(lock){
     const body=document.body;
@@ -17,20 +18,19 @@
       const survival=Boolean(canvas?.closest?.(".stage"));
       const fullscreen=Boolean(document.fullscreenElement||document.webkitFullscreenElement||
         document.querySelector(".arcade-fullscreen-fallback"));
-      if(canvas&&(mobile||survival)&&!fullscreen){
+      if(canvas&&mobileInput()&&!fullscreen){
         const viewport=window.visualViewport;
         const height=viewport?.height||window.innerHeight;
         if(survival&&height>0)
           document.documentElement.style.setProperty("--arcade-run-parent-visible-height",height+"px");
-        const rect=canvas.getBoundingClientRect();
+        const rect=(canvas.closest(".arcade-game-viewport")||canvas).getBoundingClientRect();
         if(height>0&&rect.height>0){
           const visibleCenter=(viewport?.offsetTop||0)+height/2;
           let target=scrollY+rect.top+rect.height/2-visibleCenter;
-          if(survival&&rect.height>height-24)target=scrollY+rect.top-12;
+          if(rect.height>height-24)target=scrollY+rect.top-8;
           // Retain the existing vertical priority for volleyball on very
           // short phones; survival instead fits the whole canvas above.
-          else if(!survival&&rect.height>height-32)
-            target=Math.max(target,scrollY+rect.bottom-(height-24));
+          
           const pageHeight=Math.max(document.documentElement.scrollHeight,
             document.body.scrollHeight);
           scrollY=Math.max(0,Math.min(Math.max(0,pageHeight-height),target));
@@ -60,7 +60,7 @@
     try{window.parent.postMessage({type:"arcade:play-state",active:playing},window.location.origin);}catch(_){}
   }
   function sync(playing){
-    playing=Boolean(playing);
+    playing=Boolean(playing)&&mobileInput();
     if(active===playing)return;
     active=playing;
     document.documentElement.classList.toggle("arcade-play-locked",playing);
