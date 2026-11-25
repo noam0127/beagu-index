@@ -129,13 +129,14 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
 <script defer src="js/beagu-participation-auth-v2.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
-<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
+<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=11116">
 <link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11113-save">
 <link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11115-items">
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
 <link rel="stylesheet" href="styles/arcade-fire-court-v1.css?v=11115-1">
+<style>.run-court-age{position:absolute;z-index:33;top:max(10px,env(safe-area-inset-top));right:max(64px,calc(env(safe-area-inset-right) + 55px));display:flex;gap:3px;flex-direction:column;align-items:flex-end;padding:5px 9px;border-radius:9px;background:rgba(10,28,48,.92);color:#fff;pointer-events:none;line-height:1.15;font-size:12px}.run-court-age strong{font-size:16px;color:#fff5b9}.run-court-age span{font-size:11px;color:#dceaff}</style>
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-run">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -178,6 +179,7 @@ canvas{height:400px;cursor:default}
       <div class="arcade-fullscreen-subline" id="run-fullscreen-situation" hidden>24세 · 0점 · 0초</div>
     </div>
     <div id="run4-leave-inventory" class="run4-leave" aria-label="사용 가능한 휴가권 및 연대"></div>
+    <div id="run-court-age" class="run-court-age" aria-label="현재 나이 및 정년"><strong id="run-court-current-age">24세</strong><span>정년 62세</span></div>
     <div id="run4-leave-fullscreen" class="run4-leave" aria-label="게임 중 사용 가능한 휴가권 및 연대"></div>
     <div id="run4-active-effects" class="run4-active-effects" aria-label="현재 적용 중인 효과" hidden></div>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 4.0 — 정년까지 살아남아라 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
@@ -214,7 +216,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
 <script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
-<script src="js/arcade-play-lock-v1.js?v=140"></script>
+<script src="js/arcade-play-lock-v1.js?v=11116"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
@@ -612,6 +614,7 @@ function syncLeave(){
 function updateLabels(){
  syncLeave();
  $("careerCurrentAge").textContent=getAge()+"세";
+ $("run-court-current-age").textContent=getAge()+"세";
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
@@ -1587,8 +1590,9 @@ window.addEventListener("keydown",e=>{
   return;
  }
  if(state!=="playing")return;
- const itemIndex=inventoryKeys.indexOf(key);
- if(itemIndex>=0){if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(!e.repeat)useInventorySlot(itemIndex);}return;}
+ const physicalItemIndex=["KeyZ","KeyX","KeyC","KeyV"].indexOf(e.code);
+ const itemIndex=physicalItemIndex>=0?physicalItemIndex:inventoryKeys.indexOf(key);
+ if(itemIndex>=0){if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(!e.repeat&&!useInventorySlot(itemIndex))setNotice("아직 사용할 수 없는 휴가권 또는 연대입니다.",1.5);}return;}
  if(!["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key))return;
  e.preventDefault(); // Arrow keys and WASD move the teacher, not the page.
  const beforeMask=keyMask();
