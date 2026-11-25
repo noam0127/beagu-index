@@ -776,24 +776,8 @@
           if(card.dataset.schoolId!==id)continue;
           const old=card.querySelector('.percentile-panel');
           if(old){
-            // Preserve the already-mounted in-card disclosure, its listeners,
-            // and the chosen year while refreshing only the published values.
-            const fresh=percentilePanel(school);
-            const previousGrid=old.querySelector('.percentile-grid');
-            const updatedGrid=fresh.querySelector('.percentile-grid');
-            if(previousGrid&&updatedGrid){
-              const selected=previousGrid.querySelector('.percentile-cell.is-current-year')?.dataset.year;
-              if(selected)updatedGrid.querySelector('.percentile-cell[data-year="'+selected+'"]')?.classList.add('is-current-year');
-              previousGrid.replaceWith(updatedGrid);
-            }
-            // Keep Lv.0 and Lv.1's independently rendered four-year vertical
-            // percentile graph synchronized with newly published 2026 data.
-            // Do not replace the disclosure element or the expanded details.
-            const existingGraph=old.querySelector('.percentile-graph');
-            const latestGraph=fresh.querySelector('.percentile-graph');
-            if(existingGraph&&latestGraph)existingGraph.replaceWith(latestGraph);
-            else if(existingGraph)existingGraph.remove();
-            else if(latestGraph)old.insertBefore(latestGraph,old.querySelector('.school-detail'));
+            old.replaceWith(percentilePanel(school));
+            BeaguSchoolSearchCard.updateRecordedYears(card);
           }
           break;
         }
@@ -969,28 +953,11 @@
       }
       card.insertBefore(housing,card.querySelector('.percentile-panel'));
       }
-      // Preserve Lv.0's exact four-year vertical percentile chart. Each
-      // year is an independent marker, never a connecting trend line.
-      // Only the heading becomes the detail disclosure control.
-      const historyPanel=card.querySelector('.percentile-panel');
-      const heading=historyPanel?.querySelector('.percentile-heading');
-      if(!historyPanel||!heading||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
-      historyPanel.classList.add('lv1-history-disclosure');
-      const trigger=make('button','lv1-history-trigger',Number(viewerTier)>=2?'2026 조사 결과 확인 · 연도별 상세':'역대 조사결과');
-      trigger.type='button';
-      trigger.setAttribute('aria-controls',detail.id);
-      trigger.setAttribute('aria-expanded','false');
-      trigger.setAttribute('aria-label',String(school.school_name||'학교')+
-        (Number(viewerTier)>=2?' 2026 최신 조사 결과 및 연도별 기록 펼치기':' 역대 조사결과 펼치기'));
-      const historyHeader=make('div','minimal-history-header');
-      historyHeader.append(trigger,experience);heading.replaceWith(historyHeader);
-      historyPanel.append(detail);
-      card.querySelector('.school-actions')?.remove();
-
+      const trigger=button;
+      if(!trigger||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
       async function toggleHistory(event){
         const opening=detail.hidden;
         detail.hidden=!opening;
-        historyPanel.classList.toggle('is-expanded',opening);
         trigger.setAttribute('aria-expanded',String(opening));
         trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 '+(opening?'접기':'펼치기'));
         if(!opening||detail.dataset.loaded||detail.dataset.loading==='1')return;
@@ -1017,23 +984,15 @@
         }
       }
       trigger.addEventListener('click',toggleHistory);
-      historyPanel.addEventListener('click',event=>{
-        if(event.target.closest('button,a,.school-detail'))return;
-        trigger.click();
-      });
-      // A reviewed survey record exists independently of a published percentile.
-      // This uses the public school-year presence index, not raw teacher responses.
       const recorded=['2023','2024','2025'].filter(y=>
         historicalPresenceByYear[y]?.has(String(school.school_id)));
-      if(recorded.length){
-        card.append(make('span','school-participation',
-          recorded.join(' · ')+'년 조사 기록 있음 · 백분위 공개와 별개'));
-      }
+      BeaguSchoolSearchCard.updateRecordedYears(card,recorded);
       host.append(card);
     }
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
     void window.BeaguSchoolViewCounts?.refreshCards(host);
+    void window.BeaguSchoolGamePoints?.refreshCards(host);
   }
   async function search(reset,explicitEnter=false) {
     if (reset) page = 0;
