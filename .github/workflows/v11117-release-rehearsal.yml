@@ -1,0 +1,52 @@
+name: Frozen v1.11.17 release rehearsal
+on:
+  pull_request:
+    branches: ['fix/v11117-opening-prep']
+permissions:
+  contents: read
+jobs:
+  backup-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify exact frozen candidate, install and restore synthetic DB only
+        shell: bash
+        run: |
+          set -euo pipefail
+          frozen=2ae1f907a576be5cdac922449c38ee9af7397e52
+          git fetch --no-tags --depth=1 origin "$frozen"
+          git diff --exit-code "$frozen" HEAD -- supabase js admin.html search.html school-report.html
+          container="release-rehearsal-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 45); do docker exec "$container" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local(){ docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d "$1"; }
+          psql_local postgres < tests/2026-percentile-v13-fixture.sql
+          psql_local postgres < supabase/2026-official-school-profiles-v1.sql
+          psql_local postgres < supabase/2026-percentile-only-review-v13.sql
+          psql_local postgres < supabase/2026-percentile-only-final-v13.sql
+          psql_local postgres < tests/2026-auto-opening-fixture.sql
+          psql_local postgres < tests/release-rehearsal/setup.sql
+          docker exec "$container" pg_dump -U postgres -Fc postgres > /tmp/pre.dump
+          psql_local postgres < supabase/2026-auto-opening-v1.sql
+          psql_local postgres < supabase/2026-manual-master-v1.sql
+          psql_local postgres < tests/release-rehearsal/publish.sql
+          psql_local postgres < tests/release-rehearsal/verify.sql
+          docker exec "$container" pg_dump -U postgres -Fc postgres > /tmp/post.dump
+          docker exec "$container" createdb -U postgres restored_post
+          docker exec -i "$container" pg_restore -U postgres --exit-on-error -d restored_post < /tmp/post.dump
+          psql_local restored_post < tests/release-rehearsal/verify.sql
+          docker exec "$container" createdb -U postgres restored_pre
+          docker exec -i "$container" pg_restore -U postgres --exit-on-error -d restored_pre < /tmp/pre.dump
+          psql_local restored_pre <<'SQL'
+          DO $t$ BEGIN
+           IF to_regclass('beagu_private.master_2026_batches_v1') IS NOT NULL THEN RAISE EXCEPTION 'pre-release restore contains new tables'; END IF;
+           IF NOT EXISTS(SELECT 1 FROM public.beagu_school_report_yearly WHERE school_id='1000001' AND survey_year=2025 AND percentile=30) THEN RAISE EXCEPTION 'legacy data missing'; END IF;
+           RAISE NOTICE 'PASS pre-release restore; post-release restore verified independently';
+          END $t$;
+          SQL
+          rm -f /tmp/pre.dump /tmp/post.dump
