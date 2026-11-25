@@ -686,6 +686,23 @@
     },
     {
       "order": 25,
+      "version": "v1.11.13.2",
+      "name": "입력 보존",
+      "scope": "관리자 업데이트 입력값 자동 초기화 방지 · 버전·SHA·변경내용 유지 / 등록값 불러오기 및 미등록 입력 상태에서 이전 후보 적용 방지",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1.11.13.2-admin-draft-input",
+      "dependencies": [
+        "v1.11.13.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "8caa14f8e9208e473374d875bc07054233560057",
+      "tests": [
+        "admin-release-draft-browser.cjs"
+      ]
+    },
+    {
+      "order": 26,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -705,7 +722,7 @@
       "rollback_sha": null
     },
     {
-      "order": 26,
+      "order": 27,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -724,7 +741,7 @@
       "rollback_sha": null
     },
     {
-      "order": 27,
+      "order": 28,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -741,7 +758,7 @@
       "rollback_sha": null
     },
     {
-      "order": 28,
+      "order": 29,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
