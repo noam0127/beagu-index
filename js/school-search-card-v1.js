@@ -247,9 +247,10 @@
   actions.append(mbti,open,experience);
   card.append(actions);
   const points=el('div','glory-points');
+  const ranked=Object.prototype.hasOwnProperty.call(school,'game_points');
   const known=Number.isSafeInteger(school.game_points)&&school.game_points>=0;
-  const amount=el('strong','glory-points-value',level<1?'Lv.1+':known?school.game_points.toLocaleString('ko-KR')+' P':'—');
-  if(level>=1)amount.dataset.schoolGamePoints=String(school.school_id);
+  const amount=el('strong','glory-points-value',level<1?'Lv.1+':known?school.game_points.toLocaleString('ko-KR')+' P':ranked?'자료 없음':'—');
+  if(level>=1&&!ranked)amount.dataset.schoolGamePoints=String(school.school_id);
   points.append(el('span','glory-points-label','🏆 학교 누적 게임포인트'),amount);
   card.append(points,el('div','glory-record-years'));
   updateRecordedYears(card,[]);
