@@ -352,13 +352,13 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   await page.locator('#pause').click();await page.getByRole('button',{name:'↩ 처음으로',exact:true}).click();
   await page.waitForFunction(()=>!!window.__trustedRun4Replay.envelope());
   const officialTrace=await page.evaluate(()=>window.__trustedRun4Replay.envelope());assert.equal(officialTrace.seed,42);
-  assert.equal(officialCalls.filter(x=>x.action==='submit').length,0);
-  await page.locator('#run4-official-submit').click();await page.waitForFunction(()=>document.querySelector('#run4-official-status').textContent.includes('공식 기록 승인'));
+  await page.waitForFunction(()=>document.querySelector('#run4-official-status').textContent.includes('공식 기록 승인'));
+  assert.equal(officialCalls.filter(x=>x.action==='submit').length,1,'An explicitly opted-in official game auto-submits once');
   assert.deepEqual(officialCalls.find(x=>x.action==='submit').replay,officialTrace.events);
   await page.locator('#run4-official-outcome').selectOption('retired');await page.locator('#run4-official-refresh').click();
   await page.waitForFunction(()=>document.querySelector('#run4-official-list').textContent.includes('17,626'));
   assert.equal(officialCalls.at(-1).outcome,'retired');officialFixture=false;
-  console.log('PASS RUN4_OFFICIAL_UI server seed, explicit submission, trace only, separate filtered board (intercepted API)');
+  console.log('PASS RUN4_OFFICIAL_UI server seed, opted-in automatic submission, trace only, separate filtered board (intercepted API)');
   assert.deepEqual(errors,[]);
   // This is a deterministic legal-input probe, not a human play session.
   // A failed tier remains a balance blocker, rather than being counted as complete.

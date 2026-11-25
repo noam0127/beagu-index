@@ -71,7 +71,15 @@ const fullset=read('styles/beagu-fullset-school-v11111.css');for(const width of 
 // Full Set intentionally changes only the volleyball touch/control path; preserve the
 // published baseline's server-start, contact, ranking and school selection logic.
 const fullVolley=read('teacher-volleyball.html'),publishedVolley=gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f','teacher-volleyball.html');
-for(const [start,end] of [['  async function startMatch() {',"  function stopForSchoolChange(keepSchool=false){"],['  function controlPlayer(','  function moveClones(']]){const a=publishedVolley.indexOf(start),b=publishedVolley.indexOf(end,a+start.length),c=fullVolley.indexOf(start),d=fullVolley.indexOf(end,c+start.length);assert.ok(a>=0&&b>a&&c>=0&&d>c);assert.equal(fullVolley.slice(c,d).replace('state.maxDeficit=0;',''),publishedVolley.slice(a,b));}
+for(const [start,end] of [['  async function startMatch() {',"  function stopForSchoolChange(keepSchool=false){"],['  function controlPlayer(','  function moveClones(']]){const a=publishedVolley.indexOf(start),b=publishedVolley.indexOf(end,a+start.length),c=fullVolley.indexOf(start),d=fullVolley.indexOf(end,c+start.length);assert.ok(a>=0&&b>a&&c>=0&&d>c);let approved=fullVolley.slice(c,d).replace('state.maxDeficit=0;','');
+ if(start.includes('startMatch')){
+  // Fire Court additions are authorized; reverse ONLY these lines to compare the
+  // remaining server start, contact, ranking and school eligibility contract.
+  assert.match(approved,/state.phase="starting";schoolPicker.setLocked\(true\);syncUI\(\)/);
+  assert.match(approved,/deuceEnabled=ranking\?\.matchRule==="deuce_v1";matchBonusEnabled=ranking\?\.matchBonusRule==="fire_court_v1"/);
+  approved=approved.replace('bgm.setStage(0);if(soundOn)','if(soundOn)').replace('state.phase="starting";schoolPicker.setLocked(true);syncUI();','state.phase="starting";syncUI();').replace('    rallyHistory="";deuceEnabled=ranking?.matchRule==="deuce_v1";matchBonusEnabled=ranking?.matchBonusRule==="fire_court_v1";matchBonusPoints=0;\n','');
+ }
+ assert.equal(approved,publishedVolley.slice(a,b));}
 assert.match(fullVolley,/volley-touch-v1\.js\?v=11111/);assert.doesNotMatch(fullVolley,/volley-joystick|조이스틱/);
 
 // 4.0 replacement is explicitly approved; historical preservation checked above.
