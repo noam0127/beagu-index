@@ -9,6 +9,20 @@
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null,refreshSeq=0,liveSeq=0,liveSHA=null,liveVersion=null,liveCheckedAt=0,lastDispatch=null,wakeAt=0,refreshInFlight=false,refreshRequested=false;
  const SHA=/^[0-9a-f]{40}$/;
+ const draftFields=["releaseCandidateSha","releaseVersionInput","releaseSummaryInput"];
+ let draftEditing=false;
+ function syncDraftForm(state){
+  if(!draftEditing){
+   el("releaseCandidateSha").value=state.draft_sha&&state.draft_sha!==state.production_sha?state.draft_sha:"";
+   el("releaseVersionInput").value=state.draft_version||"";
+   el("releaseSummaryInput").value=state.draft_summary||"";
+  }
+  for(const id of draftFields)el(id).disabled=busy;
+  el("releaseDraftReset").disabled=busy||!draftEditing;
+  el("releaseDraftEditing").hidden=!draftEditing;
+ }
+ function markDraftEditing(){if(busy)return;draftEditing=true;if(model)render(model);}
+ function resetDraftForm(){if(busy||!model)return;draftEditing=false;render(model);message("서버에 등록된 후보를 다시 불러왔습니다.");}
  const seconds=(a,b)=>{const x=Date.parse(a),y=b?Date.parse(b):Date.now();return Number.isFinite(x)&&Number.isFinite(y)?Math.max(0,Math.floor((y-x)/1000)):null;};
  const elapsed=n=>n===null?'—':Math.floor(n/60)+'분 '+n%60+'초';
  const date=value=>{if(!value)return "—";const d=new Date(value);
@@ -19,7 +33,7 @@
   p.classList.toggle("release-status-error",isError);
  }
  function denied(text){
-  ++refreshSeq;++liveSeq;model=null;readyKey=null;liveSHA=null;el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
+  ++refreshSeq;++liveSeq;model=null;readyKey=null;liveSHA=null;draftEditing=false;for(const id of draftFields)el(id).value="";el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
   message(text,true);
  }
  async function request(action,payload={},endpoint=api){
@@ -40,6 +54,7 @@
     direct_route_required:"직접 배포 관리자 화면을 새로고침하세요.",
     direct_ci_required:"이 커밋의 코드 검증이 아직 통과하지 않았습니다.",
     direct_candidate_stale:"현재 운영 버전을 포함하지 않는 후보입니다.",
+    direct_version_mismatch:"입력한 버전과 후보 SHA의 버전이 다릅니다. 두 값을 확인하세요.",
     direct_confirmation_required:"배포 대상이 변경되었습니다. 새로고침하세요.",
     direct_draft_conflict:"등록 후보가 변경되었습니다. 새로고침하세요.",
     version_already_used:"같은 버전 이름으로 이미 다른 코드가 배포됐습니다.",
@@ -115,11 +130,7 @@
   write("releaseDraftInfo",candidate?
     (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
-  if(s.draft_sha){
-   if(!el("releaseCandidateSha").value&&s.draft_sha!==s.production_sha)el("releaseCandidateSha").value=s.draft_sha;
-   if(document.activeElement!==el("releaseVersionInput"))el("releaseVersionInput").value=s.draft_version||"";
-   if(document.activeElement!==el("releaseSummaryInput"))el("releaseSummaryInput").value=s.draft_summary||"";
-  }
+  syncDraftForm(s);
   const active=!!job;
   const mismatch=!!liveSHA&&liveSHA!==s.production_sha;
   write("releaseQueueText",active?
@@ -129,9 +140,9 @@
     "현재 진행 중인 배포가 없습니다.");
   el("releaseStageApply").hidden=true;el("releaseStageApply").disabled=true;
   el("releaseStageRollback").hidden=true;el("releaseStageRollback").disabled=true;
-  el("releaseProdApply").disabled=busy||active||mismatch||data.direct_release_v1!==true||!ready||!s.draft_sha||s.draft_sha===s.production_sha;
+  el("releaseProdApply").disabled=busy||draftEditing||active||mismatch||data.direct_release_v1!==true||!ready||!s.draft_sha||s.draft_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
-  el("releaseProdRollback").disabled=busy||active||mismatch||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
+  el("releaseProdRollback").disabled=busy||draftEditing||active||mismatch||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||data.direct_release_v1!==true||!s.production_sha;
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
@@ -185,7 +196,7 @@
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
   const candidate_sha=el("releaseCandidateSha").value.trim();
-  if(!version||summary.length<3||!/^[0-9a-f]{40}$/.test(candidate_sha)||model?.direct_release_v1!==true)return;
+  if(!version||summary.length<3||!SHA.test(candidate_sha)||model?.direct_release_v1!==true){message("버전, 40자리 SHA, 변경 내용을 확인하세요.",true);return;}
   const old=model?.state?.draft_sha;
   const replace=old&&old!==candidate_sha&&old!==model?.state?.production_sha;
   if(replace&&!window.confirm("기존 등록 후보 "+short(old)+"를 이번 독립 후보로 교체하시겠습니까? GitHub 기록은 유지됩니다."))return;
@@ -193,6 +204,9 @@
   message("GitHub 최신 코드에서 변경된 파일을 확인하는 중입니다.");
   try{
    const result=await request("register_direct",{version,candidate_sha,...(replace?{replace_draft_sha:old}:{})});
+   draftEditing=false;
+   // Keep the server-authoritative values visible even before the next status response.
+   if(model?.state){model={...model,state:{...model.state,draft_sha:result.draft_sha,draft_version:result.version,draft_summary:result.summary},direct_candidate_ready:false};render(model);}
    const list=el("releaseChangedFiles");list.replaceChildren();
    for(const name of result.changed_files||[]){
     const item=document.createElement("li");item.textContent=name;list.append(item);
@@ -202,6 +216,8 @@
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(false);}
  }
+ for(const id of draftFields){el(id).addEventListener("input",markDraftEditing);el(id).addEventListener("change",markDraftEditing);}
+ el("releaseDraftReset").addEventListener("click",resetDraftForm);
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
   ["releaseStageApply","stage_apply"],["releaseStageRollback","stage_rollback"],

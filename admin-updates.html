@@ -66,6 +66,8 @@
         </div>
         <div class="release-register-actions">
           <button type="submit" id="releaseRegister" class="secondary">변경사항 등록</button>
+          <button type="button" id="releaseDraftReset" class="secondary" disabled>등록값 불러오기</button>
+          <p class="subtle" id="releaseDraftEditing" role="status" hidden>입력 중 · 자동 새로고침으로 입력값을 바꾸지 않습니다. 적용하려면 먼저 등록하거나 등록값을 불러오세요.</p>
           <span id="releaseDraftInfo" class="subtle" aria-live="polite">독립 커밋과 현재 운영 기준 및 코드 검증 결과를 검사합니다.</span>
         </div>
       </form>
@@ -103,6 +105,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-admin-updates-v1.js?v=170"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=111132-draft"></script>
 </body>
 </html>
