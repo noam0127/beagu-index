@@ -137,3 +137,12 @@ body.beagu-page-challenge .challenge-account-details>summary{display:flex;align-
 .beagu-minimal-upgrade-feedback{margin:0;font-size:12px}
 .beagu-minimal-upgrade-feedback:empty{display:none}
 @media(max-width:380px){.beagu-minimal-upgrade-row{flex-direction:column}.beagu-minimal-upgrade-row button{width:100%!important}}
+
+body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger::after{content:"자세히 ▾"}
+body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger[aria-expanded="true"]::after{content:"접기 ▴"}
+body.beagu-page-lv1 .beagu-lv2-upgrade{box-sizing:border-box;padding:16px;margin:0 0 14px;border:1px solid #b9ccec;border-radius:15px;background:linear-gradient(120deg,#f1f6ff,#fff)}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row{display:flex;align-items:stretch;gap:8px}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row input{flex:1;min-width:0}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row button{width:auto!important;flex:none}
+@media(max-width:600px){body.beagu-page-lv1 .beagu-lv2-upgrade-row{flex-direction:column}body.beagu-page-lv1 .beagu-lv2-upgrade-row button{width:100%!important}}
+@media(max-width:360px){body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger{font-size:12px!important;padding-inline:3px}body.beagu-page-lv1 .school-card .minimal-history-header .court-school-experience{font-size:11px;padding-inline:6px}}
