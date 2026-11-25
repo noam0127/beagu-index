@@ -47,7 +47,7 @@ vm.runInContext(read('js/2026-questionnaire-options-v1.2.js'),browser);
 vm.runInContext(read('js/2026-approved-question-results.js'),browser);
 const draw=new Function('window','make','BeaguDetailGroups','addRow','metricValue','api','loggedOut','renderHistoricalBenchmarks',
   script.slice(a,b)+'\nreturn renderYear;')(
-  browser.window,make,BeaguDetailGroups,(host,label,value)=>host.append(make('p','',value)),
+  browser.window,make,BeaguDetailGroups,(host,label,value)=>host.append(make('p','',label+' '+value)),
   m=>String(m.value),api,()=>{},()=>{}
 );
 function find(node,cls){
