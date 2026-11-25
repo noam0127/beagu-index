@@ -298,13 +298,94 @@
         </div>
       </section>
 
-      <section class="dash-section" aria-labelledby="adminReview2026Heading" id="adminReview2026">
-        <div class="section-title">
-          <h3 id="adminReview2026Heading">2026 조사자료 자동 검증 · 공개 흐름</h3>
-          <small>응답 신뢰성 → 집계 정확성 → 공개 적격성 · 예외 중심 운영</small>
+      <section class="dash-section" aria-labelledby="adminReview2026Heading">
+        <details class="admin-review-disclosure" id="admin2026Box">
+          <summary id="adminReview2026Heading">2026 조사자료</summary>
+          <div id="adminReview2026">
+            <div class="admin-review-overview" aria-label="2026 조사자료 핵심 현황">
+          <article><span>집계 학교</span><strong id="adminReview2026Total">—</strong></article>
+          <article><span>기술검사 통과</span><strong id="adminReview2026Technical">—</strong></article>
+          <article><span>학교별 최종 승인</span><strong id="adminReview2026Approved">—</strong></article>
         </div>
-        <p class="admin-review-intro">검증 현황은 핵심 수치만 표시합니다. 개별 학교의 공개 근거와 재식별 위험은 별도로 심사하며, 기술검사 통과만으로 공개되지 않습니다.</p>
-        <section class="admin-waterway" aria-labelledby="adminWaterwayHeading">
+            <p class="subtle">공개 근거와 개인정보 검수 완료 후 승인하세요.</p>
+            <details class="admin-review-disclosure" id="adminReview2026Details">
+          <summary>학교별 검수 및 승인</summary>
+        <div class="ranking-card">
+          <div class="section-title">
+            <label for="adminReview2026Filter">검수 상태</label>
+            <select id="adminReview2026Filter">
+              <option value="quality">집계 정확성 · 기초 확인 필요만</option>
+              <option value="all">전체 학교</option>
+              <option value="single">응답 1건 학교 · 전체</option>
+              <option value="single_technical">응답 1건 학교 · 기술검사 통과</option>
+              <option value="awaiting_basis">기술검사 통과 · 공개 근거 검토 대기</option>
+              <option value="technical">전체 문항 기술검사 통과</option>
+              <option value="question">전체 문항 구조 확인 필요</option>
+              <option value="school">학교 정보 일치 확인 필요</option>
+              <option value="prelaunch">사전조사 제외</option>
+              <option value="approved">승인됨</option>
+              <option value="held">공개 보류</option>
+            </select>
+            <button type="button" class="secondary" id="adminReview2026Reload">다시 확인</button>
+          </div>
+          <p id="adminReview2026Status" class="subtle" role="status" aria-live="polite">관리자 인증 후 목록을 불러옵니다.</p>
+          <div id="adminReview2026List" class="audit-list" aria-live="polite"></div>
+          <div class="period-tabs">
+            <button type="button" class="secondary" id="adminReview2026Prev" disabled>이전</button>
+            <span id="adminReview2026Page">—</span>
+            <button type="button" class="secondary" id="adminReview2026Next" disabled>다음</button>
+          </div>
+        </div>
+        </details>
+            <details class="admin-review-disclosure"><summary>일괄 승인</summary>
+              <section class="ranking-card" id="adminBulkApprovalCard" aria-labelledby="adminBulkApprovalHeading">
+          <div class="section-title">
+            <h4 id="adminBulkApprovalHeading">검증 완료 학교 일괄 승인</h4>
+            <button type="button" class="secondary" id="adminBulkApprovalPreview">승인 대상 확인</button>
+          </div>
+          <p>개별 공개 근거와 재식별 검토가 이미 완료(VERIFIED)된 학교만 일괄 승인합니다. 단순 기술검사 통과만으로 승인되지 않습니다.</p>
+          <p>이번 승인 대상 <b id="adminBulkApprovalCount">—</b>개교 · 최대 400개교/회</p>
+          <button type="button" class="primary" id="adminBulkApprovalApply" disabled>검증 완료 학교 다량 최종승인</button>
+          <p class="subtle" id="adminBulkApprovalStatus" role="status" aria-live="polite">관리자 MFA 인증 후 승인 대상을 확인하세요.</p>
+        </section>
+            </details>
+            <details class="admin-review-disclosure"><summary>레벨별 공개 승인</summary>
+              <section class="admin-release-section" aria-labelledby="adminReleaseHeading">
+          <div class="admin-release-head"><div>
+            <h4 id="adminReleaseHeading">레벨별 최종 승인</h4>
+            <p>학교별 승인·공개 적격성 충족 자료만 대상입니다.</p>
+          </div><button type="button" class="secondary" id="adminLevelReleaseReload">상태 새로고침</button></div>
+          <div class="admin-release-grid" id="adminLevelReleaseGrid">
+            <article class="admin-release-card" data-release-level="0">
+              <div class="admin-release-card-head"><h5>Lv.0 <span>일반 방문자</span></h5><strong id="adminLevelReleaseState0">확인 중</strong></div>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered0">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible0">—</b>개교 · 서버 정책상 공개 조건 충족 <b id="adminWaterwayReleased0">—</b>개교</p>
+              <p class="admin-release-hint">2026 학교별 상세 결과는 현재 Lv.0에 제공하지 않습니다. 향후 자료 공개를 위한 별도 승인입니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton0" disabled>Lv.0 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke0" disabled hidden>Lv.0 공개 중단</button>
+            </article>
+            <article class="admin-release-card" data-release-level="1">
+              <div class="admin-release-card-head"><h5>Lv.1 <span>인증 참여자</span></h5><strong id="adminLevelReleaseState1">확인 중</strong></div>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered1">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible1">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased1">—</b>개교</p>
+              <p class="admin-release-hint">학교별 승인 및 24시간 대기 조건을 통과한 2026 자료만 표시합니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton1" disabled>Lv.1 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke1" disabled hidden>Lv.1 공개 중단</button>
+            </article>
+            <article class="admin-release-card" data-release-level="2">
+              <div class="admin-release-card-head"><h5>Lv.2 <span>챌린지 달성자</span></h5><strong id="adminLevelReleaseState2">확인 중</strong></div>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered2">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible2">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased2">—</b>개교</p>
+              <p class="admin-release-hint">검증된 학교 자료에 한해 최종 승인 직후 공개할 수 있습니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton2" disabled>Lv.2 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke2" disabled hidden>Lv.2 공개 중단</button>
+            </article>
+          </div>
+          <p id="adminLevelReleaseStatus" class="subtle" role="status" aria-live="polite">레벨별 공개 권한을 확인하고 있습니다.</p>
+        </section>
+            </details>
+            <details class="admin-review-disclosure"><summary>수집·동기화 기록</summary>
+              <section class="admin-waterway" aria-labelledby="adminWaterwayHeading">
           <h4 id="adminWaterwayHeading">수집부터 공개까지</h4>
           <p id="adminWaterwayStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 조회합니다.</p>
           <div class="admin-waterway-steps" role="list" aria-label="데이터 처리 단계">
@@ -323,13 +404,8 @@
           <details class="admin-waterway-reasons"><summary id="adminWaterwayRunAt">최근 실행 기록 미수신</summary><ul id="adminWaterwayRunStages"><li>조회 전</li></ul></details>
           <p class="subtle" id="adminWaterwayFailure">마지막 실패 시각 및 원인: 확인 대기</p>
         </section>
-        <details class="admin-review-disclosure"><summary>기존 세부 검수 지표</summary>
-        <div class="admin-review-overview" aria-label="2026 조사자료 핵심 현황">
-          <article><span>집계 학교</span><strong id="adminReview2026Total">—</strong><small>2026 비공개 학교별 집계</small></article>
-          <article><span>기술검사 통과</span><strong id="adminReview2026Technical">—</strong><small>전체 문항 기준</small></article>
-          <article><span>학교별 최종 승인</span><strong id="adminReview2026Approved">—</strong><small>레벨별 최종 승인과 별개</small></article>
-        </div>
-        <div class="admin-pipeline-stages" role="list" aria-label="2026 조사자료 검증 3단계">
+              <details class="admin-review-disclosure"><summary>세부 검수 지표</summary>
+                <div class="admin-pipeline-stages" role="list" aria-label="2026 조사자료 검증 3단계">
           <article class="admin-pipeline-stage" role="listitem" aria-labelledby="adminPipelineTrustHeading">
             <p class="admin-pipeline-index">01 / 응답</p>
             <h4 id="adminPipelineTrustHeading">응답 신뢰성</h4>
@@ -366,80 +442,10 @@
           </article>
         </div>
         <p class="subtle" id="adminPipelineStatus" role="status" aria-live="polite">검증 상태를 불러오는 중입니다.</p>
-        </details>
-        <section class="admin-release-section" aria-labelledby="adminReleaseHeading">
-          <div class="admin-release-head"><div>
-            <h4 id="adminReleaseHeading">2026 자료 레벨별 최종 공개 승인</h4>
-            <p>Lv.0 · Lv.1 · Lv.2를 각각 승인합니다. 학교별 최종 승인과 공개 적격성 검토가 완료된 자료만 대상입니다.</p>
-          </div><button type="button" class="secondary" id="adminLevelReleaseReload">상태 새로고침</button></div>
-          <div class="admin-release-grid" id="adminLevelReleaseGrid">
-            <article class="admin-release-card" data-release-level="0">
-              <div class="admin-release-card-head"><h5>Lv.0 <span>일반 방문자</span></h5><strong id="adminLevelReleaseState0">확인 중</strong></div>
-              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered0">—</b>개교</p>
-              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible0">—</b>개교 · 서버 정책상 공개 조건 충족 <b id="adminWaterwayReleased0">—</b>개교</p>
-              <p class="admin-release-hint">2026 학교별 상세 결과는 현재 Lv.0에 제공하지 않습니다. 향후 자료 공개를 위한 별도 승인입니다.</p>
-              <button type="button" class="primary" id="adminLevelReleaseButton0" disabled>Lv.0 최종 공개 승인</button>
-              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke0" disabled hidden>Lv.0 공개 중단</button>
-            </article>
-            <article class="admin-release-card" data-release-level="1">
-              <div class="admin-release-card-head"><h5>Lv.1 <span>인증 참여자</span></h5><strong id="adminLevelReleaseState1">확인 중</strong></div>
-              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered1">—</b>개교</p>
-              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible1">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased1">—</b>개교</p>
-              <p class="admin-release-hint">학교별 승인 및 24시간 대기 조건을 통과한 2026 자료만 표시합니다.</p>
-              <button type="button" class="primary" id="adminLevelReleaseButton1" disabled>Lv.1 최종 공개 승인</button>
-              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke1" disabled hidden>Lv.1 공개 중단</button>
-            </article>
-            <article class="admin-release-card" data-release-level="2">
-              <div class="admin-release-card-head"><h5>Lv.2 <span>챌린지 달성자</span></h5><strong id="adminLevelReleaseState2">확인 중</strong></div>
-              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered2">—</b>개교</p>
-              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible2">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased2">—</b>개교</p>
-              <p class="admin-release-hint">검증된 학교 자료에 한해 최종 승인 직후 공개할 수 있습니다.</p>
-              <button type="button" class="primary" id="adminLevelReleaseButton2" disabled>Lv.2 최종 공개 승인</button>
-              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke2" disabled hidden>Lv.2 공개 중단</button>
-            </article>
-          </div>
-          <p id="adminLevelReleaseStatus" class="subtle" role="status" aria-live="polite">레벨별 공개 권한을 확인하고 있습니다.</p>
-        </section>
-        <section class="ranking-card" id="adminBulkApprovalCard" aria-labelledby="adminBulkApprovalHeading">
-          <div class="section-title">
-            <h4 id="adminBulkApprovalHeading">2026 학교별 다량 최종승인</h4>
-            <button type="button" class="secondary" id="adminBulkApprovalPreview">승인 대상 확인</button>
-          </div>
-          <p>개별 공개 근거와 재식별 검토가 이미 완료(VERIFIED)된 학교만 일괄 승인합니다. 단순 기술검사 통과만으로 승인되지 않습니다.</p>
-          <p>이번 승인 대상 <b id="adminBulkApprovalCount">—</b>개교 · 최대 400개교/회</p>
-          <button type="button" class="primary" id="adminBulkApprovalApply" disabled>검증 완료 학교 다량 최종승인</button>
-          <p class="subtle" id="adminBulkApprovalStatus" role="status" aria-live="polite">관리자 MFA 인증 후 승인 대상을 확인하세요.</p>
-        </section>
-        <details class="admin-review-disclosure" id="adminReview2026Details">
-          <summary>학교별 상세 검증 · 예외 목록 열기</summary>
-        <div class="ranking-card">
-          <div class="section-title">
-            <label for="adminReview2026Filter">집계 정확성 예외 및 공개 상태</label>
-            <select id="adminReview2026Filter">
-              <option value="quality">집계 정확성 · 기초 확인 필요만</option>
-              <option value="all">전체 학교</option>
-              <option value="single">응답 1건 학교 · 전체</option>
-              <option value="single_technical">응답 1건 학교 · 기술검사 통과</option>
-              <option value="awaiting_basis">기술검사 통과 · 공개 근거 검토 대기</option>
-              <option value="technical">전체 문항 기술검사 통과</option>
-              <option value="question">전체 문항 구조 확인 필요</option>
-              <option value="school">학교 정보 일치 확인 필요</option>
-              <option value="prelaunch">사전조사 제외</option>
-              <option value="approved">승인됨</option>
-              <option value="held">공개 보류</option>
-            </select>
-            <button type="button" class="secondary" id="adminReview2026Reload">다시 확인</button>
-          </div>
-          <p id="adminReview2026Status" class="subtle" role="status" aria-live="polite">관리자 인증 후 목록을 불러옵니다.</p>
-          <div id="adminReview2026List" class="audit-list" aria-live="polite"></div>
-          <div class="period-tabs">
-            <button type="button" class="secondary" id="adminReview2026Prev" disabled>이전</button>
-            <span id="adminReview2026Page">—</span>
-            <button type="button" class="secondary" id="adminReview2026Next" disabled>다음</button>
-          </div>
-        </div>
-        </details>
-        <div class="ranking-card" id="adminReferralRiskCard" hidden>
+              </details>
+            </details>
+            <details class="admin-review-disclosure" id="admin2026Reports"><summary>신고·정정 및 응답 신뢰성</summary>
+              <div class="ranking-card" id="adminReferralRiskCard" hidden>
           <div class="section-title">
             <h4>응답 신뢰성 검사 · 추천코드 연결 예외</h4>
             <button type="button" class="secondary" id="adminReferralRiskReload">다시 확인</button>
@@ -450,6 +456,9 @@
           <p id="adminReferralRiskStatus" class="subtle" role="status" aria-live="polite"></p>
           <div id="adminReferralRiskList" class="audit-list"></div>
         </div>
+            </details>
+          </div>
+        </details>
       </section>
 
       <section class="dash-section" aria-labelledby="adminSecurityHeading">
