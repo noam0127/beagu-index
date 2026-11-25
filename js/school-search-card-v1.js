@@ -28,8 +28,10 @@
   const eye=el('span','school-view-eye');
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
-  nameHeading.append(el('span','school-name-text',name),views);
-  card.append(el('span','region-badge',region),nameHeading,meta);
+  const right=el('div','glory-header-meta');
+  right.append(el('span','glory-region',[region,String(school.support_office||'')].filter(Boolean).join(' · ')),views);
+  nameHeading.append(el('span','school-name-text',name),right);
+  card.append(nameHeading,meta);
   return card;
  }
  // Explicit display states must not imply a review process when none is recorded.
@@ -55,42 +57,40 @@
  }
  function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
    status2026='unpublished',locked=false}={}){
-  const values=[0,1,2].map(i=>valid(publicValues[i])?publicValues[i]:null);
-  values.push(!locked&&valid(value2026)?value2026:null);
-  const section=el('section','percentile-panel');
-  section.setAttribute('aria-label','연도별 배구지수 백분위');
-  section.append(el('h3','percentile-heading','연도별 배구지수 백분위'));
-  const grid=el('div','percentile-grid');
-  // All visible year labels are chronological: 2023, 2024, 2025, 2026.
-  for(const i of [0,1,2,3]){
-   const year=2023+i;
-   const cell=el('div','percentile-cell'+(year===2026&&locked?' percentile-locked':''));
-   cell.dataset.year=String(year);
-   const state=values[i]!==null?STATES.PUBLISHED:
-    year===2026?(locked?STATES.LOCKED:
-      [STATES.ERROR,STATES.LOADING,STATES.REVIEW,STATES.UNPUBLISHED].includes(status2026)
-       ?status2026:STATES.UNPUBLISHED):
-    publicState(statuses[i],publicError);
-   cell.dataset.state=state;
-   const label=state===STATES.PUBLISHED?values[i].toFixed(1)+'%':labelFor(state);
-   cell.append(el('span','percentile-year',String(year)),el('strong','percentile-value',label));
-   grid.append(cell);
+  const section=el('section','percentile-panel glory-percentile');
+  section.setAttribute('aria-label','2026 배구지수 백분위');
+  const value=!locked&&valid(value2026)?value2026:null;
+  section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(value!==null?[2026]:[]).join(',');
+  section.append(el('h3','percentile-heading','2026 배구지수'));
+  const row=el('div','glory-score-row');
+  row.append(el('strong','glory-score',value===null?labelFor(locked?STATES.LOCKED:status2026):value.toFixed(1)+'%'));
+  if(value!==null){
+   const track=el('div','glory-track'),fill=el('span','glory-fill');
+   track.setAttribute('role','progressbar');track.setAttribute('aria-label','배구지수 백분위');
+   track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');
+   track.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';
+   track.append(fill);row.append(track);
   }
-  section.append(grid);
-  if(values.some(valid)&&typeof percentileChart==='function'){
-    const graph=el('div','percentile-graph');
-    // percentileChart renders only validated numerical values in an internal fixed SVG.
-    const graphLabels=[0,1,2].map(i=>labelFor(publicState(statuses[i],publicError)));
-    graphLabels.push(locked?'승인 전':labelFor(
-      [STATES.ERROR,STATES.LOADING,STATES.REVIEW,STATES.UNPUBLISHED].includes(status2026)?status2026:STATES.UNPUBLISHED
-    ));
-    graph.innerHTML=percentileChart(values,{
-      blank2026:locked||values[3]===null,
-      labels:graphLabels
-    });
-    section.append(graph);
-  }
+  section.append(row);
   return section;
+ }
+ function updateRecordedYears(card,years){
+  const footer=card.querySelector('.glory-record-years');
+  if(!footer)return;
+  if(Array.isArray(years))footer.dataset.knownYears=years.join(',');
+  const merged=[...new Set(((footer.dataset.knownYears||'')+','+(card.querySelector('.percentile-panel')?.dataset.publishedYears||'')).split(',').filter(y=>/^(2023|2024|2025|2026)$/.test(y)))].sort();
+  footer.textContent='조사기록 '+(merged.length?merged.join(' · '):'확인된 기록 없음');
+ }
+ function addFacts(card,school,level){
+  const facts=el('div','glory-facts');
+  for(const [label,key,suffix] of [['학생 수','student_count','명'],['남교사 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
+   const item=el('div','glory-fact');
+   const n=school[key];
+   const allowed=level>=1&&n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n))&&Number(n)>=0&&(suffix!=='%'||Number(n)<=100);
+   item.append(el('span','glory-fact-label',label),el('strong','glory-fact-value',allowed?Number(n).toLocaleString('ko-KR',{maximumFractionDigits:1})+suffix:level===0?'Lv.1+':'자료 없음'));
+   facts.append(item);
+  }
+  card.append(facts);
  }
  // Canonical card tree. Lv.0 opens the public report; authenticated tiers
  // toggle in-card details. All three tiers have identical visual structure.
@@ -133,15 +133,20 @@
  function createCard(school,{level=0,percentile,sortBy='school_name'}={}){
   if(!Number.isInteger(level)||level<0||level>2)throw Error('INVALID_CARD_LEVEL');
   if(!school||!/^[A-Z0-9]{7}$/.test(String(school.school_id)))throw Error('INVALID_SCHOOL_ID');
-  const card=el('article','school-card');
+  const card=el('article','school-card school-glory-card');
   card.dataset.schoolId=String(school.school_id);
   card.dataset.accessLevel=String(level);
   addHeader(card,school);
   addSortPrimary(card,school,sortBy,level);
   if(!percentile||!percentile.classList?.contains('percentile-panel'))throw Error('INVALID_PERCENTILE_PANEL');
   card.append(percentile);
-  const actions=el('div','school-actions');
-  const open=el(level===0?'a':'button','view-button','🔍 연도별 상세 기록 보기');
+  addFacts(card,school,level);
+  const actions=el('div','school-actions glory-actions');
+  const mbti=el('div','glory-mbti-slot');
+  const badge=el('div','beagu-mbti-badge');
+  badge.append(el('span','beagu-mbti-label','학교 MBTI'),el('strong','beagu-mbti-text',level===0?'Lv.1+':'확인 중'));
+  mbti.append(badge);
+  const open=el(level===0?'a':'button','view-button','상세조회');
   let detail=null;
   if(level===0){
    open.classList.add('school-button');
@@ -157,16 +162,20 @@
    detail.setAttribute('aria-label',String(school.school_name||'학교')+' 상세정보');
    open.setAttribute('aria-controls',detail.id);
   }
-  const postit=el('a','postit-quick-link postit-lv2-link','▤ 포스트잇');
-  postit.href='postit.html?school_id='+encodeURIComponent(String(school.school_id));
-  postit.setAttribute('aria-label',String(school.school_name||'학교')+' 포스트잇 열람 · 작성은 Lv.2부터');
   const experience=el('a','court-school-experience','학교체험');
-  experience.href='teacher-volleyball.html?school_id='+encodeURIComponent(String(school.school_id));
-  experience.setAttribute('aria-label',String(school.school_name||'학교')+' 학교체험 · 선생님배구');
-  actions.append(open,postit,experience);
+  const game=level===0?'teacher-volleyball.html':'teacher-run.html';
+  experience.href=game+'?school_id='+encodeURIComponent(String(school.school_id));
+  experience.setAttribute('aria-label',String(school.school_name||'학교')+' 학교체험 · '+(level===0?'선생님배구':'험난한 교직생활'));
+  actions.append(mbti,open,experience);
   card.append(actions);
+  const points=el('div','glory-points');
+  const amount=el('strong','glory-points-value','—');
+  amount.dataset.schoolGamePoints=String(school.school_id);
+  points.append(el('span','glory-points-label','🏆 학교 누적 게임포인트'),amount);
+  card.append(points,el('div','glory-record-years'));
+  updateRecordedYears(card,[]);
   if(detail)card.append(detail);
   return {card,open,detail,experience};
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard,STATES});
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard,updateRecordedYears,STATES});
 })();
