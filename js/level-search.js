@@ -853,7 +853,7 @@
     const historical=asPublicPercentiles(school),current=current2026.get(String(school.school_id));
     const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100;
     const values=[...historical,tier===2&&valid(current?.value)?current.value:null];
-    const years=tier===2?YEARS:[2025];
+    const years=YEARS;
     const grid=make('div','percentile-grid');
     for(const year of years){
       const cell=make('div','percentile-cell');cell.dataset.year=String(year);
@@ -863,13 +863,13 @@
       cell.append(make('span','',year+'년'),make('strong','',label));grid.append(cell);
     }
     section.append(grid);
-    if(tier===2&&typeof percentileChart==='function'){
+    if(typeof percentileChart==='function'){
       const chart=make('div','percentile-graph');
       // Generated only from validated numeric values and fixed year labels.
       chart.innerHTML=percentileChart(values,{blank2026:!valid(values[3])});
       section.append(chart);
     }
-    if(tier===2)section.append(make('p','beagu-school-basic-note','연도마다 조사 문항과 비교 기준이 다르므로 백분위를 직접적인 추세로 해석하지 않습니다.'));
+    section.append(make('p','beagu-school-basic-note','연도마다 조사 문항과 비교 기준이 다르므로 백분위를 직접적인 추세로 해석하지 않습니다.'));
     return section;
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
