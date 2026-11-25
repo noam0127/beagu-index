@@ -83,5 +83,5 @@ assert.equal(find(questionOnly,'beagu-year-survey-link').length,0);
 assert.equal(find(questionOnly,'beagu-question-block').length,1);
 
 const locked=new Node('div');
-draw(locked,2026,[{year:2026,access_level:1,summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}}],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}],1);
+draw(locked,2026,[{year:2026,access_level:1,summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}}],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}],0);
 assert.equal(find(locked,'beagu-approved-section').length,0);assert.equal(find(locked,'beagu-question-block').length,0);assert.equal(find(locked,'beagu-year-release-note').length,1);
