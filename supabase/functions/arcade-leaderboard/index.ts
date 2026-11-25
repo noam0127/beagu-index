@@ -152,24 +152,26 @@ async function recommendSchool(tier:Difficulty):Promise<SchoolChoice|null>{
     const lower=({easy:0,normal:20,hard:40,very_hard:60,extreme:80})[tier];
     const q=new URLSearchParams({select:"school_id",survey_year:"in.(2023,2024,2025,2026)",publication_status:"eq.PUBLISHED",privacy_reviewed:"eq.true",percentile:"gte."+lower,order:"school_id.asc",limit:"120"});
     q.append("percentile",tier==="extreme"?"lte.100":"lt."+(lower+20));
-    // At least one year must lie on the appropriate side of the average, but
-    // a yearly tier alone does not prove the final average tier. Scan several
-    // pages if needed, always including the first page.
+    // An average may belong to a tier even when no individual year does.
+    // Prefer likely yearly matches, then try a bounded broad public scan.
     const offsets=[Math.floor(Math.random()*3)*120,0,120,240];
+    const scans=[...new Set(offsets)].map(offset=>({offset,broad:false}));
+    scans.push({offset:0,broad:true});
     const seen=new Set<string>(),found:string[]=[];
     let checkedCount=0;
-    for(const offset of new Set(offsets)){
+    for(const {offset,broad} of scans){
      q.set("offset",String(offset));
+     if(broad)q.delete("percentile");
      const rows=await db("beagu_school_report_yearly?"+q) as Array<{school_id:string}>;
      const ids=[...new Set(rows.map(r=>r.school_id).filter(id=>typeof id==="string"&&!seen.has(id)))];
      for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
      const sample=ids.slice(0,12);
-     for(let i=0;i<sample.length&&checkedCount<36&&found.length<3;i+=3){
+     for(let i=0;i<sample.length&&checkedCount<48&&found.length<3;i+=3){
       const group=sample.slice(i,i+3);group.forEach(id=>seen.add(id));checkedCount+=group.length;
       const checked=await Promise.all(group.map(id=>resolveSchool(id)));
       for(const school of checked)if(school?.eligible&&school.difficulty===tier)found.push(school.school_id);
      }
-     if(found.length>=3||checkedCount>=36)break;
+     if(found.length>=3||checkedCount>=48)break;
     }
     recommendationCache.set(tier,{until:Date.now()+(found.length?45000:3000),ids:found});
     return found;
