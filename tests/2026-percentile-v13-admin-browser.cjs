@@ -9,6 +9,7 @@ case 'percentile_v13_preview':data={eligible_for_percentile_only_approval:review
 case 'percentile_v13_review':reviewed=Object.values(b.checks).every(Boolean);data={ok:true};break;
 case 'percentile_v13_decide':decision=b.decision;data={ok:true};break;
 case 'percentile_v13_scope':data={ok:true};break;
+case 'percentile_v13_bulk':data=b.preview?{ok:true,preview:true,token:'a'.repeat(64),eligible_pairs:reviewed&&!decision?2:0,eligible_schools:reviewed&&!decision?1:0,candidate_schools:1,structure_ok:1,manual_review_required:reviewed?0:1,single_response:1,small_school:1,lv1_pairs:reviewed&&!decision?1:0,lv2_pairs:reviewed&&!decision?1:0,previous_decision_pairs:decision?2:0}:{ok:true,preview:false,approved_schools:1,approved_pairs:2};break;
 case 'queue':data={items:[],summary:{total:0},total:0};break;
 case 'pipeline':data={status:{year:2026},levels:[{level:0},{level:1},{level:2}]};break;
 case 'bulk_verified':data={ok:true,preview:true,batch_candidates:0};break;
@@ -22,10 +23,20 @@ await page.evaluate(()=>window.Beagu2026ReviewAdmin.mount('owner'));await panel.
 await panel.getByPlaceholder('자료 버전 (source_version)').fill('fixture-version');
 await panel.getByRole('button',{name:'후보 및 심사 상태 조회'}).click();
 const school=panel.locator('article');await school.waitFor();assert.equal(await school.getByRole('button',{name:'Lv.2 백분위 승인'}).isDisabled(),true);
+const bulk=panel.getByRole('button',{name:'심사 완료 학교 백분위 일괄 승인'});assert.equal(await bulk.isDisabled(),true);
+await panel.getByRole('button',{name:'일괄 사전검사'}).click();
+await page.waitForFunction(()=>document.querySelector('#adminPercentileV13').textContent.includes('수동 심사 필요 1개교'));
+assert.equal(await bulk.isDisabled(),true);
 for(const el of await school.locator('input[type=checkbox]').all())await el.check();
 await school.locator('textarea').fill('실제로 확인한 가상 검토 근거입니다.');
 await school.getByRole('button',{name:'개별 검토 저장'}).click();
 await page.waitForFunction(()=>Array.from(document.querySelectorAll('#adminPercentileV13 button')).some(b=>b.textContent==='Lv.2 백분위 승인'&&!b.disabled));
+await panel.getByRole('button',{name:'일괄 사전검사'}).click();await page.waitForFunction(()=>Array.from(document.querySelectorAll('#adminPercentileV13 button')).some(b=>b.textContent==='심사 완료 학교 백분위 일괄 승인'&&!b.disabled));
+page.once('dialog',d=>d.dismiss());await bulk.click();
+assert.equal(await page.evaluate(()=>window.__calls.filter(x=>x.action==='percentile_v13_bulk'&&!x.preview).length),0);
+page.once('dialog',d=>d.accept());await bulk.click();
+await page.waitForFunction(()=>document.querySelector('#adminPercentileV13').textContent.includes('백분위 일괄 승인 완료'));
+const batches=await page.evaluate(()=>window.__calls.filter(x=>x.action==='percentile_v13_bulk'&&!x.preview));assert.equal(batches.length,1);assert.equal(batches[0].confirmation,'APPROVE_REVIEWED_PERCENTILES_ONLY');assert.deepEqual(batches[0].levels,[1,2]);assert.equal(batches[0].token,'a'.repeat(64));
 page.once('dialog',d=>d.dismiss());await school.getByRole('button',{name:'Lv.2 백분위 승인'}).click();
 assert.equal(await page.evaluate(()=>window.__calls.filter(x=>x.action==='percentile_v13_decide').length),0);
 page.once('dialog',d=>d.accept());await school.getByRole('button',{name:'Lv.2 백분위 승인'}).click();await school.getByRole('button',{name:'Lv.2 백분위 철회'}).waitFor();
