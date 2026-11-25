@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{chromium}=require('playwright');
 const origin='http://school-profile-fixture.invalid',mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};
-const schools=[0,1,2].map(i=>({school_id:String(7003900+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',student_count:200}));
+const schools=[0,1,2].map(i=>({school_id:String(7003900+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',student_count:200,student_reference_year:2025,male_teacher_ratio:25,junior_teacher_ratio:20}));
 (async()=>{const {projectOfficialProfiles2026}=await import('../supabase/functions/_shared/official-school-profile-2026.mjs');
 const official=projectOfficialProfiles2026([{school_id:schools[0].school_id,disclosure_code:'S000000001',source_year:2026,teacher_total:20,profile:{school_name:schools[0].school_name,closed:'N',suspended:'N',teacher_total:20,male_teachers:5,female_teachers:15,second_grade_teachers:4,survey_response:'PRIVATE_FIXTURE',valid_observation_count:1}},{school_id:schools[1].school_id,disclosure_code:'S000000002',source_year:2026,teacher_total:null,profile:{school_name:schools[1].school_name,closed:'N',suspended:'N'}}],schools.map(s=>s.school_id),2);
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -17,9 +17,19 @@ try{for(const tier of [1,2])for(const width of [390,1440]){
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).split('/').filter(Boolean).join('/');if(!p||p.includes('..'))return route.abort();
  if(p==='data/public-lv0-percentiles-v1.2.json')return route.fulfill({contentType:'application/json',body:JSON.stringify({data_version:'public-lv0-20261120-all-regions-verified-percentiles-v1.4',publication_status:'LV0_EXISTING_PUBLIC_SCOPE',rows:schools.map((school,i)=>({school_id:school.school_id,percentiles:[10,20,i===2?null:35+i],statuses:['EXISTING_PUBLIC_VALUE_PRESERVED','EXISTING_PUBLIC_VALUE_PRESERVED',i===2?'NO_PUBLISHED_VALUE':'VETTED_2025_EMPIRICAL_PERCENTILE']}))})});
  try{return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body:await fs.readFile(p)})}catch{return route.fulfill({status:404,body:''})}});
- const page=await context.newPage();await page.goto(origin+'/search-lv1.html');await page.locator('#searchPanel').waitFor({state:'visible'});const response=page.waitForResponse(r=>r.url().endsWith('/beagu-level-api')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action==='percentiles');await page.locator('#searchInput').fill('검증초');await response;await page.locator('#results .school-card').last().waitFor();assert.equal(await page.locator('#results .school-card').count(),3);await page.waitForFunction(()=>!document.querySelector('.official-school-basics-2026 summary')?.textContent.includes('확인 중'));assert.ok(requested>0);
+ const page=await context.newPage();await page.goto(origin+'/search-lv1.html');await page.locator('#searchPanel').waitFor({state:'visible'});const response=page.waitForResponse(r=>r.url().endsWith('/beagu-level-api')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action==='percentiles');await page.locator('#searchInput').fill('검증초');await response;await page.locator('#results .school-card').last().waitFor();assert.equal(await page.locator('#results .school-card').count(),3);await page.waitForFunction(()=>!document.querySelector('.official-school-basics-2026')?.title.includes('확인 중'));assert.ok(requested>0);
  const cards=page.locator('#results .school-card');
- {assert.equal(await page.locator('.official-school-basics-2026').count(),3);const one=cards.nth(0).locator('.official-school-basics-2026');await one.locator('summary').click();assert.match(await one.innerText(),/교원 20명/);assert.match(await one.innerText(),/남교원 25%/);assert.match(await one.innerText(),/2정 20%/);const two=cards.nth(1).locator('.official-school-basics-2026');await two.locator('summary').click();assert.match(await two.innerText(),/자료 없음/);assert.doesNotMatch(await two.locator('summary').innerText(),/교원 0명/);const three=cards.nth(2).locator('.official-school-basics-2026');await three.locator('summary').click();assert.match(await three.innerText(),/이전 자료를 최신값으로 대체하지 않습니다/);assert.doesNotMatch(await page.locator('#results').innerText(),/PRIVATE_FIXTURE/);}
+ assert.equal(await page.locator('.official-school-basics-2026').count(),3);
+ assert.equal(await page.locator('details.official-school-basics-2026,.glory-region').count(),0);
+ for(const card of await cards.all()){
+  assert.equal(await card.locator('.glory-fact').count(),3);
+  assert.deepEqual(await card.locator('.glory-fact-label').allTextContents(),['학생 수','남교원 비율','2급 정교사 비율']);
+  assert.deepEqual(await card.locator('.glory-fact-value').allTextContents(),['200명','25%','20%']);
+  assert.deepEqual(await card.locator('.glory-fact-year').allTextContents(),['2025년 기준','2024년 기준','2024년 기준']);
+  assert.equal(await card.locator('.official-school-basics-2026').textContent(),'학교 기본정보');
+ }
+ assert.doesNotMatch(await page.locator('#results').innerText(),/PRIVATE_FIXTURE|총교원 수|학교 팩스|법정동코드/);
+
  await page.waitForFunction(t=>document.querySelector('#results .school-card .glory-percentile')?.dataset.displayYear===String(t===2?2026:2025),tier);
  assert.equal(await cards.nth(0).locator('.glory-score').textContent(),tier===2?'0.0%':'35.0%');
  assert.equal(await cards.nth(1).locator('.percentile-heading').textContent(),'2025 배구지수');

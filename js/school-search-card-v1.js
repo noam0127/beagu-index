@@ -12,7 +12,6 @@
   return n;
  }
  function addHeader(card,school){
-  const region=school.sido_standard||school.sido||'';
   const name=school.school_name||'학교명 없음';
   const meta=el('div','school-meta');
   meta.append(document.createTextNode(String(school.support_office||'교육지원청 정보 없음')));
@@ -29,7 +28,7 @@
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
   const right=el('div','glory-header-meta');
-  right.append(el('span','glory-region',[region,String(school.support_office||'')].filter(Boolean).join(' · ')),views);
+  right.append(views);
   nameHeading.append(el('span','school-name-text',name),right);
   card.append(nameHeading,meta);
   return card;
@@ -88,10 +87,11 @@
  }
  function addFacts(card,school,level){
   const facts=el('div','glory-facts');
-  for(const [label,key,suffix] of [['학생 수','student_count','명'],['남교사 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
+  for(const [label,key,suffix] of [['학생 수','student_count','명'],['남교원 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
    const item=el('div','glory-fact');
    const n=school[key];
    const allowed=level>=1&&n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n))&&Number(n)>=0&&(suffix!=='%'||Number(n)<=100);
+   item.dataset.factKey=key;
    item.append(el('span','glory-fact-label',label),el('strong','glory-fact-value',allowed?Number(n).toLocaleString('ko-KR',{maximumFractionDigits:1})+suffix:level===0?'Lv.1+':'자료 없음'));
    facts.append(item);
   }
@@ -103,7 +103,7 @@
  // Authorization is server-side; this presentation also denies cross-tier fields.
  function addSortPrimary(card,school,sortBy,level){
   const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
-  if(key==='school_name'||(level===0&&key!=='address')||
+  if(key==='school_name'||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
      (level<2&&key==='housing_price_won'))return;
   const numeric=(value,suffix,options={})=>{
    if(value===null||value===undefined||value===''||

@@ -26,6 +26,6 @@ assert.match(api,/projectOfficialProfiles2026\(profiles,ids,tier\)/);
 assert.match(api,/level===2&&Array.isArray\(lv2Approved2026\)/);
 const ui=readFileSync('js/level-search.js','utf8');
 assert.match(ui,/if\(!\[1,2\]\.includes\(viewerTier\)\|\|Number\(card.dataset.accessLevel\)!==viewerTier\)return/);
-assert.match(ui,/if\(\[1,2\]\.includes\(viewerTier\)\)renderOfficial2026\(card,null,'LOADING'\)/);
-assert.match(ui,/이전 자료를 최신값으로 대체하지 않습니다/);
+assert.match(ui,/if\(\[1,2\]\.includes\(viewerTier\)\)renderOfficial2026\(card,null,'LOADING',school\)/);
+assert.match(ui,/ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'/);assert.match(ui,/heading.textContent=all2026\?'2026 학교 기본정보':'학교 기본정보'/);
 console.log('PASS 2026 Schoolinfo projection, tier isolation, source integrity, missing-data handling and card route');
