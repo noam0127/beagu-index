@@ -16,7 +16,8 @@ for(const [width,height,touch,full] of [[1440,900,false,false],[390,844,true,fal
  const host=page.locator(full?'#run4-leave-fullscreen':'#run4-leave-inventory');const other=page.locator(full?'#run4-leave-inventory':'#run4-leave-fullscreen');
  assert.equal(await host.isVisible(),true);assert.equal(await other.isVisible(),false);assert.equal(await host.locator('button').count(),4);assert.equal(await host.locator('kbd').first().isVisible(),!touch);
  const slot=host.locator('button').first();
- if(touch){await slot.tap();await slot.tap();}else{await page.keyboard.press('z');await page.keyboard.press('z');}
+ if(touch){await slot.tap();}else{await page.keyboard.press('z');}
+ assert.equal(await slot.isDisabled(),true);
  assert.deepEqual(await page.evaluate(()=>window.fixture.recorded),[{action:'collect',choice:5},{action:'leave',choice:5}]);
  const active=page.locator('#run4-active-effects');assert.equal(await active.isVisible(),true);
  await page.evaluate(()=>window.fixture.clock(26));assert.equal(await active.locator('.ending').count(),1);

@@ -11,7 +11,7 @@ try{for(const tier of [1,2])for(const width of [390,1440]){
  await context.route('**/*',async route=>{const u=new URL(route.request().url());const cors={'access-control-allow-origin':origin,'access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS','content-type':'application/json'};
  if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'application/javascript',body:"window.supabase={createClient:()=>({from:()=>{const p={then:(a,b)=>Promise.resolve({data:[],count:0,error:null}).then(a,b)};for(const m of ['select','eq','in','limit','range','order','ilike','or','maybeSingle','single','gte','lte','not'])p[m]=()=>p;return p},rpc:async()=>({data:[],error:null})})};"});
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});let b={};try{b=route.request().postDataJSON()||{}}catch{};let data={};
- if(u.pathname.endsWith('/beagu-level-api')){if(b.action==='verify')data={level:tier,provisional:false};else if(b.action==='ranked_schools')data={schools,total:schools.length};else if(b.action==='percentiles'){requested++;data={values:tier===2?{[schools[0].school_id]:0}: {},official2026:official,official2026_status:'OK'};}else if(b.action==='offices')data={offices:['동래교육지원청']};else if(b.action==='school')data={level:tier,rows:[],schoolQuestionModes:[],schoolQuestionSelections:[],schoolQuestionResults2026:[]};else if(b.action==='survey_comparisons')data={year:b.year,region:b.region,items:{}};}
+ if(u.pathname.endsWith('/beagu-level-api')){if(b.action==='verify')data={level:tier,provisional:false};else if(b.action==='ranked_schools')data={schools,total:schools.length};else if(b.action==='percentiles'){requested++;data={values:{[schools[0].school_id]:0},official2026:official,official2026_status:'OK'};}else if(b.action==='offices')data={offices:['동래교육지원청']};else if(b.action==='school')data={level:tier,rows:[],schoolQuestionModes:[],schoolQuestionSelections:[],schoolQuestionResults2026:[{questionId:'Q01',row:-1,values:['보통이다']},{questionId:'Q31',row:-1,values:['PRIVATE_FIXTURE']}]};else if(b.action==='survey_comparisons')data={year:b.year,region:b.region,items:{}};}
  else if(u.pathname.endsWith('/beagu-school-interest-v1'))data={rising:schools};else if(u.pathname.endsWith('/beagu-notice-audience-v1'))data={level:tier,notices:[]};
  return route.fulfill({status:200,headers:cors,body:JSON.stringify(data)});}
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).split('/').filter(Boolean).join('/');if(!p||p.includes('..'))return route.abort();
@@ -34,14 +34,21 @@ try{for(const tier of [1,2])for(const width of [390,1440]){
  assert.equal(await cards.nth(0).locator('.glory-score').textContent(),tier===2?'0.0%':'35.0%');
  assert.equal(await cards.nth(1).locator('.percentile-heading').textContent(),'2025 배구지수');
  assert.equal(await cards.nth(1).locator('.glory-score').textContent(),'36.0%');
- assert.equal(await cards.nth(2).locator('.glory-score').textContent(),'자료 없음');
+ assert.equal(await cards.nth(2).locator('.glory-score').textContent(),tier===2?'20.0%':'자료 없음');
+ assert.equal(await cards.nth(2).locator('.percentile-heading').textContent(),tier===2?'2024 배구지수':'2025 배구지수');
+ assert.equal(await cards.locator('.percentile-graph').count(),0);
  await cards.nth(0).locator('.glory-detail-trigger').click();
  const detail=cards.nth(0).locator('.school-detail');
  await detail.locator('.beagu-yearly-percentiles').waitFor();
  assert.equal(await detail.locator('.beagu-school-basics').count(),0);
- assert.equal(await detail.locator('.beagu-yearly-percentiles .percentile-cell').count(),tier===2?4:1);
- assert.equal(await detail.locator('.year-tabs button[data-year="2026"]').count(),tier===2?1:0);
- if(tier===1)assert.doesNotMatch(await detail.locator('.beagu-yearly-percentiles').innerText(),/2026|2023|2024/);
+ assert.equal(await detail.locator('.beagu-yearly-percentiles .percentile-cell').count(),4);
+ assert.equal(await detail.locator('.year-tabs button[data-year="2026"]').count(),1);
+ assert.equal(await detail.locator('.percentile-graph svg').count(),1);
+ await detail.locator('.year-tabs button[data-year="2026"]').click();
+ await detail.locator('.beagu-question-block').first().waitFor();
+ assert.match(await detail.locator('.beagu-question-block').first().innerText(),/Q01/);
+ assert.doesNotMatch(await detail.locator('.school-year-details').innerText(),/PRIVATE_FIXTURE|Q31/);
+ if(tier===1){assert.match(await detail.locator('.beagu-yearly-percentiles').innerText(),/2026/);assert.match(await detail.locator('.beagu-yearly-percentiles').innerText(),/2023/);}
 
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));console.log('PASS Chromium school profile',tier,width);
  }finally{await context.close()}}

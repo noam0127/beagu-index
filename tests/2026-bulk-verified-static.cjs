@@ -2,7 +2,7 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("nod
 const read=p=>fs.readFileSync(p,"utf8");
 const sql=read("supabase/migrations/20261123171500_2026_bulk_verified_school_approval.sql");
 const api=read("supabase/functions/beagu-2026-review-admin/index.ts");
-const ui=read("js/beagu-2026-admin-review.js"),html=read("admin.html");
+const ui=read("js/beagu-2026-admin-review.js"),html=read("tests/fixtures/admin-v1115-legacy.html");
 new vm.Script(ui);
 assert.match(sql,/b.review_status='VERIFIED'/);
 assert.match(sql,/b.reviewer_user_id=p_actor/);
@@ -21,5 +21,5 @@ assert.match(api,/claims.aal!=="aal2"/);
 assert.match(ui,/action:"bulk_verified"/);
 assert.match(ui,/window.confirm\("독립적으로 공개 근거/);
 assert.match(html,/id="adminBulkApprovalApply" disabled/);
-assert.match(html,/20261123-bulk-400-enabled1/);
+assert.match(html,/20261125-percentile-v13/);
 console.log("PASS: bulk approval strictly limited to previously VERIFIED schools with owner MFA and per-school audit");

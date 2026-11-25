@@ -65,13 +65,13 @@ function create(kind){
   if(!bus)newBus();beat();
   timer=setInterval(beat,Math.round(30000/track().tempo));
  }
- function sync(on){
+ function sync(on,gesture=false){
   wanted=Boolean(on);if(disposed)return;
   if(!wanted||document.hidden){silence();return;}
   try{
-   if(!ctx){ctx=new Context();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);}
+   if(!ctx){ctx=new Context();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);ctx.addEventListener?.("statechange",contextState);}
    if(ctx.state==='running'){play();return;}
-   if(opening)return;opening=true;
+   if(opening&&!gesture)return;opening=true;
    Promise.resolve(ctx.resume()).then(()=>{opening=false;play();},()=>{opening=false;});
   }catch(_){opening=false;}
  }
@@ -84,9 +84,15 @@ function create(kind){
  }
  function setBoss(id){const next=kind==='teacher_run'&&Object.hasOwn(bossTracks,id)?id:null;if(next===boss||disposed)return;if(timer!==null){clearInterval(timer);timer=null;}if(ctx)fadeBus();boss=next;step=0;if(wanted&&!document.hidden)play();}
  const visibility=()=>sync(wanted);
+ const gesture=event=>{if(event.isTrusted&&wanted&&ctx?.state!=='running')sync(true,true);};
+ const contextState=()=>{if(ctx?.state==='running')play();else if(timer!==null){clearInterval(timer);timer=null;}};
  document.addEventListener('visibilitychange',visibility);
+ document.addEventListener('pointerup',gesture,true);
+ document.addEventListener('touchend',gesture,true);
+ document.addEventListener('keydown',gesture,true);
  return Object.freeze({sync,setStage,setBoss,get boss(){return boss;},get stage(){return phase;},dispose(){
   disposed=true;wanted=false;silence();document.removeEventListener('visibilitychange',visibility);
+  document.removeEventListener('pointerup',gesture,true);document.removeEventListener('touchend',gesture,true);document.removeEventListener('keydown',gesture,true);ctx?.removeEventListener?.('statechange',contextState);
   if(ctx)void ctx.close().catch(()=>{});
  }});
 }

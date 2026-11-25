@@ -42,10 +42,12 @@ const compare=read('js/statistics-compare.js');
 for(const frontend of [publicSearch,report,compare]){
   assert.match(frontend,/window\.setInterval\(refreshVisible2026,60000\)/);
   assert.match(frontend,/document\.visibilityState!=='visible'/);
-  assert.match(frontend,/from\('beagu_school_report_yearly'\)/);
+  if(frontend===report)assert.match(frontend,/from\('beagu_school_report_yearly'\)/);
+  if(frontend===compare)assert.match(frontend,/authRequest\('percentiles',\{schoolIds:requested\},token\)/);
 }
-assert.match(publicSearch,/\.select\('school_id,percentile'\).*\.eq\('survey_year',2026\)/);
-assert.match(publicSearch,/locked:value2026===null/);
+assert.match(publicSearch,/async function readPublic2026\(\)\{return new Map\(\);\}/);
+assert.match(publicSearch,/locked:true,viewerTier:0/);
+assert.doesNotMatch(publicSearch,/\.select\('school_id,percentile'\).*\.eq\('survey_year',2026\)/);
 assert.match(report,/state\.years\['2026'\]\.approved=false/);
 assert.match(report,/state\.years\['2026'\]\.items=\{\}/);
 assert.match(report,/state\.tier>=1&&Object\.values\(current\.items/);

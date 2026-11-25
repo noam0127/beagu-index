@@ -25,16 +25,16 @@ assert.match(route,/action:"verify"/);
 assert.doesNotMatch(route,/service_role|supabase_secret/i);
 assert.match(lv1,/String\(school\.school_id\)!==arcadeTargetId/);
 assert.match(lv1,/String\(item\.school_id\)===arcadeTargetId/);
-assert.match(lv1,/\.lv1-history-trigger/);
+assert.match(lv1,/\.glory-detail-trigger/);
 assert.match(shell,/history-school-link/);
 for(const school of ['teacher-volleyball.html','teacher-run.html']){
  const page=read(school);
- assert.match(page,/js\/arcade-leaderboard-v1\.js\?v=1119/);
+ assert.match(page,/js\/arcade-leaderboard-v1\.js\?v=(?:1119|11115-outcome)/);
 }
 assert.match(read('index.html'),/href="games.html"/);
 assert.match(read('games.html'),/href="teacher-volleyball.html"/);
 assert.match(read('games.html'),/href="teacher-run.html"/);
-assert.match(shell,/js\/arcade-history-v1\.js\?v=1117/);
+assert.match(shell,/js\/arcade-history-v1\.js\?v=11116-disclosure/);
 assert.match(read('styles/arcade-cabinet-v1.css'),/arcade-rank-school-link::after/);
 const script=route.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);

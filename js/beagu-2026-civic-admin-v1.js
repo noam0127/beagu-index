@@ -48,13 +48,13 @@ async function refresh(){if(!owner)return;const root=$("civicAdminList");root.re
  details.append(el("p",c.held?"공개 보류 중 · 최신 자료 검수 후 해제 가능":"현재 보류 없음"),el("p","학교별 승인: "+String(c.school_approval||"자료 없음")));
  for(const a of Array.isArray(c.history)?c.history:[])details.append(el("p",String(a.created_at)+" · "+String(a.action)+" · "+String(a.reason)));
  const canHold=!c.held&&item.status==="REVIEWING";
- const canResume=c.held&&c.hold_feedback===item.id&&c.school_approval==="APPROVED";
+ const canResume=c.held&&c.hold_feedback===item.id&&c.school_approval==="APPROVED"&&(!c.edited_file||c.edited_after_hold);
  if((canHold||canResume)&&/^[a-f0-9]{64}$/.test(c.snapshot_sha||"")){
  const b=el("button",canHold?"2026 자료 공개 보류":"재검증 후 보류 해제");b.type="button";details.append(b);
  b.onclick=async()=>{
  const reason=window.prompt("검토 근거를 12~500자로 입력하세요. 개인정보는 제외하세요.");
  if(reason===null||reason.trim().length<12||reason.length>500)return;
- if(!window.confirm(canHold?"이 학교의 2026 자료를 모든 레벨에서 보류하고 기존 학교별 승인을 무효화합니다.":"최신 자료 재검증 및 학교별 승인 완료 후 보류를 해제합니다. 레벨별 최종 승인은 별도로 필요합니다."))return;
+ if(!window.confirm(canHold?"이 학교의 2026 자료를 모든 레벨에서 보류하고 기존 학교별 승인을 무효화합니다.":(c.edited_file?"새 최종 편집본으로 해당 학교의 공개중단을 해제합니다.":"최신 자료 재검증 및 학교별 승인 완료 후 보류를 해제합니다. 레벨별 최종 승인은 별도로 필요합니다.")))return;
  b.disabled=true;try{await call({action:canHold?"admin_hold":"admin_resume",id:item.id,snapshot_sha:c.snapshot_sha,reason:reason.trim()});await refresh();}
  catch{details.append(el("p","처리 실패 · 최신 자료, 검수 기록과 MFA를 확인하세요."));}finally{b.disabled=false;}
  };

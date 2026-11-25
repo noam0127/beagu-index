@@ -12,6 +12,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='school_like_state')return route.fulfill({status:200,headers:cors,body:JSON.stringify({canLike:false,schools:route.request().postDataJSON().schoolIds.map(school_id=>({school_id,likes:0,liked:false}))})});
+ if(a==='public_school_basics_2026')return route.fulfill({status:200,headers:cors,body:JSON.stringify({official2026:{}})});
  if(a==='login')return route.fulfill({status:200,headers:cors,body:JSON.stringify({level:tier,token:'b'.repeat(64)})});
  if(a==='verify')data={level:tier,provisional:false};
  else if(a==='ranked_schools'){const b=route.request().postDataJSON();sorted ||= b.sort==='housing_price_won';data={schools:fixture.map(({housing_price_won,...v})=>tier===2?{...v,housing_price_won}:v),total:fixture.length};}
@@ -177,7 +179,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.locator('.glory-detail-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.glory-detail-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);
  if(tier===1){await page.waitForFunction(()=>!document.querySelector('#results .school-year-details[aria-busy="true"]'));assert.equal(comparisonRequested,true);assert.equal(await page.locator('#searchPanel').isVisible(),true);}
  await page.locator('#regionTab').click();await page.locator('#regionSelect').selectOption('부산');await page.locator('#results[data-search-mode="region"] .school-card').first().waitFor();assert.equal(await page.locator('#results .beagu-housing-preview').count(),0);
- assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),tier===1);
+ assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),false);
  await page.locator('#officeSelect').selectOption('동래교육지원청');await page.waitForTimeout(350);assert.equal(await page.locator('#searchPanel').isVisible(),true);
  if(tier===2){await page.locator('#regionSort').selectOption('housing_price_won');await page.waitForTimeout(600);assert.equal(sorted,true);assert.equal(await page.locator('#results [data-sort-key="housing_price_won"]').count(),0);}
  }

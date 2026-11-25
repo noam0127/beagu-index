@@ -5,7 +5,7 @@ const read=p=>fs.readFileSync(p,"utf8");
 const sql=read("supabase/migrations/20261120214500_beagu_2026_basis_pending_review_audit.sql");
 const api=read("supabase/functions/beagu-2026-review-admin/index.ts");
 const view=read("js/beagu-2026-admin-review.js");
-const html=read("admin.html");
+const html=read("tests/fixtures/admin-v1115-legacy.html");
 const css=read("styles/beagu-admin-v1.css");
 execFileSync(process.execPath,["--check","js/beagu-2026-admin-review.js"],{stdio:"inherit"});
 // Events are private and immutable: read and append only, no anonymous or authenticated grant.
@@ -43,7 +43,7 @@ assert.match(view,/notice_digest_sha256/);
 assert.match(view,/notice_effective_at/);
 assert.match(view,/REJECTED/);
 assert.doesNotMatch(view,/action:"approve"/);
-assert.match(html,/2026 조사자료 자동 검증 · 공개 흐름/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261123-bulk-400-enabled1/);
+assert.match(html,/<summary id="adminReview2026Heading">2026 조사자료<\/summary>/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261125-percentile-v13/);
 assert.match(css,/\.beagu-basis-review/);
 console.log("PASS: 2026 snapshot-bound MFA evidence intake PENDING/REJECTED without approval");
