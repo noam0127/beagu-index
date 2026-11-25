@@ -101,7 +101,6 @@ Deno.serve(async(req:Request)=>{
      }
      return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
-   // Lv.1 gets official school facts only; never query or return 2026 survey percentiles.
    // Lv1 uses its own existing publication gate; its basic card stays 2025.
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
@@ -238,8 +237,9 @@ Deno.serve(async(req:Request)=>{
 
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
-  const level=Number(session.access_level);
-  if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
+  const verifiedLevel=Number(session.access_level);
+  const level=body.viewLevel===undefined?verifiedLevel:body.viewLevel;
+  if(typeof level!=='number'||![1,2].includes(level)||level>verifiedLevel)return send({error:'ACCESS_DENIED'},403,origin);
   // Tier approval and school snapshot approval must both hold for 2026 outputs.
   let tierPublished2026=false;
   if([1,2].includes(level)){
