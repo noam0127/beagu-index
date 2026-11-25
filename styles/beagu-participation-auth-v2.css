@@ -171,4 +171,9 @@ body.beagu-header-auth-only>.beagu-unified-header{position:sticky;top:0;z-index:
 #challengePublicSurvey a{font-size:13px;color:#2458b9;font-weight:750}
 @media(max-width:1180px){.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-inner{grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:auto auto;row-gap:8px;column-gap:6px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{grid-column:1;grid-row:1}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-header-auth{grid-column:2;grid-row:1}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-nav{grid-column:1/-1;grid-row:2;width:100%;justify-self:stretch}}
 @media(max-width:480px){.beagu-header-auth .beagu-header-code{width:112px}.beagu-header-code button{min-width:30px;width:30px!important;flex-basis:30px;min-height:36px}.beagu-header-auth #beaguLevelState{font-size:11px;min-height:36px;padding:6px 7px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{gap:5px;font-size:13px}}
-@media(max-width:390px){.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-name{display:none}.beagu-header-auth .beagu-header-code{width:132px}}
+@media(max-width:390px){.beagu-header-auth .beagu-header-code{width:108px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{font-size:12px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-mark{flex-basis:30px;width:30px;height:30px}}
+@media(max-width:340px){.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-name{display:none}}
+
+.beagu-header-auth-only #beaguParticipationDetail{margin-bottom:10px}
+.beagu-participation-dialog #beaguParticipationMessage:empty{display:none!important}
+.beagu-header-auth .beagu-header-code button:focus-visible{outline:2px solid #93baf7;outline-offset:2px}
