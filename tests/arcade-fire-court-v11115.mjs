@@ -60,3 +60,17 @@ instance.state='interrupted';instance.listeners.get('statechange')();assert.equa
 pendingEvents.get('pointerup')({isTrusted:true});await Promise.resolve();assert.equal(pendingTimers.size,1);
 interrupted.sync(false);assert.equal(pendingTimers.size,0);interrupted.dispose();assert.equal(pendingEvents.size,0);
 console.log('PASS fire-court stage timing, distinct music, mute, pause, tab visibility, reset and disposal; official write disabled');
+
+// Career record disclosure must preserve stored results and avoid loading history until opened.
+for(const path of ['teacher-run.html','teacher-run-4-preview.html']){
+ const html=read(path);
+ assert.doesNotMatch(html,/id="run4-local-board"|id="run4-record-list"|교직생활 3\.0·4\.0 통합 기록/);
+ assert.match(html,/<details id="run-history-disclosure"[^>]*><summary>🏆 험난한 교직생활 기록<\/summary>/);
+ assert.match(html,/recordPolicy\.save\(localStorage,result\)/);
+ const code=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(s=>s.includes("getElementById('run-history-disclosure')"));assert.ok(code);
+ let toggle,frame=null,loads=0;const panel={open:false,addEventListener(n,fn){assert.equal(n,'toggle');toggle=fn},querySelector(s){return s==='iframe'?frame:{append(f){frame=f;loads++;}}}};
+ vm.runInNewContext(code,{document:{getElementById:()=>panel,createElement:()=>({})}});
+ toggle();assert.equal(loads,0);panel.open=true;toggle();assert.equal(loads,1);assert.equal(frame.src,'arcade-history.html?game=teacher_run_retirement&embed=1');
+ panel.open=false;toggle();panel.open=true;toggle();assert.equal(loads,1);
+}
+console.log('PASS career history disclosure and retained record storage contract');
