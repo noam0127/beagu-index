@@ -1,7 +1,7 @@
 name: v1.11.14 isolated school glory validation
 on:
   push:
-    branches: [release/v1.11.14-school-glory, fix/v1115-school-glory-after-fire-court, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated]
+    branches: [release/v1.11.14-school-glory, fix/v1115-school-glory-after-fire-court, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only]
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +20,7 @@ jobs:
           if [ -n "$browser" ]; then export BEAGU_CHROMIUM_PATH="$browser"; else npx playwright install chromium --only-shell; fi
           mkdir -p artifacts/v1114
           node tests/v1114-school-glory-browser.cjs
+          node tests/v11116-ui-only-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
