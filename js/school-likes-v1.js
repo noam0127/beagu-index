@@ -19,7 +19,7 @@
  function apply(data,ids,g,t){
  if(g!==epoch||t!==token()||!Array.isArray(data?.schools))return;
  for(const r of data.schools){if(!ids.includes(r.school_id)||!Number.isSafeInteger(r.likes)||r.likes<0)continue;
- counts.set(r.school_id,Math.max(counts.get(r.school_id)||0,r.likes));if(data.canLike===true&&r.liked===true)mine.add(r.school_id);
+ counts.set(r.school_id,Math.max(counts.get(r.school_id)||0,r.likes));if(data.canLike===true&&r.liked===true)mine.add(r.school_id);else if(data.canLike!==true)mine.delete(r.school_id);
  for(const b of nodes(r.school_id)){b.dataset.canLike=String(data.canLike===true);paint(b,data.canLike===true);}
  }
  }

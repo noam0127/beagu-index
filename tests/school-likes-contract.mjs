@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+const read=p=>readFileSync(p,'utf8'),src=read('js/school-likes-v1.js'),api=read('supabase/functions/beagu-level-api/index.ts'),sql=read('supabase/school-likes-v1.sql');
+new Script(src);
+assert.match(sql,/primary key\(school_id,visitor_id\)/);
+assert.match(sql,/on conflict\(school_id,visitor_id\) do nothing/);
+assert.match(sql,/s\.access_level=2 and s\.identity_campaign='2026'/);
+assert.match(sql,/beagu_has_earned_challenge_visitor\(s\.identity_visitor_id\) is true/);
+assert.match(api,/p_digest:digest/);
+assert.match(src,/g!==epoch\|\|t!==token\(\)/);
+for(const p of ['search.html','search-lv1.html','school-report.html'])assert.match(read(p),/js\/school-likes-v1.js/);
+for(const p of ['search.html','search-lv1.html'])assert.match(read(p),/value="like_count">좋아요순/);
+assert.match(read('js/school-search-card-v1.js'),/flag\);if\(heart\)nameHeading.append\(heart\);nameHeading.append\(right\)/);
+console.log('PASS school-like contract');

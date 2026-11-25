@@ -1,0 +1,28 @@
+name: School likes isolated validation
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify additive schema on disposable PostgreSQL only
+        run: |
+          set -euo pipefail
+          container="school-likes-fixture-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$container" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          psql_local < tests/school-likes-fixture.sql
+          psql_local < supabase/school-likes-v1.sql
+          psql_local < tests/school-likes-assertions.sql
+      - name: Verify client and tier wiring
+        run: node tests/school-likes-contract.mjs
