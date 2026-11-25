@@ -19,11 +19,11 @@
  modal.setAttribute('role','presentation');
  modal.innerHTML=`
  <section class="beagu-participation-dialog" role="dialog" aria-modal="true"
-   aria-labelledby="beaguParticipationTitle" aria-describedby="beaguParticipationDescription">
+   aria-labelledby="beaguParticipationTitle">
   <button class="beagu-participation-close" type="button" data-beagu-close aria-label="닫기">×</button>
   <div class="beagu-participation-eyebrow">BAEGU INDEX · PARTICIPATION</div>
   <h2 id="beaguParticipationTitle">참여코드 입력</h2>
-  <p id="beaguParticipationDescription">발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.</p>
+  <p id="beaguParticipationDescription" hidden></p>
   <div id="beaguParticipationDetail" class="beagu-participation-detail" hidden>
    <strong id="beaguParticipationTier"></strong>
    <span id="beaguParticipationExpiry"></span>
@@ -75,9 +75,7 @@
    host.dataset.beaguParticipationLevel=String(level);
    const action=host.querySelector('[data-beagu-participation-trigger]');
    const state=host.querySelector('[data-beagu-participation-status]');
-   const description=host.querySelector('[data-beagu-participation-description]');
    if(action)action.hidden=level>=1;
-   if(description)description.hidden=level>=1;
    if(state){
     const stateText=level===1?text+' · Lv.2 참여코드 입력':text;
     state.textContent=stateText;
@@ -97,9 +95,9 @@
   // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
-  description.hidden=level===1;
-  description.textContent=level===1?'':
-   level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  description.hidden=level<2;
+  description.textContent=level>=2?'Lv.2 인증이 완료되었습니다.':'';
+  modal.querySelector('[role="dialog"]').dataset.level=String(level);
   label.textContent=level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
   submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';
@@ -144,14 +142,16 @@
   }
   const heading=host.querySelector('h1,h2');
   if(heading)heading.textContent='참여코드 입력';
-  const intro=el('p','beagu-participation-intro','발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.');
-  intro.dataset.beaguParticipationDescription='';
   const trigger=button('참여코드 입력','beagu-participation-inline-trigger');
+  const nextTier=el('span','beagu-participation-next-tier','Lv.1');nextTier.setAttribute('aria-hidden','true');
+  const title=el('span','beagu-participation-cta-title','참여코드 입력');
+  const arrow=el('span','beagu-participation-cta-arrow','→');arrow.setAttribute('aria-hidden','true');
+  trigger.replaceChildren(nextTier,title,arrow);trigger.setAttribute('aria-label','참여코드 입력');
   trigger.dataset.beaguParticipationTrigger='';
   const status=button('', 'beagu-participation-inline-status',open);
   status.dataset.beaguParticipationStatus='';
   status.hidden=true;
-  (legacy||host).before(intro,trigger,status);
+  (legacy||host).before(trigger,status);
  }
  if(playHost){
  const title=el('strong','beagu-minimal-upgrade-title','🔒 레벨2에 도전하세요!');
