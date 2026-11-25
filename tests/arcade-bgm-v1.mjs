@@ -19,7 +19,7 @@ assert.match(read('index.html'),/href="games\.html/);
 assert.match(read('games.html'),/href="teacher-volleyball\.html"/);
 assert.match(read('games.html'),/href="teacher-run\.html"/);
 assert.match(read('js/beagu-home-schools-v1.js'),/teacher-volleyball\.html\?school_id=/);
-assert.match(volley,/styles\/arcade-cabinet-v1\.css\?v=20261123-cc0-bgm2/);
+assert.match(volley,/styles\/arcade-cabinet-v1\.css\?v=(?:20261123-cc0-bgm2|11115-outcome)/);
 assert.match(run,/styles\/arcade-cabinet-v1\.css\?v=20261123-cc0-bgm2/);
 assert.match(volley,/https:\/\/opengameart\.org\/content\/keep-your-dream-alive-seamless-loop/);
 assert.match(run,/https:\/\/opengameart\.org\/content\/8-bit-jester-theme/);

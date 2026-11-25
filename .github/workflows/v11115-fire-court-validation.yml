@@ -29,5 +29,6 @@ jobs:
       - name: Offline Chromium layouts
         run: |
           node tests/arcade-fire-court-browser.cjs
+          node tests/volley-outcome-browser.cjs
           node tests/playback-browser.cjs
           node tests/v1114-school-glory-browser.cjs
