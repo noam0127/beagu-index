@@ -77,6 +77,8 @@
   };
   let publicIndex = new Map(), publicStaticAvailable = false, publicLoadError = false;
   let current2026 = new Map();
+  let officialBasicsIndex=new Map(),officialBasicsAvailable=false;
+  const basicsReady=window.BeaguPublicSchoolBasics2026.index().then(m=>{officialBasicsIndex=m;officialBasicsAvailable=true;}).catch(e=>console.warn('2026 공식 기본정보 파일 조회 실패',e));
   // Only signed API-approved 2026 values can refresh on an active search page.
   let visiblePageSchools=[];
   let refreshingReleased2026=false;
@@ -765,7 +767,7 @@
       statuses:index?.statuses || [],
       publicError:publicLoadError,
       value2026:current?.value ?? null,
-      common2026:current?.common ?? null,
+      common2026:null, // Representative mean uses only existing public 2023–2025 values.
       status2026:current?.status || 'loading',
       locked:false,viewerTier
     });
@@ -780,14 +782,21 @@
     if(![1,2].includes(viewerTier)||Number(card.dataset.accessLevel)!==viewerTier)return;
     const facts=card.querySelector('.glory-facts');
     if(!facts)return;
-    const ready=profile?.source_year===2026;
+    const official=officialBasicsIndex.get(String(school?.school_id));
+    const ranked=school?.staticFactsOnly===true;
+    const ready=!ranked&&profile?.source_year===2026;
     const number=(v,max)=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=max;
     const legacy=(v,max)=>v!==null&&v!==undefined&&v!==''&&number(Number(v),max)?Number(v):null;
     const fields=[
-      ['student_count',ready&&number(profile.student_count,100000)?profile.student_count:null,legacy(school?.student_count,100000),Number(school?.student_reference_year),'명'],
-      ['male_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.male_teacher_ratio,100)?profile.male_teacher_ratio:null,legacy(school?.male_teacher_ratio,100),2024,'%'],
-      ['junior_teacher_ratio',ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.second_grade_teacher_ratio,100)?profile.second_grade_teacher_ratio:null,legacy(school?.junior_teacher_ratio,100),2024,'%']
+      ['student_count',official?.student_count??(ready&&number(profile.student_count,100000)?profile.student_count:null),ranked?null:legacy(school?.student_count,100000),Number(school?.student_reference_year),'명'],
+      ['male_teacher_ratio',official?.male_teacher_ratio??(ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.male_teacher_ratio,100)?profile.male_teacher_ratio:null),ranked?null:legacy(school?.male_teacher_ratio,100),2024,'%'],
+      ['junior_teacher_ratio',official?.second_grade_teacher_ratio??(ready&&profile.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&number(profile.second_grade_teacher_ratio,100)?profile.second_grade_teacher_ratio:null),ranked?null:legacy(school?.junior_teacher_ratio,100),2024,'%'],
+      ['teacher_total',official?.teacher_total??null,null,2026,'명']
     ];
+    if(!facts.querySelector('[data-fact-key="teacher_total"]')){
+      const item=make('div','glory-fact');item.dataset.factKey='teacher_total';
+      item.append(make('span','glory-fact-label','교원 수'),make('strong','glory-fact-value','자료 없음'));facts.append(item);
+    }
     let all2026=true;
     for(const [key,latest,previous,previousYear,unit] of fields){
       const item=facts.querySelector('[data-fact-key="'+key+'"]');
@@ -796,7 +805,7 @@
       const year=latest!==null?2026:previousYear;
       const known=Number.isInteger(year)&&year>=2000&&year<=2026;
       if(value===null||year!==2026)all2026=false;
-      item.querySelector('.glory-fact-value').textContent=value===null?'자료 없음':value.toLocaleString('ko-KR',{maximumFractionDigits:1})+unit;
+      item.querySelector('.glory-fact-value').textContent=value===null?'자료 없음':value.toLocaleString('ko-KR',{maximumFractionDigits:2})+unit;
       let source=item.querySelector('.glory-fact-year');
       if(!source){source=make('span','glory-fact-year');item.append(source);}
       source.textContent=value===null?'공식 자료 미확인':known?year+'년 기준':'기준연도 미확인';
@@ -804,7 +813,7 @@
     let heading=card.querySelector('.official-school-basics-2026');
     if(!heading){heading=make('h3','official-school-basics-2026');facts.before(heading);}
     heading.textContent=all2026?'2026 학교 기본정보':'학교 기본정보';
-    heading.title=status==='UNAVAILABLE'?'2026 공식자료 조회 실패':status==='LOADING'?'2026 공식자료 확인 중':'확인된 기준연도의 세 가지 지표만 표시';
+    heading.title=official?'학교알리미 2026 공식 자료':ranked?'2026년 정적 공개 자료 기준':status==='UNAVAILABLE'?'2026 공식자료 조회 실패':status==='LOADING'?'2026 공식자료 확인 중':'확인된 기준연도의 세 가지 지표만 표시';
   }
   function loadPagePercentiles(list,requestId){
     const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
@@ -1061,6 +1070,33 @@
     void window.BeaguSchoolViewCounts?.refreshCards(host);
     void window.BeaguSchoolGamePoints?.refreshCards(host);
   }
+  // Existing public directory and signed verification only; no new server dependencies.
+  async function localPublicRank(q,region,office,sort,direction,request){
+    const checked=await api('verify');
+    if(![1,2].includes(Number(checked.level))||Number(checked.level)<level){const e=Error('AUTH_REQUIRED');e.unauthorized=true;throw e;}
+    await Promise.all([loaded,basicsReady]);
+    if(request!==serial){const e=Error('STALE_SEARCH');e.stale=true;throw e;}
+    if(sort==='beagu_percentile_2025'&&!publicStaticAvailable)throw Error('PUBLIC_DATA_UNAVAILABLE');
+    if(sort!=='beagu_percentile_2025'&&!officialBasicsAvailable)throw Error('OFFICIAL_BASICS_UNAVAILABLE');
+    const rows=[],seen=new Set(),size=500;
+    let total=null;
+    for(let from=0;from===0||from<total;from+=size){
+      if(request!==serial){const e=Error('STALE_SEARCH');e.stale=true;throw e;}
+      let query=supabaseClient.from('schools').select('school_id,school_name,sido,sido_standard,support_office,address,establishment,status',{count:'exact'}).eq('status','운영');
+      if(q)query=query.ilike('school_name','%'+q.replace(/[%_\\]/g,'')+'%');
+      if(region)query=query.eq('sido_standard',region);
+      if(office)query=query.eq('support_office',office);
+      const result=await query.order('school_id',{ascending:true}).range(from,from+size-1);
+      if(result.error)throw result.error;
+      if(!Array.isArray(result.data)||!Number.isSafeInteger(result.count)||result.count<0||result.count>10000||(total!==null&&result.count!==total))throw Error('DIRECTORY_CHANGED');
+      total=result.count;
+      if(result.data.length!==Math.min(size,Math.max(0,total-from)))throw Error('INCOMPLETE_DIRECTORY');
+      for(const school of result.data){const id=String(school.school_id);if(!/^[A-Z0-9]{7}$/.test(id)||seen.has(id))throw Error('DIRECTORY_CHANGED');seen.add(id);rows.push(school);}
+    }
+    if(rows.length!==total)throw Error('INCOMPLETE_DIRECTORY');
+    const ordered=window.BeaguPublicSchoolBasics2026.rank(rows,sort,direction,officialBasicsIndex,publicIndex);
+    return {schools:ordered.slice(page*LIMIT,(page+1)*LIMIT),total};
+  }
   async function search(reset,explicitEnter=false) {
     if (reset) page = 0;
     if(!session || $('searchPanel').hidden)return;
@@ -1079,7 +1115,8 @@
       const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
-      const response=await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
+      const response=window.BeaguPublicSchoolBasics2026.metricKeys.has(sort)?await localPublicRank(q,region,office,sort,direction,request):await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
+      await basicsReady;
       const data=Array.isArray(response.schools)?response.schools:[];
       const count=Number(response.total)||0;
       if (request !== serial) return;
@@ -1091,7 +1128,7 @@
       void (async()=>{
         await Promise.all([loaded,historicalPresenceReady]);
         if(request!==serial)return;
-        if(!publicStaticAvailable){
+        if(!publicStaticAvailable&&!data.some(s=>s.staticFactsOnly)){
           try{await recoverPublicIndex(data)}
           catch(e){publicLoadError=true;console.warn('Lv.1 백분위 DB 재조회 실패',e)}
         }
