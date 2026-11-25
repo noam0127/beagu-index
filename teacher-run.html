@@ -215,7 +215,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11112"></script>
-<script src="js/teacher-run-4-rules.js?v=11111-6"></script>
+<script src="js/teacher-run-4-rules.js?v=11113-boss"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -708,7 +708,7 @@ function applyGrowth(id,manual=true){
 }
 function openGrowth(pick){
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;tapGesture.cancel();
- message("재직 "+pick.year+"년 · 능력 성장","능력 하나를 선택하세요. 선택 중 교직시간과 휴가 효과는 정지합니다.",
+ message(pick.phase+" · 능력 성장",pick.boss+" 퇴치! 능력 하나를 선택하세요.",
   pick.choices.map(u=>({label:u.name,detail:u.detail+" · "+u.level+" → "+(u.level+1)+"/"+u.max,action:()=>{
     if(state!=="between"||!applyGrowth(u.id))return;recordInput("growth",{choice:u.id});state="playing";updateLabels();closeMessage();playTone(610,.16);
   }})),"🎖️");
@@ -1090,6 +1090,7 @@ function damageBoss(amount){
  if(clutch)crisisAwards(run4.bossClutch());
  if(defeated.id==="responsibility"||defeated.id==="burnout")joinAlly();
  setNotice("🏆 "+defeated.name+" 처치 · "+defeated.reward,3);playTone(990,.24);
+ const growthPick=growth.afterBoss(defeated.id,gameRandom);if(growthPick&&state==="playing")openGrowth(growthPick);
 }
 function joinAlly(){
  const a=allies.join(clock,gameRandom);if(!a)return;
@@ -1205,7 +1206,7 @@ function update(dt){
  }
  if(getCareerStage()>stage)nextCareerStage();
  tenureEvents();
- const growthPick=growth.next(clock,gameRandom);if(growthPick){openGrowth(growthPick);return;}
+ // Growth selection is granted only after the corresponding boss is defeated.
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
  const cycle=Math.floor((stageElapsed()-5)/14);
  if(cycle>=0&&cycle!==lastEventCycle){
@@ -1245,7 +1246,7 @@ function update(dt){
  }
  updateBoss(dt);if(state!=="playing")return;
  fireChalk(dt);
- updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());
+ updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());if(state!=="playing")return;
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+gameRandom()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
  // A collected support item can remove other hazards or append new ones.
