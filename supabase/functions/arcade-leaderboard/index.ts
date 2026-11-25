@@ -2,15 +2,13 @@
 // All submitted records are anonymous; no nickname or other name is accepted from clients.
 const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-// Opt-in only: rally history is consistency evidence, not authoritative physics replay.
-const MATCH_BONUS_ENABLED=Deno.env.get("BEAGU_VOLLEY_MATCH_BONUS_ENABLED")==="true";
 const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
 const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
-type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null; public_result?: any };
+type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null };
 type FastEntry = { session_id?: string | null; win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
@@ -45,24 +43,14 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   if(response.status===204)return null;
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
-function volleyballOutcome(result:any){
- const raw=result&&typeof result==="object"?result:{};
- const p=raw.playerPoints,c=raw.cpuPoints;
- const points=Number.isSafeInteger(p)&&p>=0&&p<=3601&&Number.isSafeInteger(c)&&c>=0&&c<=3601;
- const deuce=raw.matchRule==="deuce_v1";
- const valid=points&&(deuce?Math.max(p,c)>=25&&Math.abs(p-c)>=2:(p===25||c===25)&&p!==c);
- const outcome=raw.outcome==="victory"&&valid&&p>c?"victory":raw.outcome==="defeat"&&valid&&c>p?"defeat":raw.outcome==="stopped"&&points&&!valid?"stopped":"unknown";
- return {outcome,playerPoints:outcome!=="unknown"?p:null,cpuPoints:outcome!=="unknown"?c:null,deuce:outcome==="victory"&&deuce&&c>=24};
-}
 async function top(game: Game,tier:string|null=null): Promise<Entry[]> {
-  if(ARCHIVE_ENABLED){const rows=await db("rpc/beagu_arcade_history_v11115","POST",{p_game:game,p_tier:tier,p_page:1});if(!Array.isArray(rows))throw Error("invalid_archive");return rows.slice(0,10).map((r:any)=>({score:r.score,created_at:r.createdAt,school_id:r.schoolId,school_name:r.schoolName,difficulty:r.difficulty,version:r.version,...(game==="volleyball_25"?volleyballOutcome(r.details):{})}));}
-  const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty"+(game==="volleyball_25"?",public_result":""),game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   if(tier)q.set("difficulty","eq."+tier);
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_id:e.school_id??null,school_name:e.school_name??null,difficulty:e.difficulty??null,...(game==="volleyball_25"?volleyballOutcome(e.public_result):{})}));
+  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_id:e.school_id??null,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
-async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null;outcome:string;playerPoints:number|null;cpuPoints:number|null;deuce:boolean}>>{
+async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null}>>{
  const q=new URLSearchParams({
   select:"session_id,win_time_tenths,created_at,school_name,difficulty",
   order:"win_time_tenths.asc,created_at.asc",limit:"10"
@@ -73,14 +61,12 @@ async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number
  const sessions=[...new Set(rows.map(r=>r.session_id).filter((id):id is string=>
   typeof id==="string"&&/^[0-9a-f-]{36}$/i.test(id)))];
  const related=sessions.length?await db("arcade_game_scores?"+new URLSearchParams({
-  select:"session_id,school_id,public_result",session_id:"in.("+sessions.join(",")+")",limit:"100"
- })) as Array<{session_id:string;school_id:string|null;public_result:any}>:[];
+  select:"session_id,school_id",session_id:"in.("+sessions.join(",")+")",limit:"100"
+ })) as Array<{session_id:string;school_id:string|null}>:[];
  const schoolIds=new Map(related.map(row=>[row.session_id,row.school_id]));
- const results=new Map(related.map(row=>[row.session_id,volleyballOutcome(row.public_result)]));
  return rows.map(e=>({timeTenths:e.win_time_tenths,created_at:e.created_at,
   school_id:e.session_id?schoolIds.get(e.session_id)??null:null,
-  school_name:e.school_name??null,difficulty:e.difficulty??null,
-  ...(e.session_id&&results.get(e.session_id)?.outcome==="victory"?results.get(e.session_id):{playerPoints:null,cpuPoints:null,deuce:false}),outcome:"victory"}));
+  school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
@@ -244,28 +230,6 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
-function volleyMatchEnded(p:number,c:number,deuce:any=false){
- return deuce?Math.max(p,c)>=25&&Math.abs(p-c)>=2:(p===25||c===25)&&!(p===25&&c===25);
-}
-function matchBonusFromRallies(rallies:any,player:number,cpu:number,ordinary:number,deuce:any=false){
- if(typeof rallies!=="string"||rallies.length>(deuce?3601:49)||!/^[PC]*$/.test(rallies)||rallies.length!==player+cpu)throw Error("invalid_rally_history");
- let p=0,c=0,deficit=0,streak=0,longest=0,opponentFirst24=false;
- for(const side of rallies){
-  if(volleyMatchEnded(p,c,deuce))throw Error("invalid_rally_history");
-  if(side==="P"){p++;streak++;longest=Math.max(longest,streak);}
-  else{c++;streak=0;if(c===24&&p<24)opponentFirst24=true;}
-  deficit=Math.max(deficit,c-p);
- }
- if(p!==player||c!==cpu)throw Error("invalid_rally_history");
- let kind="none",rate=0;
- if(volleyMatchEnded(p,c,deuce)&&p>c){
-  const award=(condition:any,name:any,pct:number)=>{if(condition&&pct>rate){kind=name;rate=pct;}};
-  award(c===0,"sweep",50);award(deficit>=10,"great_comeback",50);
-  award(opponentFirst24,"dramatic",40);award(c<=5,"dominant",30);
-  award(deficit>=5,"comeback",25);award(c>=23,"close",20);award(longest>=10,"streak",15);
- }
- return {kind,rate,points:Math.floor(Math.max(0,ordinary)*rate/100)};
-}
 // Recompute item effects; do not trust client-supplied adjustment totals.
 function verifiedVolleyballItemScore(result:any,tenths:number,player:number,cpu:number):number {
  const events=result?.itemScoreEvents??[];
@@ -293,41 +257,25 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
  const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
    bonus=result?.survivalBonus,multiplier=result?.multiplier,final=result?.finalScore,
    victory=result?.victory,endedEarly=result?.endedEarly,tenths=result?.activeTenths;
- const deuce=result?.matchRule==="deuce_v1";
- if(result?.matchRule!==undefined&&!deuce)throw Error("invalid_match_rule");
- if(!int(player,0,deuce?3601:25)||!int(cpu,0,deuce?3601:25)||!int(base,0,deuce?360100:2500)||
-   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,deuce?200000:100000)||
+ if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
+   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,100000)||
    !int(tenths,1,36000)||typeof victory!=="boolean"||typeof endedEarly!=="boolean")
   throw new Error("invalid_stats");
  if(tenths>Math.floor(elapsed*10)+20)throw new Error("invalid_survival_time");
- const matchEnded=volleyMatchEnded(player,cpu,deuce);
- if(deuce&&player+cpu>Math.floor(tenths/10)+1)throw Error("invalid_duration");
+ const matchEnded=(player===25||cpu===25)&&!(player===25&&cpu===25);
  if(endedEarly){
   if(matchEnded||tenths<40)throw new Error("invalid_early_end");
  }else{
   if(!matchEnded)throw new Error("invalid_match");
   if(tenths<Math.max(40,(player+cpu-1)*10))throw new Error("invalid_duration");
  }
- if(victory!==(matchEnded&&player>cpu))throw new Error("invalid_victory");
+ if(victory!==(player===25&&cpu<25))throw new Error("invalid_victory");
  const expectedBase=Math.max(0,player*100-cpu*50);
  const expectedBonus=Math.min(900,Math.floor(tenths/10))*4;
- const expectedMultiplier=victory?1+Math.floor(Math.max(0,25-cpu)/5):1;
+ const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
  const itemScore=verifiedVolleyballItemScore(result,tenths,player,cpu);
- const ordinary=Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore);
- let extra=0;
- if(deuce){
-  matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary,true);
-  for(const e of result.itemScoreEvents??[]){const prefix=result.rallyHistory.slice(0,e.player+e.cpu);if(prefix.split("P").length-1!==e.player)throw Error("invalid_rally_history");}
- }
- if(result.bonusRule!==undefined||(!deuce&&result.rallyHistory!==undefined)||result.matchBonus!==undefined||result.matchBonusKind!==undefined){
-  if(result.bonusRule!=="fire_court_v1")throw Error("invalid_bonus_rule");
-  const computed=matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary,deuce);
-  if(result.matchBonus!==computed.points||result.matchBonusKind!==computed.kind)throw Error("invalid_match_bonus");
-  for(const e of result.itemScoreEvents??[]){const prefix=result.rallyHistory.slice(0,e.player+e.cpu);if(prefix.split("P").length-1!==e.player)throw Error("invalid_rally_history");}
-  extra=computed.points;
- }
  if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
-    final!==(deuce?Math.min(200000,ordinary+extra):ordinary+extra))
+    final!==Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore))
   throw new Error("invalid_score");
  return final;
 }
@@ -340,9 +288,7 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
    playerPoints:result.player,cpuPoints:result.cpu,
    baseScore:result.baseScore,playBonus:result.survivalBonus,
    itemScore:result.itemScoreDelta??0,
-   winMultiplier:result.multiplier,playedTenths:result.activeTenths,
-   ...(result.matchRule==="deuce_v1"?{matchRule:"deuce_v1"}:{}) ,
-   ...(result.bonusRule==="fire_court_v1"?{bonusRule:result.bonusRule,matchBonus:result.matchBonus,matchBonusKind:result.matchBonusKind}:{})
+   winMultiplier:result.multiplier,playedTenths:result.activeTenths
   };
  }
  return {
@@ -355,9 +301,7 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
   ...(result.healthPercent===undefined?{}:{healthPercent:result.healthPercent})
  };
 }
-const ARCHIVE_ENABLED=Deno.env.get("BEAGU_ARCADE_ARCHIVE_ENABLED")==="true";
 async function gameHistory(game:Game,tier:string|null,page:number){
- if(ARCHIVE_ENABLED){const rows=await db("rpc/beagu_arcade_history_v11115","POST",{p_game:game,p_tier:tier,p_page:page});if(!Array.isArray(rows))throw Error("invalid_archive");return {game,page,pageSize:30,sort:"score_desc",archive:true,hasMore:rows.length>30,records:rows.slice(0,30)};}
  const pageSize=30,offset=(page-1)*pageSize;
  const q=new URLSearchParams({
   select:"id,score,created_at,school_id,school_name,difficulty,win_time_tenths,public_result",
@@ -416,17 +360,16 @@ Deno.serve(async (req:Request)=>{
   try{
     if(req.method==="GET"){
       const params=new URL(req.url).searchParams;
-      if(params.has("recommend")){const tier=rankTier(params.get("recommend"));if(!tier)return error("invalid_difficulty",400,origin);return json({school:await recommendSchool(tier)},200,origin);}
       if(params.has("schools"))return json({schools:await searchSchools(params.get("schools")||"")},200,origin);
+      if(params.has("recommend")){const tier=rankTier(params.get("recommend"));if(!tier)return error("invalid_difficulty",400,origin);return json({school:await recommendSchool(tier)},200,origin);}
       if(params.has("school_id")){const school=await resolveSchool(params.get("school_id"));return school?json({school},200,origin):error("school_not_found",404,origin);}
       const game=params.get("game");
       if(!isGame(game))return error("invalid_game",400,origin);
       const tier=params.has("difficulty")?rankTier(params.get("difficulty")):null;
       if(params.has("difficulty")&&!tier)return error("invalid_difficulty",400,origin);
-      if(params.get("school_rank")==="1"){if(!ARCHIVE_ENABLED)return error("archive_unavailable",503,origin);return json({game,schoolTop10:await db("rpc/beagu_arcade_school_rank_v11115","POST",{p_game:game})},200,origin);}
       if(params.get("history")==="1"){
         const rawPage=params.get("page")??"1";
-        if(!/^[1-9][0-9]{0,4}$/.test(rawPage)||Number(rawPage)>(ARCHIVE_ENABLED?10000:4))return error("invalid_page",400,origin);
+        if(!/^[1-4]$/.test(rawPage))return error("invalid_page",400,origin);
         return json(await gameHistory(game,tier,Number(rawPage)),200,origin);
       }
       if(params.has("history"))return error("invalid_history",400,origin);
@@ -453,7 +396,7 @@ Deno.serve(async (req:Request)=>{
         const selected=await resolveSchool(payload.school_id);
         if(!selected)return error("select_school",400,origin);
         if(!selected.eligible)return error("school_ineligible",409,origin);
-        return json({session:crypto.randomUUID(),school:selected,excluded:true,...(game==="volleyball_25"?{matchRule:"deuce_v1"}:{})},200,origin);
+        return json({session:crypto.randomUUID(),school:selected,excluded:true},200,origin);
       }
       if(payload.action==="submit"){
         const [top10,fastestTop10]=await Promise.all([
@@ -475,7 +418,7 @@ Deno.serve(async (req:Request)=>{
       const recent=await db("arcade_game_sessions?"+q);
       if(recent.length>=40)return error("too_many_plays",429,origin);
       const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash,school_id:selected.school_id,school_name:selected.school_name,difficulty:selected.difficulty,percentile_source_year:selected.source_year},"return=representation");
-      return json({session:rows[0].id,school:selected,...(game==="volleyball_25"?{matchRule:"deuce_v1"}:{}),...(game==="volleyball_25"&&MATCH_BONUS_ENABLED?{matchBonusRule:"fire_court_v1"}:{})},200,origin);
+      return json({session:rows[0].id,school:selected},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
     const sessionId=payload.session;
@@ -491,7 +434,6 @@ Deno.serve(async (req:Request)=>{
       return error("school_ineligible",409,origin);
     const elapsed=(Date.now()-Date.parse(session.started_at))/1000;
     if(elapsed<(game==="teacher_run_retirement"?1:4)||elapsed>3600)return error("invalid_duration",400,origin);
-    if(game==="volleyball_25"&&payload.stats?.bonusRule!==undefined&&!MATCH_BONUS_ENABLED)return error("bonus_rule_disabled",409,origin);
     let score:number;
     try {
       score=game==="volleyball"?scoreFromVolleyball(payload.stats,elapsed,session.difficulty):
