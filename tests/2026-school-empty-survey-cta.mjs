@@ -55,7 +55,7 @@ function find(node,cls){
     .filter(item=>item.className?.split(' ').includes(cls));
 }
 const pending=new Node('div');
-draw(pending,2026,[],null,'ABC1234');
+draw(pending,2026,[],null,'ABC1234',[],null,null,'ready',[],[],2);
 const links=find(pending,'beagu-year-survey-link');
 assert.equal(links.length,1,'No public result must show exactly one survey link');
 assert.equal(links[0].tag,'a');
@@ -69,15 +69,19 @@ const released=new Node('div');
 draw(released,2026,[{
  year:2026,access_level:1,
  summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}
-}],null,'ABC1234');
+}],null,'ABC1234',[],null,null,'ready',[],[],2);
 assert.equal(find(released,'beagu-year-survey-link').length,0,
   'Approved results must not show a survey CTA');
 assert.equal(find(released,'beagu-year-empty').length,0);
 assert.ok(find(released,'beagu-approved-section').length===1);
 assert.equal(find(released,'year-2026-button').length,1);
-console.log('PASS: Lv.1 empty 2026 school details link to the official survey, released details do not');
+console.log('PASS: Lv.2 empty 2026 school details link to the official survey, released details do not');
 
 const questionOnly=new Node('div');
-draw(questionOnly,2026,[],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}]);
+draw(questionOnly,2026,[],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}],2);
 assert.equal(find(questionOnly,'beagu-year-survey-link').length,0);
 assert.equal(find(questionOnly,'beagu-question-block').length,1);
+
+const locked=new Node('div');
+draw(locked,2026,[{year:2026,access_level:1,summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}}],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}],1);
+assert.equal(find(locked,'beagu-approved-section').length,0);assert.equal(find(locked,'beagu-question-block').length,0);assert.equal(find(locked,'beagu-year-release-note').length,1);
