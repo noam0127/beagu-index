@@ -1,0 +1,1 @@
+-- v1.11.0 anonymous account candidate: deliberately no Auth identity table or social binding RPC. Historical production migrations remain intact; no migration of PII is authorized.
