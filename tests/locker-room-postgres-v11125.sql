@@ -72,6 +72,13 @@ begin
  if (select count(distinct nickname) from public.beagu_locker_aliases_v1 where post_id=p)<>13 then raise exception 'alias collision';end if;
  insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,op,'operator') returning locker_nickname,locker_operator into cn,flag;
  if cn is distinct from '카리브해매너티' or flag is distinct from true then raise exception 'operator nickname';end if;
+ update public.beagu_admin_accounts set enabled=false where user_id='90000000-0000-4000-8000-000000000001';
+ begin
+  insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,op,'revoked operator');
+  raise exception 'revoked binding accepted';
+ exception when insufficient_privilege then null;
+ end;
+ if has_table_privilege('service_role','public.beagu_locker_operator_v1','insert') then raise exception 'untrusted binding write';end if;
  if exists(select 1 from public.beagu_postit_posts where body='original' and locker_nickname is not null) then raise exception 'legacy nickname rewritten';end if;
  if has_table_privilege('anon','public.beagu_locker_aliases_v1','select') or has_table_privilege('authenticated','public.beagu_locker_operator_v1','select') then raise exception 'private mapping exposed';end if;
 end $nick$;
