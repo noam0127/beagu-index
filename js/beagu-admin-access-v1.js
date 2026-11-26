@@ -15,7 +15,7 @@
 
   function show(section, message, error = false) {
     for (const id of sections) $(id).hidden = id !== section;
-    if(section!=="adminDashboard")window.BeaguHomeNoticeAdmin?.reset();
+    if(section!=="adminDashboard"){window.BeaguHomeNoticeAdmin?.reset();window.BeaguLockerAdmin?.reset();}
     notice.textContent = message;
     notice.classList.toggle("error", error);
   }
@@ -381,6 +381,7 @@
     window.Beagu2026ReviewAdmin?.mount(proof.role);
      window.BeaguCivicAdmin?.mount(proof.role);
     window.BeaguMembersAdmin?.mount(proof.role);
+    window.BeaguLockerAdmin?.mount(proof.role);
     window.BeaguHomeNoticeAdmin?.mount(proof.role);
     await loadMetrics();
     if(liveTimer===null)liveTimer=window.setInterval(()=>{
@@ -510,6 +511,7 @@
       window.Beagu2026ReviewAdmin?.reset();
        window.BeaguCivicAdmin?.reset();
       window.BeaguMembersAdmin?.reset();
+      window.BeaguLockerAdmin?.reset();
       $("adminPassword").value = "";
       $("adminTotp").value = "";
       $("adminQrWrap").hidden = true;

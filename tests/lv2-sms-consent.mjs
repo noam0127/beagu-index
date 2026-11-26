@@ -15,18 +15,11 @@ assert.doesNotThrow(()=>new vm.Script(postitJs));
 // Account work remains on hold; the current challenge intentionally has no member signup.
 assert.doesNotMatch(challenge,/id="challengeMember(?:SmsConsent|SmsPhone|Form|Overlay)"/);
 assert.doesNotMatch(challenge,/challenge-member-auth-v1\.(?:js|css)/);
-for (const [html,id] of [[postit,'postitSmsConsent']]) {
- const tag=html.match(new RegExp('<input[^>]*id="'+id+'"[^>]*>'))?.[0];
- assert.ok(tag, 'SMS consent checkbox missing: '+id);
- assert.ok(tag.includes('type="checkbox"'));
- assert.equal(tag.includes('checked'),false,'Marketing consent must begin unchecked');
-}
-for (const [html,id] of [[postit,'postitSmsPhone']]) {
- assert.ok(html.includes('id="'+id+'"'), 'Phone input absent: '+id);
-}
-// Preserve dormant challenge opt-in handler and private database checks below; no contact form restored.
-assert.ok(postit.includes('미동의해도 가입 가능'));
-for (const script of [challengeJs,postitJs]) {
+// New anonymous community must not collect phone/email or marketing consent.
+// Legacy dormant challenge handler and private SMS storage remain protected.
+assert.doesNotMatch(postit,/postitSmsConsent|postitSmsPhone|type="tel"|type="email"/);
+assert.doesNotMatch(postitJs,/beagu_sms_opt_in|beagu_sms_phone|client\.auth\.updateUser|signInWithOAuth/);
+for(const script of [challengeJs]){
  assert.ok(script.includes('beagu_sms_opt_in:wantsSms'));
  assert.ok(script.includes('beagu_sms_phone:wantsSms?mobile:null'));
  assert.ok(script.includes("replace(/[^0-9]/g,'')"));

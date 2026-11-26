@@ -5,6 +5,16 @@ import {readFileSync,existsSync} from "node:fs";
 const source=execFileSync("git",["show","7c069111b2d2e5c0c3f1cac458f75ca066df1489:supabase/functions/_shared/postit-position-v1.mjs"],{encoding:"utf8"});
 const {threadPositions,POSITIONS}=await import("data:text/javascript;base64,"+Buffer.from(source).toString("base64"));
 const server="supabase/functions/beagu-postit-api-v1/index.ts";
+const version=JSON.parse(readFileSync("release-candidate.json","utf8")).version;
+if(["v1.11.25","v1.12.02"].includes(version)){
+ // Intentional, separately verified locker server replacement. Pin the exact
+ // 23/23 development blob and execute its actual privacy/auth contracts.
+ assert.equal(readFileSync(server,"utf8"),readFileSync("supabase/preview/v11125/beagu-postit-api-v1/index.ts","utf8"));
+ assert.equal(existsSync("supabase/functions/_shared/postit-position-v1.mjs"),false);
+ assert.match(readFileSync("js/postit-v1.js","utf8"),/function lockerName\(/);
+ assert.match(readFileSync("postit.html","utf8"),/postit-v1\.js\?v=11125-replies/);
+ for(const test of ["locker-room-lv3-edge-v11125.mjs","locker-room-identity-v11125.mjs","locker-room-final-v11125.mjs"])execFileSync(process.execPath,["tests/"+test],{stdio:"inherit"});
+}else{
 assert.equal(execFileSync("git",["hash-object",server],{encoding:"utf8"}).trim(),"50c2b6cfce81177c5a6defab20c1189d4d6384ce","legacy server must be byte-for-byte unchanged");
 assert.equal(existsSync("supabase/functions/_shared/postit-position-v1.mjs"),false,"deferred server module must not ship");
 const client=readFileSync("js/postit-v1.js","utf8");
@@ -15,6 +25,8 @@ const page=readFileSync("postit.html","utf8");
 assert.doesNotMatch(page,/게시글마다 배구 포지션닉을 사용합니다/);
 assert.match(page,/postit-v1\.js\?v=1119-legacy/);
 console.log("PASS: release candidate retains legacy anonymous API; deferred alias algorithm tested separately");
+
+}
 const root="fixture-root",actors=Array.from({length:60},(_,i)=>"fixture-"+i);
 const a=await threadPositions("fixture-key","thread-a",root,actors);
 const b=await threadPositions("fixture-key","thread-a",root,[...actors,"new-author"]);

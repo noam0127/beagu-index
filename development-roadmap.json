@@ -1186,6 +1186,30 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "ceffeacba51dce6130fdfa8344222421bba63b2d"
+    },
+    {
+      "order": 50,
+      "version": "v1.12.02",
+      "name": "라커룸 개장",
+      "scope": "기존 v1.11.25 라커룸 통합 후보 재이식 · Lv.3 계정 재사용 · v1.12.01 시설 정보 보존 · 서버 의존성 별도 검증",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.12.02-locker-room-production-base",
+      "pr": null,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml",
+        "locker-room-lv3-v11125.yml",
+        "locker-room-v11125-browser.yml",
+        "school-facilities-v11126.yml"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.12.01"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "6699e367f17586f892903804e409001eb16b3437"
     }
   ],
   "source_manifest": {

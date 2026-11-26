@@ -1,0 +1,26 @@
+/* v1.11.25 single chronological feed; scoped to locker-room route. */
+.locker-feed-v11125.beagu-postit-page{background:var(--beagu-bg,#f7f8fa)}
+.locker-feed-v11125 .postit-layout{max-width:700px;margin-inline:auto}
+.locker-feed-v11125 .postit-thread{display:block;gap:0;background:transparent;padding:0;overflow:visible}
+.locker-feed-v11125 .postit-thread::before,.locker-feed-v11125 .postit-thread::after,.locker-feed-v11125 .paper-tape{display:none}
+.locker-feed-v11125 .postit-entry{width:100%;max-width:none;margin:0;padding:0;transform:none!important;animation:none!important}
+.locker-feed-v11125 .postit-paper{background:#fff!important;border:0;border-bottom:1px solid #e1e6ec;clip-path:none!important;transform:none!important;filter:none!important;box-shadow:none!important;border-radius:0;padding:16px 18px;font-family:inherit;animation:none!important}
+.locker-feed-v11125 .postit-paper::before,.locker-feed-v11125 .postit-paper::after{display:none!important}
+.locker-feed-v11125 .paper-overline{display:flex;justify-content:space-between;gap:12px;color:#607186;font-family:inherit;font-size:13px}
+.locker-feed-v11125 .paper-content{white-space:pre-wrap;overflow-wrap:anywhere;min-height:0;font-family:inherit;font-size:15px;line-height:1.65;color:#263044}
+.locker-feed-v11125 .paper-topic:empty{display:none}
+.locker-feed-v11125 .paper-actions{display:flex;flex-wrap:wrap;gap:8px}
+.locker-feed-v11125 .postit-comments{transform:none!important}
+.locker-feed-v11125 #lockerClearTag{margin-block:8px}
+.locker-feed-v11125 [hidden]{display:none!important}
+@media(max-width:560px){.locker-feed-v11125 .postit-layout{width:100%;padding-inline:10px}.locker-feed-v11125 .postit-paper{padding:12px 10px}}
+
+/* The text label is part of the trusted server projection; color is supplementary. */
+.locker-feed-v11125 .locker-operator-verified{color:#185a9d;font-weight:700}
+.locker-feed-v11125 .locker-operator-verified::before{content:'✓';display:inline-block;margin-inline-end:5px;border:1px solid currentColor;border-radius:50%;width:1.2em;height:1.2em;line-height:1.15em;text-align:center;font-size:.8em}
+
+.locker-feed-v11125 .locker-reply{margin-inline-start:24px;border-inline-start:2px solid #d7e3ef;padding-inline-start:12px}
+.locker-feed-v11125 .locker-notifications{background:white;border:1px solid #e1e6ec;border-radius:12px;padding:12px 16px;margin-block:12px}
+.locker-feed-v11125 .locker-notification{padding:8px 0;overflow-wrap:anywhere}
+.locker-feed-v11125 .locker-notification.unread{font-weight:700}
+.locker-feed-v11125 .locker-reply-target{font-size:13px;color:#486581}
