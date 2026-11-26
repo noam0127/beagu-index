@@ -1259,6 +1259,20 @@
         "v11205-admin-registration.yml",
         "lv3-anonymous-db-fixture.yml"
       ]
+    },
+    {
+      "order": 55,
+      "version": "v1.12.05.1",
+      "name": "코트 가독성",
+      "scope": "검색 급상승 학교와 홈 취지 설명 명암 및 상단 배치",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v112051-readable-court",
+      "baseline_sha": "2ba1eddcb2404626477e46cea9f03b715fbeec14",
+      "dependencies": [
+        "v1.12.05"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED"
     }
   ],
   "source_manifest": {

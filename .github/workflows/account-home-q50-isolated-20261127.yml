@@ -1,7 +1,7 @@
 name: Account and Q50 isolated regression
 on:
   push:
-    branches: ['fix/account-home-qa-20261127','fix/defer-level3-community-20261127','fix/defer-level3-release-20261127','fix/v11205-court-integrated']
+    branches: ['fix/account-home-qa-20261127','fix/defer-level3-community-20261127','fix/defer-level3-release-20261127','fix/v11205-court-integrated','fix/v112051-readable-court']
 permissions:
   contents: read
 jobs:
@@ -37,3 +37,4 @@ jobs:
           BEAGU_TEST_WIDTH=1280 node tests/account-ui-v11202-browser.mjs
           node tests/account-home-q50-regression.mjs
           node tests/deferred-account-community-browser.mjs
+          node tests/readable-court-browser.mjs

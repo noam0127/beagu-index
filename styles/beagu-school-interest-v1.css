@@ -47,3 +47,15 @@
 .beagu-interest .beagu-interest-school{gap:1px}.beagu-interest .beagu-interest-school strong{font-size:13px}
 .beagu-interest .beagu-interest-status{padding:7px 4px}.beagu-interest .beagu-interest-number{font-size:11px}
 @media(prefers-color-scheme:dark){.beagu-interest{background:#172334;border-color:#40516b;color:#e6eef9}.beagu-interest .beagu-interest-head h2,.beagu-interest .beagu-interest-rank,.beagu-interest .beagu-interest-school small{color:#d3e3fa}.beagu-interest .beagu-interest-number{color:#89e2cb}.beagu-interest .beagu-interest-item{border-color:#40516b}}
+
+/* Search ranking: pair foreground and surface in every pointer/keyboard state. */
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest{--interest-ink:#172c48;--interest-muted:#52647b;--interest-rank:#2054b6;--interest-hover:#e8f0fc;--interest-active:#dbe8fa;--interest-focus:#2563eb;--interest-count:#08705e}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link{color:var(--interest-ink)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link strong{color:var(--interest-ink)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link small{color:var(--interest-muted)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-rank{color:var(--interest-rank)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-number{color:var(--interest-count)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link:is(:hover,:focus-visible){background:var(--interest-hover)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link:active{background:var(--interest-active)!important}
+body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest .beagu-interest-link:focus-visible{outline:3px solid var(--interest-focus);outline-offset:2px}
+@media(prefers-color-scheme:dark){body:is(.beagu-page-search,.beagu-page-lv1) #beaguInterest{--interest-ink:#edf4ff;--interest-muted:#becfe4;--interest-rank:#a9c9ff;--interest-hover:#293f5a;--interest-active:#344e70;--interest-focus:#a9c9ff;--interest-count:#89e2cb}}
