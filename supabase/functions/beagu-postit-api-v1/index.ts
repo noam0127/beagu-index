@@ -202,6 +202,18 @@ Deno.serve(async(req:Request)=>{
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    const member=await verifiedMember(viewer);
    if(action==="writer_status")return respond(req,{linked:Boolean(member),readable:true});
+   if(action==="school_counts"){
+    const ids=[...new Set((url.searchParams.get("school_ids")||"").split(","))];
+    if(ids.length<1||ids.length>50||ids.some(id=>!SCHOOL_ID.test(id)))return fail(req,"INVALID_SCHOOLS");
+    const {data,error}=await db.rpc("beagu_postit_school_counts_v1",{p_ids:ids});
+    if(error)throw error;
+    const counts:Record<string,number>={};
+    for(const row of data||[]){
+     if(ids.includes(row.school_id)&&Number.isSafeInteger(Number(row.post_count))&&Number(row.post_count)>0)
+      counts[row.school_id]=Number(row.post_count);
+    }
+    return respond(req,{counts});
+   }
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
