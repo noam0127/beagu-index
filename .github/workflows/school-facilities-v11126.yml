@@ -1,0 +1,26 @@
+name: School facilities v1.11.26 isolated validation
+on:
+  pull_request:
+    paths:
+      - 'js/school-facilities-v11126.js'
+      - 'styles/school-facilities-v11126.css'
+      - 'js/level-search.js'
+      - 'school-report.html'
+      - 'search-lv1.html'
+      - 'tests/school-facilities*v11126.mjs'
+      - '.github/workflows/school-facilities-v11126.yml'
+permissions:
+  contents: read
+jobs:
+  facilities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/school-facilities-v11126.mjs
+      - run: npm install --no-save --no-package-lock playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/school-facilities-browser-v11126.mjs
