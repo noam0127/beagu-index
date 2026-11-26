@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {reconstructVI13,normalizeSourceTime,assessRevalidation} from './revalidate-source-v14.mjs';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {METHOD,parseVI13Sheet} from './_shared/vi13-sheet-sync.mjs';
@@ -39,3 +40,15 @@ assert.ok(source.includes('const schoolQuestionResults2026=level!==2?[]'));asser
 assert.ok(source.includes("Number(verified.access_level)<2"));assert.ok(!calls.some(x=>x.includes('approval')||x.includes('percentile_v13_values')));
 const require=createRequire(import.meta.url),h=require('../../js/beagu-home-ranking-v1.js');assert.ok(h.validAuto(top));assert.equal(h.validAuto({...top,rows:top.rows.map(r=>({...r,percentile:100}))}),false);
 console.log('PASS synthetic one-observation automatic gate, unknown/flagged/blocked denial, Lv0-1, time and private question protection');
+
+const coreFixture=(n,idx=2)=>Array.from({length:13},(_,i)=>({id:'Q'+String(i+1).padStart(2,'0'),row:-1,valid:n,invalid:0,counts:Array.from({length:6},(_,j)=>j===idx?n:0)}));
+const one=coreFixture(1),reconstructed=reconstructVI13(one,1);assert.ok(reconstructed&&Number.isSafeInteger(reconstructed.sumUnits));
+const row={observations:1,sum_units:reconstructed.sumUnits,flags:0};
+const older=assessRevalidation(row,one,'2026-11-23T08:00:00Z','2026-11-26T09:00:00Z');assert.equal(older.scoreAgreement,true);assert.equal(older.sourceAgreement,null);assert.equal(older.reidentification,null);
+assert.equal(assessRevalidation(row,one,'2026-11-26T10:00:00Z','2026-11-26T09:00:00Z').sourceAgreement,true);
+assert.equal(assessRevalidation({...row,sum_units:row.sum_units+1},one,'2026-11-26T10:00:00Z','2026-11-26T09:00:00Z').sourceAgreement,false);
+const partial=coreFixture(2);partial[0].counts=[0,0,1,0,0,1];assert.equal(reconstructVI13(partial,2),null);
+assert.equal(assessRevalidation({...row,flags:1},one,'2026-11-26T10:00:00Z','2026-11-26T09:00:00Z').manipulation,false);
+assert.equal(reconstructVI13(coreFixture(1,0),1).extremePattern,true);
+assert.equal(normalizeSourceTime('오후 8:30:00','Q19'),510);assert.equal(normalizeSourceTime('오전 4:30:00','Q20'),990);assert.equal(normalizeSourceTime('','Q19'),null);assert.equal(normalizeSourceTime('25:10','Q20'),null);
+console.log('PASS read-only reconstruction and old-snapshot denial; source time normalization');

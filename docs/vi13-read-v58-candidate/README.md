@@ -6,3 +6,5 @@ Question protection: Q31/Q50/Q51 excluded, edited labels allowlisted, other/free
 New TOP10 endpoint requires verified Lv2; existing manual rank/name fallback remains publicly visible without embedded percentile. Search/detail shared batch remains server-tier guarded. No new release version assigned; do not enable BEAGU_VI13_SHEET_SYNC_ENABLED. No operational approval or registration.
 
 Lv.1 detailed survey response is also blocked (including edited questions and legacy 2026 metrics). Numeric time metrics lack normalization provenance and are withheld; source-side normalized question aggregate remains separate.
+
+2026-11-26 follow-up: see revalidation-2026-11-26.md. Exact older-score comparison is now computed, but stale source and unknown risk remain fail-closed. The standalone module and synthetic tests verify the reconstruction math and input-level time correction. No raw source data copied into git.
