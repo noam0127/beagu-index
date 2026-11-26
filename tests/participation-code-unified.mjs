@@ -57,7 +57,7 @@ assert.ok(!server.includes("admin.rpc('beagu_check_class_diary_guest_code'"),
 assert.ok(server.includes("record.identity_campaign='2026'")&&server.includes("record.identity_visitor_id=visitorId"));
 assert.ok(server.includes("admin.rpc('beagu_has_earned_challenge_visitor'"),
  'Every protected request must confirm current credit');
-assert.ok(postit.includes('beagu_has_earned_challenge_visitor'),
+assert.ok(postit.includes('beagu_locker_notification_actor_v1')&&read('docs/v1.11.25-locker-lv3-auth-preview.sql').includes('beagu_has_earned_challenge_visitor'),
  'Post-it reads and writes must fail closed on disabled referrals');
 assert.ok(referral.includes("identity_campaign: '2026', identity_visitor_id: visitor"),
  'Referral-triggered session upgrades bind stable identity');

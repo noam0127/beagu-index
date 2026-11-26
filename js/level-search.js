@@ -1047,7 +1047,7 @@
           if(!detail.isConnected)return;
           showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026,Number(data.level));
           if(housing)detail.prepend(housing);
-          const reportFooter=make('div','school-report-footer');reportFooter.append(BeaguSchoolSearchCard.createReportFlag(school));detail.append(reportFooter);
+          const reportFooter=make('div','school-report-footer');reportFooter.append(BeaguSchoolSearchCard.createReportFlag(school));detail.append(reportFooter);const stories=window.BeaguLockerSchoolLinks?.create(String(school.school_id),true);if(stories)detail.append(stories);window.BeaguLockerSchoolLinks?.refresh();
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
@@ -1070,6 +1070,7 @@
     void window.BeaguSchoolLikes?.refreshCards(host);
     void window.BeaguSchoolViewCounts?.refreshCards(host);
     void window.BeaguSchoolGamePoints?.refreshCards(host);
+    window.BeaguLockerSchoolLinks?.refresh();
   }
   // Existing public directory and signed verification only; no new server dependencies.
   async function localPublicRank(q,region,office,sort,direction,request){
