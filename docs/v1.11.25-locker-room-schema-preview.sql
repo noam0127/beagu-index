@@ -160,15 +160,15 @@ create trigger beagu_locker_alias_comment_v1 before insert on public.beagu_posti
 -- null/false combination stays valid without touching historical content.
 alter table public.beagu_locker_aliases_v1 add constraint beagu_locker_alias_format_v1 check (
  (is_operator and nickname='카리브해매너티')
- or (not is_operator and nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?)
+ or (not is_operator and nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$')
 );
 alter table public.beagu_postit_posts add constraint beagu_locker_post_alias_format_v1 check (
  (locker_operator and locker_nickname is not null and locker_nickname='카리브해매너티')
- or (not locker_operator and (locker_nickname is null or locker_nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?))
+ or (not locker_operator and (locker_nickname is null or locker_nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$'))
 );
 alter table public.beagu_postit_comments add constraint beagu_locker_comment_alias_format_v1 check (
  (locker_operator and locker_nickname is not null and locker_nickname='카리브해매너티')
- or (not locker_operator and (locker_nickname is null or locker_nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?))
+ or (not locker_operator and (locker_nickname is null or locker_nickname ~ '^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$'))
 );
 -- The service API may still change status (moderation/deletion), but it
 -- must not rewrite an existing identity or transfer its author ownership.
