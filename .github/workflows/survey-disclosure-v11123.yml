@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -26,5 +28,5 @@ jobs:
           node tests/clean-release-contract.cjs
       - name: Verify changed files exclude data and backend
         run: |
-          git diff --name-only HEAD^ HEAD | tee /tmp/changed
+          git diff --name-only da0b5e739f31607f83771c2d08bc5bbaca50b60e HEAD | tee /tmp/changed
           if grep -E '^(supabase/|data/|scripts/)' /tmp/changed; then exit 1; fi
