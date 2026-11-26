@@ -10,4 +10,5 @@
 .beagu-facility.is-absent .beagu-facility-icon{filter:grayscale(1);opacity:.55}
 .beagu-facility.is-absent .beagu-facility-state{color:#64748b}
 .beagu-facilities-caption{font-size:.72rem;color:#64748b;margin:12px 0 0;line-height:1.5}
+.beagu-facilities-source{margin:8px 0;padding:8px;border:1px solid #e2e8f0;border-radius:8px;min-width:0}.beagu-facilities-source summary{font-size:.85rem;cursor:pointer;color:#475569;padding:4px}.beagu-facilities-source[hidden]{display:none!important}
 @media(max-width:420px){.beagu-facilities-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 4px}.beagu-facilities{padding:12px 8px}}
