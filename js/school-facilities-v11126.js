@@ -108,5 +108,31 @@ function render(host,modes,results,tier){
  }
  host.append(grid,node('p','beagu-facilities-caption','역대 공개 조사에서 확인된 시설 · O 있음 / X 없음만 확인 · 미확인 항목 제외. 현재 시설과 다를 수 있습니다.'));
 }
-window.BeaguSchoolFacilities={collect,render};
+// Keep the exact annual questions and comparison values reachable, but avoid
+// repeating facility-only cards in the main view. Explicit searches open them.
+function fold(host,year,{search=false}={}){
+ if(search||![2025,2026].includes(Number(year)))return;
+ const ids=Number(year)===2025?['Q36','Q37','Q43']:['Q41','Q42','Q43','Q44','Q45'];
+ const groups=new Map();
+ for(const row of host.querySelectorAll('.historical-question-row,.beagu-question-block,.question-row')){
+  const label=row.querySelector('.beagu-question-number,.question-code,h4')?.textContent||'';
+  const id=label.trim().match(/^Q\d{2}\b/)?.[0];
+  if(!ids.includes(id)||!row.parentElement)continue;
+  const parent=row.parentElement;
+  if(!groups.has(parent))groups.set(parent,[]);
+  groups.get(parent).push(row);
+ }
+ for(const [parent,rows] of groups){
+  const details=document.createElement('details');details.className='beagu-facilities-source';
+  const summary=document.createElement('summary');summary.textContent='연도별 시설 문항 원문·세부 결과 ('+rows.length+'개)';
+  details.append(summary);
+  parent.insertBefore(details,rows[0]);details.append(...rows);
+  const input=host.querySelector('.beagu-question-input');
+  if(input)input.addEventListener('input',()=>{
+   details.hidden=rows.every(row=>row.hidden);
+   if(input.value.trim()&&!details.hidden)details.open=true;
+  });
+ }
+}
+window.BeaguSchoolFacilities={collect,render,fold};
 })();
