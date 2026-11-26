@@ -44,3 +44,9 @@ assert.equal(historicalChoice(2025,"Q03","잘모름"),null);
 assert.equal(historicalChoice(2025,"Q04","수학여행"),null);
 assert.equal(historicalChoice(2025,"Q04","축제"),null);
 assert.equal(historicalChoice(2025,"Q04","학부모 공개수업"),null);
+
+// Source-verified historical numeric codes, not arbitrary strings.
+for(const [year,ids] of [[2023,['Q11','Q12','Q13','Q14']],[2024,['Q03']]])for(const id of ids){for(let n=1;n<=6;n++){const v=historicalChoice(year,id,String(n));assert.equal(v,context.window.BeaguHistoricalQuestionnaire[year][id][n-1]);assert.equal(context.window.BeaguHistoricalClosedChoice(year,id,String(n)),v);}assert.equal(historicalChoice(year,id,'7'),null);assert.equal(historicalChoice(year,id,'1: SYNTHETIC_PRIVATE_OTHER_TEXT'),null);}
+assert.equal(historicalChoice(2024,'Q03','2'),'2점');
+assert.equal(Object.keys(context.window.BeaguHistoricalQuestionnaire['2023']).length,14);
+assert.equal(Object.keys(context.window.BeaguHistoricalQuestionnaire['2024']).length,14);

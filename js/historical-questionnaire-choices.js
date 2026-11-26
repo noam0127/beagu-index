@@ -1,7 +1,8 @@
 /* Source: 사용자 Google Docs '전국 학교 배구지수(교직문화지수) 2023-2025 문항 체계 종합 보고서'.
  * Only exact documented choices, never reconstructed respondent-level data.
- * 2024 Q03 phone-number item and unknown 2025 Q01-Q30 choices are NOT fabricated.
+ * 2024 Q03 uses documented numeric response codes only; exact verbal labels remain unverified.
  * 2025 Q01-Q30: exact choices from two matching 2026-02-26 PDF exports of the final elementary survey, pp. 18–32. Other text inputs are excluded.
+ * 2023 Q11-Q14: contemporaneous 2023-11-12 announcement, independently checked against six numeric codes in the raw source. Announcement labels are not represented as an exact final form transcription.
  * 2024 numbering mapped by explicitly matching verified question topics.
  * 2025 Q31-Q50 original documented factual-choice response scale. */
 window.BeaguHistoricalQuestionnaire=Object.freeze({
@@ -85,6 +86,38 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "4점: 보통",
       "5점: 많이 있다",
       "6점: 많이 있는게 당연하다"
+    ],
+    "Q11": [
+      "1점: 여러 휴식장소들이 있음",
+      "2점: 학년연구실과 휴식장소가 있음",
+      "3점: 학년연구실 하나 있음",
+      "4점: 학년 연구실도 없음",
+      "5점: 교실에서만 쉴 수 있음",
+      "6점: 교실에서조차 쉴 수 없음"
+    ],
+    "Q12": [
+      "1점: 없는게 당연하다",
+      "2점: 매우 적게 있다.",
+      "3점: 있다.",
+      "4점: 보통",
+      "5점: 많다.",
+      "6점: 매우 많은 게 당연하다."
+    ],
+    "Q13": [
+      "1점: 1회미만",
+      "2점: 1~2회",
+      "3점: 3~4회",
+      "4점: 5~6회",
+      "5점: 7~8회",
+      "6점: 9회 이상"
+    ],
+    "Q14": [
+      "1점: 16미만",
+      "2점: 16~17",
+      "3점: 18~19",
+      "4점: 20~21",
+      "5점: 22~23",
+      "6점: 24이상"
     ]
   },
   "2024": {
@@ -190,6 +223,14 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "4점: 소수의 특정 구성원에 의해 업무분장이 정해진다",
       "5점: 업무분장에 대한 의논조차 하지 않는다",
       "6점: 학폭, 기피학년은 신규와 전입교사가 맡는 게 당연하다"
+    ],
+    "Q03": [
+      "1점",
+      "2점",
+      "3점",
+      "4점",
+      "5점",
+      "6점"
     ]
   },
   "2025": {
@@ -533,6 +574,8 @@ const closedChoice=(catalog,year,id,value)=>{
   if(!Array.isArray(options))return null;
   const v=value.trim();
   if(options.includes(v))return v;
+  // These five questions have verified numeric source codes 1–6.
+  if(((Number(year)===2023&&['Q11','Q12','Q13','Q14'].includes(id))||(Number(year)===2024&&id==='Q03'))&&/^[1-6](?:점)?$/.test(v))return options[Number(v[0])-1]??null;
   // Compare only equivalent numbered labels, never arbitrary text or an ordinal alone.
   const ordinal=text=>{const m=text.match(/^([①②③④⑤⑥⑦⑧⑨⑩]|10|[1-9])(?:\s*점\s*[:.]?|\s*[.)、:]|\s+)?\s*(\S.*)$/);if(!m)return null;const n='①②③④⑤⑥⑦⑧⑨⑩'.includes(m[1])?'①②③④⑤⑥⑦⑧⑨⑩'.indexOf(m[1])+1:Number(m[1]);return n+':'+m[2].replace(/\s+/g,'').replace(/[.]$/,'');};
   const key=ordinal(v);
