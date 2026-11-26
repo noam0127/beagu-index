@@ -136,12 +136,16 @@ function schoolChips(p,host){
  else host.append(node("span","paper-chip","학생수 미확인"));
  host.append(node("span","paper-chip",s.percentile==null?"백분위 자료 없음":"백분위 "+s.percentile+" · "+s.percentile_year+"년"));
 }
+function lockerName(item){
+ if(item.is_operator===true&&item.nickname==="카리브해매너티")return "카리브해매너티 · 운영자";
+ return /^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$/.test(item.nickname||"")?item.nickname:"익명";
+}
 function buildPost(post){
  const entry=node("article","postit-entry");
  entry.dataset.postId=post.id;
  const paper=node("div","postit-paper");
  const top=node("div","paper-overline");
- top.append(node("span","","라커룸 · 익명"),node("span","",timeSince(post.created_at)));
+ top.append(node("span","",lockerName(post)),node("span","",timeSince(post.created_at)));
  paper.append(top);
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
@@ -210,7 +214,7 @@ async function fillComments(id,host){
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
-   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta","익명 · "+timeSince(c.created_at));
+   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta",lockerName(c)+" · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
    row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));
