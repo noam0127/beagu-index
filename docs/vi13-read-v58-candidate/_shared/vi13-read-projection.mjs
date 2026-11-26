@@ -20,9 +20,21 @@ async function checksFor(admin,snapshot,ids,tier){
  if(error||!record(data))throw Error('VI13_CHECKS_UNAVAILABLE');
  return data;
 }
+// Internal only: a cohort member cannot fall back to an older 2026 release when held.
+export async function autoSheetSelection(admin,ids,tier){
+ if(tier!==2)return {covered:[],values:{}};
+ const s=await readVI13Sheet(admin),all=new Set(s.rows.map(r=>r.school_id));
+ const covered=ids.filter(id=>all.has(id));
+ const values=covered.length?automaticVI13Values(s,covered,await checksFor(admin,s,covered,tier),tier):{};
+ return {covered,values};
+}
+export function mergeVI13Selection(legacy,selection){
+ const out={...legacy};
+ for(const id of selection.covered)delete out[id];
+ return {...out,...selection.values};
+}
 export async function autoSheetValues(admin,ids,tier){
- if(tier!==2)return {};
- try{const s=await readVI13Sheet(admin);return automaticVI13Values(s,ids,await checksFor(admin,s,ids,tier),tier);}catch{return {};}
+ try{return (await autoSheetSelection(admin,ids,tier)).values;}catch{return {};}
 }
 export async function autoSheetTop10(admin,tier){
  if(tier!==2)throw Error('VI13_LEVEL');

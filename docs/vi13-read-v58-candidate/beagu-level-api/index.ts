@@ -1,4 +1,4 @@
-import {vi13SheetEnabled,readVI13Sheet,autoSheetValues,autoSheetTop10} from '../_shared/vi13-read-projection.mjs';
+import {vi13SheetEnabled,readVI13Sheet,autoSheetSelection,mergeVI13Selection,autoSheetTop10} from '../_shared/vi13-read-projection.mjs';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import {sanitizeEditedQuestions} from '../_shared/publication-v14-sanitize.mjs';
@@ -139,7 +139,11 @@ Deno.serve(async(req:Request)=>{
    };
    if(tier===1)return await sendSchoolProfiles({},{});
    // Do not replace already approved legacy values merely because a new sheet arrived.
-   const sheetValues=vi13SheetEnabled()?await autoSheetValues(admin,ids,tier):{};
+   let sheetSelection:{covered:string[];values:Record<string,number>}={covered:[],values:{}};
+   if(vi13SheetEnabled()){
+    try{sheetSelection=await autoSheetSelection(admin,ids,tier);}
+    catch{return send({error:'VI13_SNAPSHOT_UNAVAILABLE'},503,origin);}
+   }
    const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier});
    if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
    if(edited.data.active===true){
@@ -149,7 +153,7 @@ Deno.serve(async(req:Request)=>{
     const other=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier===1?2:1});
     const common2026:Record<string,number>={};
     if(!other.error&&other.data?.active===true)for(const id of ids){const p=other.data.schools?.[id]?.percentile;if(Object.hasOwn(values,id)&&p===values[id])common2026[id]=p;}
-    return await sendSchoolProfiles({...sheetValues,...values},{});
+    return await sendSchoolProfiles(mergeVI13Selection(values,sheetSelection),{});
    }
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
@@ -195,7 +199,7 @@ Deno.serve(async(req:Request)=>{
        if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
      }
    }
-   return await sendSchoolProfiles({...sheetValues,...out},{});
+   return await sendSchoolProfiles(mergeVI13Selection(out,sheetSelection),{});
 
   }
 
@@ -295,6 +299,12 @@ Deno.serve(async(req:Request)=>{
   const verifiedLevel=Number(session.access_level);
   const level=body.viewLevel===undefined?verifiedLevel:body.viewLevel;
   if(typeof level!=='number'||![1,2].includes(level)||level>verifiedLevel)return send({error:'ACCESS_DENIED'},403,origin);
+  let detailSelection:{covered:string[];values:Record<string,number>}={covered:[],values:{}};
+  if(level===2&&vi13SheetEnabled()){
+   try{detailSelection=await autoSheetSelection(admin,[id],level);}
+   catch{return send({error:'VI13_SNAPSHOT_UNAVAILABLE'},503,origin);}
+  }
+  const vi13Covered=detailSelection.covered.includes(id);
   const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:[id],p_level:level});
   if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
   // Before the first edited file, preserve legacy publication rules.
@@ -327,7 +337,7 @@ Deno.serve(async(req:Request)=>{
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
     .filter((m:any)=>(m.year!==2026||(level===2&&tierPublished2026))&&
-      !(level===1&&(m.year<2025||m.year===2026)&&m.key==='percentile')&&!(m.year===2026&&/^Q(?:31|50|51)(?:$|[._-])/.test(String(m.key||''))));
+      !(vi13Covered&&m.year===2026&&m.key==='percentile')&&!(level===1&&(m.year<2025||m.year===2026)&&m.key==='percentile')&&!(m.year===2026&&/^Q(?:31|50|51)(?:$|[._-])/.test(String(m.key||''))));
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
   const [officialNumbers, officialCategories]=await Promise.all([
@@ -596,7 +606,7 @@ Deno.serve(async(req:Request)=>{
   }
   const finalRow=edited.data.active===true?edited.data.schools?.[id]:null;
   const schoolQuestionResults2026=level!==2?[]:edited.data.active===true?sanitizeEditedQuestions(finalRow?.questions):Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):[];
-  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:level>=2?(finalRow?.percentile??null):null},200,origin);
+  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:level>=2?(vi13Covered?(detailSelection.values[id]??null):(finalRow?.percentile??null)):null},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 

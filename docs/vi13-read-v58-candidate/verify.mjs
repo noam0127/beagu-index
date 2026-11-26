@@ -3,7 +3,7 @@ import {reconstructVI13,normalizeSourceTime,assessRevalidation} from './revalida
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {METHOD,parseVI13Sheet} from './_shared/vi13-sheet-sync.mjs';
-import {automaticVI13Values,autoSheetValues,autoSheetTop10} from './_shared/vi13-read-projection.mjs';
+import {automaticVI13Values,autoSheetValues,autoSheetSelection,mergeVI13Selection,autoSheetTop10} from './_shared/vi13-read-projection.mjs';
 import {normalizeTimeMinutes,sanitizeEditedQuestions} from './_shared/publication-v14-sanitize.mjs';
 import {publicQuestionResults} from './_shared/results-2026.mjs';
 globalThis.Deno={env:{get:()=> '1'}};
@@ -34,8 +34,8 @@ assert.deepEqual(publicQuestionResults([q('Q19',2,1000),q('Q31',1,0),q('Q50',1,0
 assert.deepEqual(sanitizeEditedQuestions(['Q31','Q50','Q51','Q19'].map(questionId=>({questionId,row:-1,values:['private']}))),[]);
 assert.deepEqual(sanitizeEditedQuestions([{questionId:'Q12',row:-1,values:['기타','free text','운영하지 않는다']}]),[{questionId:'Q12',row:-1,values:['운영하지 않는다']}]);
 const source=readFileSync(new URL('beagu-level-api/index.ts',import.meta.url),'utf8');
-assert.ok(source.indexOf('if(tier===1)return await sendSchoolProfiles({},{})')<source.indexOf('const sheetValues='));
-assert.ok(source.includes('autoSheetValues(admin,ids,tier)'));assert.ok(source.includes('sanitizeEditedQuestions(finalRow?.questions)'));
+assert.ok(source.indexOf('if(tier===1)return await sendSchoolProfiles({},{})')<source.indexOf('let sheetSelection:'));
+assert.ok(source.includes('autoSheetSelection(admin,ids,tier)'));assert.ok(source.includes('sanitizeEditedQuestions(finalRow?.questions)'));
 assert.ok(source.includes('const schoolQuestionResults2026=level!==2?[]'));assert.ok(source.includes('(m.year!==2026||(level===2&&tierPublished2026))'));assert.ok(!source.includes('lv1Approved2026'));
 assert.ok(source.includes("Number(verified.access_level)<2"));assert.ok(!calls.some(x=>x.includes('approval')||x.includes('percentile_v13_values')));
 const require=createRequire(import.meta.url),h=require('../../js/beagu-home-ranking-v1.js');assert.ok(h.validAuto(top));assert.equal(h.validAuto({...top,rows:top.rows.map(r=>({...r,percentile:100}))}),false);
@@ -58,3 +58,19 @@ assert.equal((preflight.match(/create or replace function/g)||[]).length,1);
 assert.equal((preflight.match(/\$v14\$/g)||[]).length,2);
 assert.ok(preflight.includes("'^Q(0[1-9]|1[0-3])$' and q->>'row'='-1'"));
 assert.ok(preflight.includes("left join score_check v"));
+
+// Cohort holds cannot be bypassed by edited/legacy values; non-cohort legacy remains.
+const covered='7000120',outside='9999999';checks.schools[covered].blocked=true;
+const selection=await autoSheetSelection(admin,[covered,outside],2);
+assert.deepEqual(selection,{covered:[covered],values:{}});
+assert.deepEqual(mergeVI13Selection({[covered]:99,[outside]:12},selection),{[outside]:12});
+checks.schools[covered].blocked=false;
+assert.deepEqual(mergeVI13Selection({[covered]:99},await autoSheetSelection(admin,[covered],2)),{[covered]:p});
+await assert.rejects(autoSheetSelection({rpc:async()=>({error:{}})},[covered],2));
+assert.ok(source.includes('autoSheetSelection(admin,[id],level)'));
+assert.ok(source.includes("!(vi13Covered&&m.year===2026&&m.key==='percentile')"));
+assert.ok(source.includes('mergeVI13Selection(values,sheetSelection)'));
+assert.ok(source.includes('mergeVI13Selection(out,sheetSelection)'));
+assert.ok(preflight.includes('exact_reproduced then true'));
+assert.ok(preflight.includes('priorSurfaceOverlap'));
+console.log('PASS cohort-specific fail-closed shared read path; historical legacy outside cohort preserved');

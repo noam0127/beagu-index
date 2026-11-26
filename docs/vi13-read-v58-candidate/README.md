@@ -8,3 +8,5 @@ New TOP10 endpoint requires verified Lv2; existing manual rank/name fallback rem
 Lv.1 detailed survey response is also blocked (including edited questions and legacy 2026 metrics). Numeric time metrics lack normalization provenance and are withheld; source-side normalized question aggregate remains separate.
 
 2026-11-26 follow-up: see revalidation-2026-11-26.md. Exact older-score comparison is now computed, but stale source and unknown risk remain fail-closed. The standalone module and synthetic tests verify the reconstruction math and input-level time correction. No raw source data copied into git.
+
+2026-11-27: see reconstruction-2026-11-27.md. Verified exact snapshot checksum only; actual risk indicators connected, residual unknowns remain fail-closed. Search/detail share one cohort selection and no legacy fallback for held cohort members. No new public values; no operating changes.

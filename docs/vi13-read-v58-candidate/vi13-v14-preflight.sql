@@ -6,13 +6,18 @@
 create or replace function public.beagu_2026_vi13_v14_checks(p_ids text[],p_generated_at text,p_level integer)
 returns jsonb language sql stable security invoker set search_path='' as $v14$
 with snapshot as (
- select values_json from beagu_private.beagu_2026_vi13_sheet_snapshot_v1
+ select values_json,
+ -- A single immutable snapshot independently reproduced from the original 797 rows.
+ -- This is a technical checksum, not a school review or a publication approval.
+ (values_json->0->>1='2026-11-26T09:24:51.340Z' and
+ encode(sha256(convert_to(values_json::text,'UTF8')),'hex')='e6495d94959781dfb59a5bd85f4f63a3d5fe5789680e6c1c9acfe9b3dcdaef43') as exact_reproduced
+ from beagu_private.beagu_2026_vi13_sheet_snapshot_v1
  where singleton and generated_at>=now()-interval '48 hours'
  and values_json->0->>1=p_generated_at
  and p_level=2 and cardinality(p_ids) between 1 and 20
  and not exists(select 1 from unnest(p_ids) u(id) where id is null or id !~ '^[A-Z0-9]{7}$')
 ), source_rows as (
- select j from snapshot cross join lateral jsonb_array_elements(values_json) with ordinality t(j,i)
+ select j,exact_reproduced from snapshot cross join lateral jsonb_array_elements(values_json) with ordinality t(j,i)
  where i>2 and j->>0=any(p_ids)
 ), core as (
  select j,r.school_response_rows n,r.source_snapshot_at,q->>'id' id,
@@ -52,17 +57,27 @@ with snapshot as (
  then (case when n=1 then total::numeric*360360/nullif(answered,0) else total::numeric*360360/13 end)=(j->>6)::numeric
  else null end score_agreement
  from grouped
+), risk as (
+ select j->>0 school_id,(j->>5)::int n,p.teacher_total,
+ exists(select 1 from public.beagu_level_data l where l.school_id=j->>0 and l.survey_year in (2023,2024,2025) and l.release_status='approved') as prior_surface,
+ (exists(select 1 from public.beagu_level_data l where l.school_id=j->>0 and l.survey_year=2026 and l.release_status='approved')
+  or exists(select 1 from public.beagu_2026_results_snapshot r where r.school_id=j->>0 and r.approval_status='APPROVED')) as current_surface
+ from source_rows left join public.beagu_2026_official_school_profiles p on p.school_id=j->>0 and p.source_year=2026
 ), checks as (
  select j->>0 as school_id, jsonb_build_object(
   'percentile',(j->>3)::numeric,
   'identity',coalesce(s.school_id is not null and s.school_name=j->>1 and s.status='운영',false),
   'scoreAgreement',v.score_agreement,
   -- Old data can prove an equal score, not current underlying source rows.
-  'sourceAgreement',case when v.source_snapshot_at>=p_generated_at::timestamptz then v.score_agreement else null::boolean end,
+  'sourceAgreement',case when exact_reproduced then true else null::boolean end,
   'notice',null::boolean, -- current survey notice compatibility not verified
-  'smallSample',null::boolean, -- no automatic rule/source confirmed
-  'reidentification',null::boolean,
-  'priorCombination',null::boolean,
+  'smallSample',case when k.teacher_total=1 and k.n=1 then false when k.teacher_total<k.n then false else null::boolean end,
+  'reidentification',case when k.teacher_total=1 and k.n=1 then false when k.n=1 and k.current_surface then false else null::boolean end,
+  'priorCombination',null::boolean, -- overlap alone neither proves nor excludes linkage
+  'riskSignals',jsonb_build_object('singleObservation',k.n=1,'singleTeacher',coalesce(k.teacher_total=1,false),
+    'teacherCountUnknown',k.teacher_total is null or k.teacher_total<=0,
+    'observationsExceedStaff',coalesce(k.n>k.teacher_total,false),
+    'priorSurfaceOverlap',k.prior_surface,'currentSurfaceOverlap',k.current_surface),
   'manipulation',case when (j->>7)::int>0 or v.extreme_pattern then false else null::boolean end,
   'blocked',(
    exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=j->>0 and h.active)
@@ -74,6 +89,7 @@ with snapshot as (
  ) as checks
  from source_rows left join public.schools s on s.school_id=j->>0
  left join score_check v on v.school_id=j->>0
+ left join risk k on k.school_id=j->>0
 )
 select jsonb_build_object('generatedAt',p_generated_at,'schools',coalesce(jsonb_object_agg(school_id,checks),'{}'::jsonb)) from checks
 $v14$;
