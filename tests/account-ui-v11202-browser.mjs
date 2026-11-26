@@ -6,7 +6,7 @@ const card=read('challenge.html').match(/<section id="level3-account"[\s\S]*?<\/
 assert.ok(card);
 const browser=await chromium.launch({headless:true});
 try{
- const page=await browser.newPage({viewport:{width:375,height:800}});
+ const page=await browser.newPage({viewport:{width:Number(process.env.BEAGU_TEST_WIDTH||375),height:800}});
  const shared='a'.repeat(64), rejected='b'.repeat(64), personal='c'.repeat(64), account='d'.repeat(64);
  await page.route('**/*',r=>r.request().url()==='https://fixture.invalid/challenge.html'?r.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><a id="beaguLevelState" data-level="2" data-provisional="true" data-account-level="2">Lv.2</a><div id="challengeAccessPanel" data-challenge-verified-level="2" data-provisional="true" data-account-level="2"></div>'+card}):r.abort());
  await page.goto('https://fixture.invalid/challenge.html');
@@ -34,6 +34,10 @@ try{
  await page.addStyleTag({content:read('styles/beagu-participation-auth-v2.css')});
  await page.addScriptTag({content:read('js/beagu-participation-auth-v2.js')});
  await page.addScriptTag({content:read('js/challenge-level3-v1.js')});
+ await page.locator('#beaguLevelState').click();
+ assert.equal(await page.locator('#beaguParticipationOverlay').isVisible(),true);
+ assert.equal(await page.locator('#beaguParticipationForm').isHidden(),true,'Normal Lv.2 badge must not ask for another code');
+ await page.locator('[data-beagu-close]').click();
  await page.locator('#level3Upgrade').click();
  assert.equal(await page.locator('#beaguParticipationOverlay').isVisible(),true);
  assert.equal(await page.locator('#beaguParticipationForm').isVisible(),true);
