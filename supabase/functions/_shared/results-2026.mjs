@@ -46,7 +46,7 @@ export function publicQuestionResults(questions) {
   return questions.flatMap(q=>{
     if(!keys(q,['id','row','valid','invalid','counts','minutes_sum'])||
       typeof q.id!=='string'||!Object.hasOwn(catalog,q.id)||q.id==='Q31'||q.id==='Q51'||
-      occurrences.get(q.id+':'+q.row)!==1||q.invalid!==0||!integer(q.valid,50000)||q.valid<1)return [];
+      occurrences.get(q.id+':'+q.row)!==1||!integer(q.invalid,50000)||!integer(q.valid,50000)||q.valid<1||q.valid+q.invalid>50000)return [];
     const m=catalog[q.id],grid=m.kind==='grid';
     if(!Number.isSafeInteger(q.row)||(grid?(q.row<0||q.row>=m.rows.length):q.row!==-1))return [];
     const options=grid?m.columns:m.options;
@@ -54,18 +54,21 @@ export function publicQuestionResults(questions) {
       !q.counts.every(c=>integer(c,q.valid))||!integer(q.minutes_sum,1439*q.valid))return [];
     const sum=q.counts.reduce((a,b)=>a+b,0),multi=m.kind==='multi'||q.id==='Q45';
     if(m.kind==='time'?sum!==0:(q.minutes_sum!==0||(multi?sum<q.valid:sum!==q.valid)))return [];
-    // Do not project free-form/other selections even if a stored row was corrupted.
-    if(options.some((v,i)=>v==='기타'&&q.counts[i]>0))return [];
+    // Approval and snapshot validation are unchanged. At projection only, keep
+    // validated fixed choices even when other rows were marked invalid. Never
+    // publish other/free-text labels, counts, review pointers, or raw values.
+    const fixed=options.map((v,i)=>({v,n:q.counts[i]})).filter(x=>x.v!=='기타'&&x.n>0);
     let values=[];
     if(m.kind==='time'){
       const minutes=Math.round(q.minutes_sum/q.valid);
       values=[String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0')];
     }else if(m.kind==='multi'||q.id==='Q45'){
-      values=options.filter((_,i)=>q.counts[i]>0);
+      values=fixed.map(x=>x.v);
     }else{
-      const max=Math.max(...q.counts);
-      values=options.filter((_,i)=>q.counts[i]===max);
+      if(!fixed.length)return [];
+      const max=Math.max(...fixed.map(x=>x.n));
+      values=fixed.filter(x=>x.n===max).map(x=>x.v);
     }
-    return [{questionId:q.id,row:q.row,values}];
+    return values.length?[{questionId:q.id,row:q.row,values}]:[];
   });
 }

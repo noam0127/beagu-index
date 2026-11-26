@@ -16,7 +16,7 @@
       const catalog=window.Beagu2026Questionnaire;if(!catalog||typeof r?.questionId!=='string'||!Object.hasOwn(catalog,r.questionId)||r.questionId==='Q31'||r.questionId==='Q51')return [];
       const m=catalog[r.questionId];if(!Array.isArray(r.values))return [];
       const allowed=m.kind==='grid'?m.columns:m.options;
-      const clean={questionId:r.questionId,row:r.row,values:[...new Set(r.values.filter(v=>typeof v==='string'&&(m.kind==='time'?/^([01]\d|2[0-3]):[0-5]\d$/.test(v):allowed.includes(v))))]};
+      const clean={questionId:r.questionId,row:r.row,values:[...new Set(r.values.filter(v=>typeof v==='string'&&(m.kind==='time'?/^([01]\d|2[0-3]):[0-5]\d$/.test(v):v!=='기타'&&allowed.includes(v))))]};
       return safe(clean)?[clean]:[];
     });
   }

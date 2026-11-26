@@ -50,3 +50,10 @@ for(const [year,ids] of [[2023,['Q11','Q12','Q13','Q14']],[2024,['Q03']]])for(co
 assert.equal(historicalChoice(2024,'Q03','2'),'2점');
 assert.equal(Object.keys(context.window.BeaguHistoricalQuestionnaire['2023']).length,14);
 assert.equal(Object.keys(context.window.BeaguHistoricalQuestionnaire['2024']).length,14);
+
+assert.equal(historicalChoice(2024,'Q12','3점: 원본 선택지 설명 미확인'),'3점');
+for(const label of final25.Q14){const bare=label.replace(/^[①②③④⑤]\s*/,'');assert.equal(historicalChoice(2025,'Q14',bare),label);assert.equal(context.window.BeaguHistoricalClosedChoice(2025,'Q14',bare),label);assert.equal(historicalChoice(2025,'Q14',bare+' '+canary),null);}
+assert.equal(historicalChoice(2025,'Q27','1 대부 바르게 인사한다'),final25.Q27[0]);
+const mixedOther=[{questionId:'Q12',row:-1,values:[catalog.Q12.options[0],'기타',canary]}];
+assert.deepEqual(filterEdited2026Results(mixedOther),[{questionId:'Q12',row:-1,values:[catalog.Q12.options[0]]}]);
+assert.equal(context.window.Beagu2026ApprovedResults.summary(mixedOther).Q12,catalog.Q12.options[0]);

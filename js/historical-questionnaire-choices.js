@@ -140,6 +140,7 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
     "Q12": [
       "1점: 분리 장소가 여러 곳이며 실제 분리된다",
       "2점: 단 한 곳뿐이며 실제 분리된다",
+      "3점",
       "4점: 장소는 있으나 실제 분리되지 않는다",
       "5점: 분리 장소가 없다",
       "6점: 어떤 일이 있어도 담임이 홀로 담당한다"
@@ -574,6 +575,16 @@ const closedChoice=(catalog,year,id,value)=>{
   if(!Array.isArray(options))return null;
   const v=value.trim();
   if(options.includes(v))return v;
+  // Q12's third numeric source code is documented; its verbal label is unknown.
+  if(Number(year)===2024&&id==='Q12'&&(v==='3'||v==='3점: 원본 선택지 설명 미확인'))return '3점';
+  // The original 2025 source contains exact, unnumbered Q14 labels.
+  if(Number(year)===2025&&id==='Q14'){
+    const normalize=text=>text.replace(/\s+/g,'').replace(/\.$/,'');
+    const bareMatches=options.filter(o=>normalize(o.replace(/^[①②③④⑤]\s*/,''))===normalize(v));
+    if(bareMatches.length===1)return bareMatches[0];
+  }
+  // Explicit source-observed typo, independently matched to final form Q27 option 1.
+  if(Number(year)===2025&&id==='Q27'&&/^(?:①|1)\s*대부 바르게 인사한다$/.test(v))return options[0];
   // These five questions have verified numeric source codes 1–6.
   if(((Number(year)===2023&&['Q11','Q12','Q13','Q14'].includes(id))||(Number(year)===2024&&id==='Q03'))&&/^[1-6](?:점)?$/.test(v))return options[Number(v[0])-1]??null;
   // Compare only equivalent numbered labels, never arbitrary text or an ordinal alone.
