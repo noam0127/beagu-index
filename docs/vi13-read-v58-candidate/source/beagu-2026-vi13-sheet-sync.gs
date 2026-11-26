@@ -112,8 +112,9 @@ function refreshBeagu2026VI13SheetSync(){
   }
   // One rectangular write; the verified original tabs are never edited.
   if(!tab)tab=book.insertSheet(BEAGU_VI13_SYNC_TAB);
+  const generatedAt=new Date().toISOString();
   const rows=[
-   ['VI13_SYNC_V1',new Date().toISOString(),s.rows.length,s.rows.reduce((n,r)=>n+r.observations,0),BEAGU_VI13_METHOD,s.sourceRows,'PRIVATE',JSON.stringify(s.recheck)],
+   ['VI13_SYNC_V1',generatedAt,s.rows.length,s.rows.reduce((n,r)=>n+r.observations,0),BEAGU_VI13_METHOD,s.sourceRows,'PRIVATE',JSON.stringify({...s.recheck,generatedAt})],
    ['school_id','school_name','region','percentile','rank','observations','sum_units','flags'],
    ...s.rows.map(r=>[r.school_id,r.school_name,r.region,r.percentile,r.rank,r.observations,r.sum_units,r.flags])
   ];
@@ -209,5 +210,6 @@ function beagu26VI13SecondPass(values,schools,expected) {
  const keys=['school_id','school_name','region','observations','sum_units','flags','rank','percentile'];
  if(rows.length!==expected.length||rows.some((r,i)=>keys.some(k=>r[k]!==expected[i][k])))throw Error('VI13_INDEPENDENT_RECHECK_MISMATCH');
  return {version:'VI13_SOURCE_RECHECK_V1',source:BEAGU26.sourceId,sourceRows,schools:rows.length,
-  observations:rows.reduce((a,b)=>a+b.observations,0),extremeIds:[...extreme].sort()};
+  observations:rows.reduce((a,b)=>a+b.observations,0),extremeIds:[...extreme].sort(),
+  aggregateDigest:Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify(rows.map(r=>[r.school_id,r.school_name,r.region,r.percentile,r.rank,r.observations,r.sum_units,r.flags])),Utilities.Charset.UTF_8).map(b=>(b&255).toString(16).padStart(2,'0')).join('')};
 }

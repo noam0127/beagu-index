@@ -16,4 +16,5 @@ jobs:
         with:
           node-version: '22'
       - run: node docs/vi13-read-v58-candidate/verify.mjs
+      - run: node docs/vi13-read-v58-candidate/verify-source-sync.mjs
       - run: node --check js/beagu-home-ranking-v1.js

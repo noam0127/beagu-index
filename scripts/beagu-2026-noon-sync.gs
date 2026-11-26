@@ -564,15 +564,15 @@ function refreshBeagu2026Stats(snapshot) {
 }
 
 // VI13 private nationwide reaggregation. Only Q01-Q13 are used.
-function beagu26BuildVI13(values,schools){
+function beagu26BuildVI13(values,schools,resolve=resolveSchool){
  const c=questionColumns(values[0]);beagu26PrepareSchoolIndex(schools);
- const signals=beagu26RowReviewSignals(values,c,schools),groups=new Map();
+ const signals=beagu26RowReviewSignals(values,c,schools,resolve),groups=new Map();
  let unmatched=0,invalid=0,excluded=0,suspect=0;
  const domains=[[0,1,2,3,4,11,12],[5,6,7,8],[9,10]];
  for(let i=1;i<values.length;i++){
   const row=values[i];if(!row[0]&&!row[c.school])continue;
   const day=getSubmittedDay(row[0]);if(!day){invalid++;continue;}if(day<BEAGU26.firstOfficialResponseDay||day>'2026-12-31'){excluded++;continue;}
-  const m=resolveSchool(row,c,schools);if(!m.school||m.school.status!=='운영'){unmatched++;continue;}
+  const m=resolve(row,c,schools);if(!m.school||m.school.status!=='운영'){unmatched++;continue;}
   let unknown=false;const scores=c.q.map((col,j)=>{try{return questionScore(j+1,row[col]);}catch{unknown=true;return null;}});
   const n=scores.filter(v=>v!==null).length;
   if(n<9||domains.some((d,j)=>d.filter(k=>scores[k]!==null).length<[4,2,1][j])){invalid++;continue;}
@@ -646,7 +646,7 @@ function beagu26Selections(value, options, multiple) {
 // Only identical second-level timestamps and all 13 identical mandatory
 // selections at the same uniquely matched school are duplicate suspects.
 // Never remove rows on suspicion, persist fingerprints or export them.
-function beagu26RowReviewSignals(values,c,schools) {
+function beagu26RowReviewSignals(values,c,schools,resolve=resolveSchool) {
   const signals=new Map(),seen=new Map();
   if(!Array.isArray(c.q)||c.q.length!==13)return signals;
   const add=(i,reason)=>{
@@ -656,7 +656,7 @@ function beagu26RowReviewSignals(values,c,schools) {
   for(let i=1;i<values.length;i++){
     const r=values[i],day=getSubmittedDay(r[0]);
     if(!day||day<'2026-11-01'||day>'2026-12-31')continue;
-    const match=resolveSchool(r,c,schools);
+    const match=resolve(r,c,schools);
     if(!match.school)continue;
     if(match.typeConflict)add(i,'SCHOOL_TYPE_REVIEW');
     const core=c.q.map(j=>String(r[j]||'').trim());

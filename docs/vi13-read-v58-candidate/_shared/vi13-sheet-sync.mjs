@@ -59,7 +59,9 @@ export async function readVI13Sheet(admin){
  if(!vi13SheetEnabled())throw Error('VI13_SYNC_DISABLED');
  const {data,error}=await admin.rpc('beagu_2026_vi13_sheet_read_v1');
  if(error||!data)throw Error('VI13_SNAPSHOT_UNAVAILABLE');
- return parseVI13Sheet(data);
+ const snapshot=parseVI13Sheet(data);
+ await verifySourceRecheckDigest(snapshot);
+ return snapshot;
 }
 export function validateVI13Push(payload,now=Date.now()){
  if(!payload||typeof payload!=='object'||Array.isArray(payload)||Object.keys(payload).sort().join(',')!=='kind,values'||payload.kind!=='VI13_SHEET_PUSH_V1')throw Error('VI13_PUSH_SCHEMA');
@@ -77,9 +79,17 @@ export function parseSourceRecheck(raw,meta){
  if(raw===undefined||raw===null||raw==='')return null;
  if(typeof raw!=='string'||raw.length>120000)throw Error('VI13_RECHECK_FORMAT');
  const v=JSON.parse(raw);
- if(!v||Array.isArray(v)||Object.keys(v).sort().join(',')!=='extremeIds,observations,schools,source,sourceRows,version'||
+ if(!v||Array.isArray(v)||Object.keys(v).sort().join(',')!=='aggregateDigest,extremeIds,generatedAt,observations,schools,source,sourceRows,version'||
  v.version!=='VI13_SOURCE_RECHECK_V1'||v.source!=='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4'||
- v.sourceRows!==meta[5]||v.schools!==meta[2]||v.observations!==meta[3]||!Array.isArray(v.extremeIds)||
+ v.generatedAt!==meta[1]||typeof v.aggregateDigest!=='string'||!/^[0-9a-f]{64}$/.test(v.aggregateDigest)||v.sourceRows!==meta[5]||v.schools!==meta[2]||v.observations!==meta[3]||!Array.isArray(v.extremeIds)||
  v.extremeIds.length>meta[2]||new Set(v.extremeIds).size!==v.extremeIds.length||v.extremeIds.some(id=>typeof id!=='string'||!ID.test(id)))throw Error('VI13_RECHECK_SCHEMA');
  return v;
+}
+
+// Canonical row hash ties a second-pass summary to the exact stored cohort.
+export async function verifySourceRecheckDigest(snapshot){
+ if(!snapshot.verification)return;
+ const rows=snapshot.rows.map(r=>[r.school_id,r.school_name,r.region,r.percentile,r.rank,r.observations,r.sum_units,r.flags]);
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(rows)))),b=>b.toString(16).padStart(2,'0')).join('');
+ if(hash!==snapshot.verification.aggregateDigest)throw Error('VI13_RECHECK_DIGEST_MISMATCH');
 }

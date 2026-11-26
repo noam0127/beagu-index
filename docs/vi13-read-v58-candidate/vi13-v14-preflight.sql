@@ -63,7 +63,11 @@ with snapshot as (
  select j->>0 school_id,(j->>5)::int n,p.teacher_total,
  exists(select 1 from public.beagu_level_data l where l.school_id=j->>0 and l.survey_year in (2023,2024,2025) and l.release_status='approved') as prior_surface,
  (exists(select 1 from public.beagu_level_data l where l.school_id=j->>0 and l.survey_year=2026 and l.release_status='approved')
-  or exists(select 1 from public.beagu_2026_results_snapshot r where r.school_id=j->>0 and r.approval_status='APPROVED')) as current_surface
+  or exists(select 1 from public.beagu_2026_results_snapshot r where r.school_id=j->>0 and r.approval_status='APPROVED')
+  or exists(select 1 from public.beagu_release_metrics_v2 m where m.school_id=j->>0 and m.survey_year=2026 and m.approval_status='APPROVED')
+  or exists(select 1 from public.beagu_edited_school_rows e where e.school_id=j->>0 and e.survey_year=2026 and lower(e.release_status)='approved')
+  or exists(select 1 from public.beagu_school_report_yearly y where y.school_id=j->>0 and y.survey_year=2026 and lower(y.publication_status) in ('approved','published','public','released'))
+  or exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=j->>0 and d.decision='APPROVE')) as current_surface
  from source_rows left join public.beagu_2026_official_school_profiles p on p.school_id=j->>0 and p.source_year=2026
 ), checks as (
  select j->>0 as school_id, jsonb_build_object(
@@ -75,10 +79,10 @@ with snapshot as (
    when verification->>'version'='VI13_SOURCE_RECHECK_V1'
     and verification->>'source'='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4'
     then true else null::boolean end,
-  'notice',null::boolean, -- current survey notice compatibility not verified
+  'notice',null::boolean, -- Oct 26 design disavows ranking; actual Nov 1 notice not verified
   'smallSample',case when k.teacher_total=1 and k.n=1 then false when k.teacher_total<k.n then false else null::boolean end,
-  'reidentification',case when k.teacher_total=1 and k.n=1 then false when k.n=1 and k.current_surface then false else null::boolean end,
-  'priorCombination',null::boolean, -- overlap alone neither proves nor excludes linkage
+  'reidentification',case when k.teacher_total=1 and k.n=1 then false when k.current_surface then false else null::boolean end,
+  'priorCombination',case when k.current_surface then false else null::boolean end, -- same-year overlap requires differencing review; historical overlap alone is inconclusive
   'riskSignals',jsonb_build_object('singleObservation',k.n=1,'singleTeacher',coalesce(k.teacher_total=1,false),
     'teacherCountUnknown',k.teacher_total is null or k.teacher_total<=0,
     'observationsExceedStaff',coalesce(k.n>k.teacher_total,false),

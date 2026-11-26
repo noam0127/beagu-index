@@ -12,3 +12,5 @@ Lv.1 detailed survey response is also blocked (including edited questions and le
 2026-11-27: see reconstruction-2026-11-27.md. Verified exact snapshot checksum only; actual risk indicators connected, residual unknowns remain fail-closed. Search/detail share one cohort selection and no legacy fallback for held cohort members. No new public values; no operating changes.
 
 Follow-up 2026-11-27: see v14-review-followup.md. Future authenticated source recheck metadata is a candidate only; do not install Apps Script or deploy ingestion. Coverage-only legacy blockers are reconciled only for technically verified snapshots; other blockers retained. No release approval produced.
+
+2026-11-27 notice/source integration audit: see v14-notice-risk-audit.md. Original 11/1 notice unresolved; prelaunch design has explicit no-ranking language. Source second pass integration tests execute synthetic data only. No deployment or actual automatic publication.
