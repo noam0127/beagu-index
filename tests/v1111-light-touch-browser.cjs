@@ -12,6 +12,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='home_ranking_2026'){
+  assert.deepEqual(route.request().postDataJSON(),{action:'home_ranking_2026'});
+  assert.equal(token,undefined);
+  const day='2026-11-25';
+  return route.fulfill({status:200,headers:cors,body:JSON.stringify({day,rows:fixture.slice(0,2).map((v,i)=>({school_id:v.school_id,school_name:v.school_name,region:v.region,rank:i+1,percentile:99-i}))})});
+ }
  if(a==='school_like_state')return route.fulfill({status:200,headers:cors,body:JSON.stringify({canLike:false,schools:route.request().postDataJSON().schoolIds.map(school_id=>({school_id,likes:0,liked:false}))})});
  if(a==='public_school_basics_2026')return route.fulfill({status:200,headers:cors,body:JSON.stringify({official2026:{}})});
  if(a==='login')return route.fulfill({status:200,headers:cors,body:JSON.stringify({level:tier,token:'b'.repeat(64)})});
@@ -103,6 +109,10 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.goto(origin+'/index.html');
  await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
  await page.waitForFunction(()=>document.querySelector('#beaguHomeNoticeBody').textContent==='공통 검증 공지');
+ await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===2);
+ assert.equal(await page.locator('#beagu2026Ranking').isVisible(),true);
+ assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2']);
+
  const ids=()=>page.locator('#beaguTodaySchools .beagu-home-school-name').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).searchParams.get('school_id')));
  const today=await ids();assert.equal(new Set(today).size,2);
  const experienceLinks=()=>page.locator('#beaguTodaySchools .court-school-experience').evaluateAll(nodes=>nodes.map(n=>({id:new URL(n.href).searchParams.get('school_id'),path:new URL(n.href).pathname,text:n.textContent})));
