@@ -983,7 +983,7 @@
         viewerTier=Number(fresh?.level)||viewerTier;
         latest2026Status='ready';
       }
-      window.BeaguSchoolFacilities?.render(facilities,modes,results2026,viewerTier);
+      window.BeaguSchoolFacilities?.render(facilities,modes,results2026,failed?viewerTier:Number(fresh?.level));
       if(currentYear===2026)choose(2026);
     });
     // A school can have approved historical question distributions even when
