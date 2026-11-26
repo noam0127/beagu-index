@@ -204,6 +204,16 @@ Deno.serve(async(req:Request)=>{
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    const member=await verifiedMember(viewer);
    if(action==="writer_status")return respond(req,{linked:Boolean(member),readable:true});
+   if(action==="home_latest"){
+    const {data,error}=await db.from("beagu_postit_posts").select("id,body,created_at,locker_nickname,locker_operator")
+     .eq("status","published").order("created_at",{ascending:false}).order("id",{ascending:false}).limit(3);
+    if(error)throw error;
+    return respond(req,{posts:(data||[]).slice(0,3).map((p:any)=>({
+     id:p.id,excerpt:[...String(p.body||"")].slice(0,100).join(""),created_at:p.created_at,
+     nickname:p.locker_operator===true&&p.locker_nickname==="카리브해매너티"?"카리브해매너티":/^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$/.test(p.locker_nickname||"")?p.locker_nickname:"익명",
+     is_operator:p.locker_operator===true&&p.locker_nickname==="카리브해매너티"
+    }))});
+   }
    if(action==="notifications"){
     const {data:actor,error:actorError}=await db.rpc("beagu_locker_notification_actor_v1",{p_token_sha:viewer.hash});
     if(actorError||typeof actor!=="string"||!UUID.test(actor))return fail(req,"LEVEL_REQUIRED",403);
