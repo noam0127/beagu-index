@@ -890,7 +890,7 @@
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
     if(![1,2].includes(viewerTier)){host.replaceChildren(make('p','beagu-detail-feedback','Lv.1 인증 후 상세조회할 수 있습니다.'));return;}
     const facilities=make('section','beagu-facilities');
-    window.BeaguSchoolFacilities?.render(facilities,modes,results2026,viewerTier);
+    window.BeaguSchoolFacilities?.render(facilities,modes,results2026,viewerTier,selections);
     if(!window.BeaguSchoolFacilities)facilities.hidden=true;
     host.replaceChildren(facilities,yearlyPercentileHistory(school,viewerTier));
     const allowedYears=[1,2].includes(viewerTier)?YEARS:[];
@@ -983,7 +983,7 @@
         viewerTier=Number(fresh?.level)||viewerTier;
         latest2026Status='ready';
       }
-      window.BeaguSchoolFacilities?.render(facilities,modes,results2026,failed?viewerTier:Number(fresh?.level));
+      window.BeaguSchoolFacilities?.render(facilities,modes,results2026,failed?viewerTier:Number(fresh?.level),selections);
       if(currentYear===2026)choose(2026);
     });
     // A school can have approved historical question distributions even when
