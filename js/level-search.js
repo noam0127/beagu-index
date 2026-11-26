@@ -927,6 +927,7 @@
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,viewerTier===1&&year!==2025?null:vals[year-2023]??null,
           school.school_id,modes,school,data,status,selections,results2026,viewerTier);
+        window.BeaguSchoolFacilities?.fold(content,year);
       };
       if(year===2026){draw(null,latest2026Status);return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
