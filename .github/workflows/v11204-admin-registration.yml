@@ -1,0 +1,42 @@
+name: v1.12.04 administrator registration validation
+on:
+  pull_request:
+    branches: ['release/base-pages-v11204-current-production']
+permissions:
+  contents: read
+jobs:
+  registration-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact production ancestry and candidate metadata
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD a0875f2c9235211cbc9d97befd7b234d2e7b437c)" = "a0875f2c9235211cbc9d97befd7b234d2e7b437c"
+          test "$(git rev-parse HEAD)" != "a0875f2c9235211cbc9d97befd7b234d2e7b437c"
+          count=$(git diff --name-only a0875f2c9235211cbc9d97befd7b234d2e7b437c HEAD | wc -l)
+          test "$count" -gt 0 && test "$count" -lt 300
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const manifest=JSON.parse(fs.readFileSync('release-candidate.json','utf8'));
+          const info=JSON.parse(fs.readFileSync('release-info.json','utf8'));
+          assert.equal(manifest.version,'v1.12.04');
+          assert.equal(info.version,manifest.version);
+          assert.equal(info.name,'안전한 응답');
+          assert.equal(info.environment,'candidate');
+          assert.equal(info.deployedAt,null);
+          assert.ok(manifest.summary.trim().length>=3&&manifest.summary.trim().length<=500);
+          JS
+      - name: Mocked administrator register guard only
+        run: node tests/direct-pages-release-contract.cjs
+      - name: Verify closed-choice projection
+        run: node tests/closed-choice-privacy-v1.mjs
