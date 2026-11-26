@@ -1219,8 +1219,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261124-q45-wording1"></script>
 <script src="js/2026-approved-question-results.js?v=20261121-lv2-approved-instant"></script>
-<link rel="stylesheet" href="styles/school-facilities-v11126.css?v=11126">
-<script src="js/school-facilities-v11126.js?v=11126"></script>
+<link rel="stylesheet" href="styles/school-facilities-v11126.css?v=112011">
+<script src="js/school-facilities-v11126.js?v=112011"></script>
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
@@ -1387,7 +1387,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       '';
   }
   function clearTierItems(){
-    state.facilityModes=[];state.facilityResults=[];
+    state.facilityModes=[];state.facilityResults=[];state.facilitySelections=[];
     if(!state.school||state.demo)return;
     const year=state.selected;
     state.years=buildYears(String(state.school.school_id));
@@ -1538,7 +1538,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
           display:d.modeOption,modeOption:d.modeOption,serverApproved:true
         };
       }
-      if(!latestOnly)state.facilityModes=Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[];
+      if(!latestOnly){state.facilityModes=Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[];state.facilitySelections=Array.isArray(r.schoolQuestionSelections)?r.schoolQuestionSelections:[];}
       state.facilityResults=requested===2&&Array.isArray(r.schoolQuestionResults2026)?r.schoolQuestionResults2026:[];
       const releasedQuestions=window.Beagu2026ApprovedResults?.summary(r.schoolQuestionResults2026)||{};
       // Replace the previous 2026 answer snapshot, including when withdrawn.
@@ -1789,7 +1789,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     if(postit)postit.href='postit.html?school_id='+encodeURIComponent(String(school.school_id));
     const experience=document.getElementById('reportExperienceLink');
     if(experience){const id=String(school.school_id);experience.hidden=!!state.demo||!/^[A-Z0-9]{7}$/.test(id);experience.href=experience.hidden?'teacher-volleyball.html':'teacher-volleyball.html?school_id='+encodeURIComponent(id);}
-    state.facilityModes=[];state.facilityResults=[];
+    state.facilityModes=[];state.facilityResults=[];state.facilitySelections=[];
     state.school=school;state.years=years;state.yearLookupError=false;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.participationYears=[];state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=[2026,2025,2024,2023].find(y=>years[String(y)]?.approved||num(years[String(y)]?.percentile)!==null)||2026;state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render();const badge=$('reportSchoolViews');if(badge){badge.hidden=!!state.demo;if(!state.demo){badge.dataset.schoolId=String(school.school_id);badge.querySelector('strong').textContent='—';void window.BeaguSchoolViewCounts?.refreshOne(badge,String(school.school_id));}}if(!state.demo){window.BeaguSearchTelemetry?.selectedFromReport(String(school.school_id));window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),0,'school-report')}}
   function render(){if(!state.school)return;
     const s=state.school;
@@ -1804,7 +1804,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     tierUI();
     const anonymous=state.tier===0;
     if(anonymous)state.selected=2025;
-    window.BeaguSchoolFacilities?.render($('reportFacilities'),state.facilityModes,state.facilityResults,state.tier);
+    window.BeaguSchoolFacilities?.render($('reportFacilities'),state.facilityModes,state.facilityResults,state.tier,state.facilitySelections);
     const overview=$('yearGrid').closest('.year-overview'),latest=$('latestYearMessage').closest('.latest-year-status'),body=$('reportHeading').closest('.report-body');
     overview.hidden=anonymous;latest.hidden=anonymous;body.hidden=anonymous;
     // hidden must win against legacy page display rules.

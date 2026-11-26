@@ -1186,6 +1186,18 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "ceffeacba51dce6130fdfa8344222421bba63b2d"
+    },
+    {
+      "order": 50,
+      "version": "v1.12.01.1",
+      "name": "분야별 학교정보",
+      "scope": "2025·2026년 공개 조사 O/X 판별 항목을 업무·복무, 학교 조직·지원, 교육활동, 교직원 행사·스포츠, 급식·복지, 2027 예정 변경 분야별 아이콘으로 표시 · 2025·2026년 연도 분리, 복수선택의 미선택·모름·충돌 응답 제외 · 기존 역대 시설 아이콘과 Lv.별 공개 권한, 게임 기록 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "production": "NOT_APPROVED",
+      "admin_registration": "NOT_REGISTERED",
+      "dependencies": [
+        "v1.12.01"
+      ]
     }
   ],
   "source_manifest": {
