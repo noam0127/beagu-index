@@ -49,7 +49,15 @@ console.log('PASS v1.11.1 static source, menu, release isolation and game preser
 
 // Court tidy: exact same data source and existing API; no automatic game start.
 const report=read('school-report.html'),picker=read('js/arcade-school-picker-v1.js'),hub=read('js/beagu-court-tidy-v1110.js');
-assert.match(report,/id="reportPostitLink"[^>]*>[^<]*<\/a><a id="reportExperienceLink"/);
+if(['v1.11.25','v1.12.02'].includes(JSON.parse(read('release-info.json')).version)){
+ // The approved locker integration replaces only the legacy post-it entrance.
+ assert.match(report,/id="reportExperienceLink"/);
+ assert.match(report,/id="reportLockerLinks"/);
+ assert.match(report,/if\(!state\.demo\)\{const stories=window\.BeaguLockerSchoolLinks\?\.create\(String\(school\.school_id\),true\)/);
+ cp.execFileSync(process.execPath,['tests/locker-school-links-v11125.mjs'],{stdio:'inherit'});
+}else{
+ assert.match(report,/id="reportPostitLink"[^>]*>[^<]*<\/a><a id="reportExperienceLink"/);
+}
 assert.match(report,/experience\.hidden=!!state\.demo/);
 assert.match(report,/teacher-volleyball\.html\?school_id=/);
 assert.match(picker,/String\(school\.school_id\)!==String\(record\.school_id\)/);

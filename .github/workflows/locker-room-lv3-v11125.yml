@@ -1,0 +1,39 @@
+name: Locker room Lv3 compatibility isolated validation
+on:
+  push:
+    branches: [feature/v11125-lv3-server, release/v1.12.02-locker-room-production-base]
+  pull_request:
+    branches: [feature/v11125-lv3-server-base, release/base-pages-v11202-locker-room]
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: fixture-only
+          POSTGRES_DB: locker_fixture
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/locker-room-v58-overlay-v11125.mjs
+      - run: node tests/locker-room-policy-v11125.mjs
+      - run: node tests/locker-room-lv3-edge-v11125.mjs
+      - run: node tests/locker-room-identity-v11125.mjs
+      - run: node tests/locker-room-final-v11125.mjs
+      - name: PostgreSQL isolated fixtures
+        env:
+          PGPASSWORD: fixture-only
+        run: |
+          set -euo pipefail
+          psql -h 127.0.0.1 -U postgres -d locker_fixture -v ON_ERROR_STOP=1 -f tests/locker-room-postgres-v11125.sql
+          psql -h 127.0.0.1 -U postgres -d locker_fixture -v ON_ERROR_STOP=1 -f tests/locker-room-lv3-auth-v11125.sql
+          psql -h 127.0.0.1 -U postgres -d locker_fixture -v ON_ERROR_STOP=1 -f tests/locker-room-replies-v11125.sql

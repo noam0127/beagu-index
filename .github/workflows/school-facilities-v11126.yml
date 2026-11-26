@@ -1,7 +1,7 @@
 name: School facilities v1.11.26 isolated validation
 on:
   push:
-    branches: [release/v1.12.01-facilities-production-base]
+    branches: [release/v1.12.01-facilities-production-base, release/v1.12.02-locker-room-production-base]
   pull_request:
     paths:
       - 'js/school-facilities-v11126.js'

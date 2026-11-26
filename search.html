@@ -229,7 +229,9 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
-  <script src="js/school-search-card-v1.js?v=111231-card-meta"></script>
+  <script src="js/locker-school-links-v11125.js?v=11125-school"></script>
+<link rel="stylesheet" href="styles/locker-school-links-v11125.css?v=11125-school">
+<script src="js/school-search-card-v1.js?v=11125-school"></script>
   <script src="js/public-school-basics-2026-v1.js?v=11118-static1"></script>
   <script src="js/school-game-points-v1.js?v=111181-court1"></script>
   <link rel="stylesheet" href="styles/school-likes-v1.css?v=11119-court">
@@ -469,6 +471,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     void window.BeaguSchoolLikes?.refreshCards(results);
     void window.BeaguSchoolViewCounts?.refreshCards(results);
     void window.BeaguSchoolGamePoints?.refreshCards(results);
+    window.BeaguLockerSchoolLinks?.refresh();
   }
 
   async function loadSchools(resetPage=true,explicitEnter=false) {
