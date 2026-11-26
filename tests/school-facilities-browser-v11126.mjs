@@ -29,5 +29,18 @@ try{
  assert.equal(await page.locator('.is-absent .beagu-facility-icon').evaluate(e=>getComputedStyle(e).filter),'grayscale(1)');
  await page.evaluate(()=>window.BeaguSchoolFacilities.render(document.querySelector('#facility'),[],[],0));
  assert.equal(await page.locator('#facility').isVisible(),false);
- console.log('320/375/768/1280px actual Chromium responsive facility grid passed');
+ await page.evaluate(()=>{
+  const host=document.createElement('div');host.id='annual';
+  for(const id of ['Q36','Q37','Q38']){
+   const row=document.createElement('article');row.className='historical-question-row';
+   const code=document.createElement('span');code.className='beagu-question-number';code.textContent=id;row.append(code);host.append(row);
+  }
+  document.body.append(host);window.BeaguSchoolFacilities.fold(host,2025);
+ });
+ assert.equal(await page.locator('#annual details .historical-question-row').count(),2);
+ assert.equal(await page.locator('#annual > .historical-question-row').count(),1);
+ assert.equal(await page.locator('#annual details').evaluate(e=>e.open),false);
+ await page.locator('#annual details summary').click();
+ assert.equal(await page.locator('#annual details').evaluate(e=>e.open),true);
+ console.log('320/375/768/1280px actual Chromium responsive facility grid and annual disclosure passed');
 }finally{await browser.close();}
