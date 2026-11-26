@@ -56,7 +56,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   payload.validReferrals=1;
   events.focus();await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'추천으로 발급된 개인 Lv.2 참여코드');
   assert.equal(nodes.copyIdentityCode.hidden,false);
   assert.equal(nodes.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),true);

@@ -25,11 +25,12 @@ jobs:
           node-version: '22'
       - name: Install Chromium browser test runner
         run: |
-          npm install --no-save --no-package-lock playwright
+          npm install --no-save --no-package-lock playwright html2canvas@1.4.1
           npx playwright install --with-deps chromium --only-shell
       - name: Test desktop/mobile participation-code flow on local static pages
         run: |
           python3 -m http.server 8124 --bind 127.0.0.1 >/tmp/participation-browser.log 2>&1 &
+          node tests/v11123-challenge-ui.mjs
           node scripts/test-participation-browser.cjs
       - name: Browser screenshots
         if: always()

@@ -69,7 +69,8 @@
         boundIdentity=data.lv2Access===true;paintLoginCode();
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         renderMilestone(n);
-        identityCode.textContent = byId('challengeAccessPanel')?.dataset.accountLevel==='3' ? code.slice(0,2)+'*'.repeat(code.length-2) : code;
+        if(byId('challengeAccessPanel')?.dataset?.accountLevel==='3')identityCode.textContent=code.slice(0,2)+'*'.repeat(code.length-2);
+        else identityCode.textContent = code;
         copyIdentityCode.disabled = byId('challengeIdentityPanel')?.dataset.referralState !== 'earned';
         identityCopyFeedback.textContent = '';
         // Referral display is separate from the certificate PNG and requires a validated session.
@@ -138,7 +139,7 @@
   });
 
   copyIdentityCode.addEventListener('click', async () => {
-    if (byId('challengeAccessPanel')?.dataset.accountLevel==='3'||!accessGranted || currentSession()!==activeSession || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
+    if (byId('challengeAccessPanel')?.dataset?.accountLevel==='3'||!accessGranted || currentSession()!==activeSession || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
       await navigator.clipboard.writeText(personalCode);
@@ -160,7 +161,7 @@
     accessGranted=false;activeSession="";epoch++;busy=false;certificateRefreshPending=false;resetIdentity();
     status.textContent="";retry.hidden=true;
   });
-  window.addEventListener('beagu:challenge-verified-level-changed',()=>{paintLoginCode();if(byId('challengeAccessPanel')?.dataset.accountLevel==='3'&&personalCode){identityCode.textContent=personalCode.slice(0,2)+'*'.repeat(personalCode.length-2);copyIdentityCode.disabled=true;}});
+  window.addEventListener('beagu:challenge-verified-level-changed',()=>{paintLoginCode();if(byId('challengeAccessPanel')?.dataset?.accountLevel==='3'&&personalCode){identityCode.textContent=personalCode.slice(0,2)+'*'.repeat(personalCode.length-2);copyIdentityCode.disabled=true;}});
   window.addEventListener('beagu:referral-status-changed', () => {
     if(!accessGranted)return;
     invalidateImage();
