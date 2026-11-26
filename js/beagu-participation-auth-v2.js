@@ -47,7 +47,7 @@
   </nav>
  </section>`;
  document.body.append(modal);
- modal.querySelector('#beaguAccountEntry').addEventListener('click',()=>{close();});
+ modal.querySelector('#beaguAccountEntry')?.addEventListener('click',()=>{close();});
  const heading=modal.querySelector('#beaguParticipationTitle');
  const description=modal.querySelector('#beaguParticipationDescription');
  const label=modal.querySelector('#beaguParticipationCodeLabel');
@@ -268,7 +268,7 @@
  let challengeEntryHandled=false;
  function handleChallengeEntry(level){
   if(challengeEntryHandled||!document.body.classList.contains('beagu-page-challenge'))return;
-  if(location.hash==='#level3-account'){challengeEntryHandled=true;return;}
+  if(window.location?.hash==='#level3-account'){challengeEntryHandled=true;return;}
   if(level===0&&!stored()){
    challengeEntryHandled=true;
    if(modal.hidden)open();
