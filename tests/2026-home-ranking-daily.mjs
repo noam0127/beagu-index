@@ -17,7 +17,7 @@ assert.ok(validPayload({level:2,day:null,rows:[]},2));assert.ok(!validPayload({.
 const read=p=>readFileSync(p,'utf8');
 const html=read('index.html'),api=read('supabase/functions/beagu-level-api/index.ts'),sql=read('supabase/2026-home-ranking-daily-v1.sql'),js=read('js/beagu-home-ranking-v1.js');
 assert.ok(html.indexOf('id="beaguTodaySchools"')<html.indexOf('id="beagu2026Ranking"'));
-assert.ok(html.includes('js/beagu-home-ranking-v1.js?v=11119'));
+assert.match(html,/id="beagu2026Ranking"[^>]*\bhidden>/);assert.doesNotMatch(html,/<script[^>]*src="js\/beagu-home-ranking-v1\.js/);assert.match(js,/if\(!root\|\|root.hidden\)return/);
 assert.ok(api.indexOf('const session=await check(req)')>api.indexOf("if(body.action==='home_ranking_2026')"));
 assert.ok(api.includes('readPercentileProjection(ids,tier,sendSchoolProfiles)'));assert.ok(api.includes('rows.length>10'));assert.ok(api.includes('const tier=1;'));assert.ok(!js.includes('X-Beagu-Session'));
 assert.ok(api.includes('current.values?.[r.school_id]!==r.percentile'));

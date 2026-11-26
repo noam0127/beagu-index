@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only, fix/v11118-static-basics, fix/v111181-court-completion]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only, fix/v11118-static-basics, fix/v111181-court-completion, feat/v11119-daily-ranking]
 permissions:
   contents: read
 jobs:
@@ -51,6 +51,11 @@ jobs:
           node tests/v11117-public-school-basics.mjs
           node tests/v11118-static-basics.mjs
           node tests/v111181-court-completion.mjs
+          node tests/2026-home-ranking-daily.mjs
+          node tests/v11119-court-tidy.mjs
+          node tests/arcade-fire-court-v11115.mjs
+          node tests/2026-civic-feedback-safe.cjs
+          node tests/school-likes-contract.mjs
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-release-consent-gate.mjs
@@ -75,6 +80,7 @@ jobs:
           node tests/v1111-light-touch-browser.cjs
           node tests/playback-browser.cjs
           node tests/v11117-small-features-browser.cjs
+          node tests/region-interest-browser.cjs
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs

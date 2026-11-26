@@ -21,7 +21,7 @@
   });
  }
  if(typeof module==='object'&&module.exports){module.exports={koreaDay,nextMidnight,validPayload,detailHref};return;}
- const root=document.getElementById('beagu2026Ranking');if(!root)return;
+ const root=document.getElementById('beagu2026Ranking');if(!root||root.hidden)return;
  const list=root.querySelector('[data-ranking-list]'),status=root.querySelector('[data-ranking-status]');
  const tier=()=>Number(document.getElementById('beaguLevelState')?.dataset.level);
  let rows=[],sequence=0,controller=null,timer=null;
