@@ -1216,6 +1216,24 @@
         "계정 테이블 및 세션 컬럼·RPC 운영 적용 승인 필요",
         "아이디 인증 API 운영 적용 및 비밀키 설정 필요"
       ]
+    },
+    {
+      "order": 53,
+      "version": "v1.12.02.2",
+      "name": "코트 정돈",
+      "scope": "Lv.3·계정·커뮤니티 공개 보류, Lv.0~2 인증 유지, Q50 785건·11개 항목, 전국 TOP10 숨김, 공시가격 단위 개선",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/defer-level3-release-20261127",
+      "tests": [
+        "clean-release-validation.yml",
+        "account-home-q50-isolated-20261127.yml"
+      ],
+      "dependencies": [
+        "v1.12.02.1"
+      ],
+      "production": "NOT_APPROVED",
+      "admin_registration": "NOT_REGISTERED",
+      "rollback_sha": "a0875f2c9235211cbc9d97befd7b234d2e7b437c"
     }
   ],
   "source_manifest": {
