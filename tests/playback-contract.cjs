@@ -117,6 +117,6 @@ assert.match(preview,/run4-official-submit/);assert.match(read('js/run4-official
  assert.equal(api.enabled,false);assert.equal(Object.isFrozen(officialWindow.BeaguRun4Official.defaultConfig),true);
  for(const action of [()=>api.start({school_id:'fixture'}),()=>api.submit({seed:1,difficulty:'easy',session:'fixture'},{seed:1,difficulty:'easy',events:[]}),()=>api.list('all','all')])await assert.rejects(action(),/verification_unavailable/);
  assert.equal(calls,0);
- const manifest=JSON.parse(read('release-candidate.json'));assert.ok(manifest.summary.length<=500);assert.match(manifest.summary,/4\.0 공식 랭킹 비활성화/);assert.match(manifest.summary,/기존 3\.0 공식 랭킹 유지/);
+ const manifest=JSON.parse(read('release-candidate.json'));assert.ok(manifest.summary.length<=500);assert.match(manifest.summary,/기존 공식 기록 유지/);assert.match(manifest.summary,/새 공식 기록 제출 보류/);assert.doesNotMatch(manifest.summary,/3\.0|4\.0/);for(const p of ['teacher-run.html','teacher-run-4-preview.html','games.html'])assert.doesNotMatch(read(p),/험난한 교직생활 [34]\.0|4\.0 공식 명예의 전당|4\.0 개인 기록|4\.0 검수판/);assert.doesNotMatch(read('js/arcade-history-v1.js'),/row\.version/);
  console.log('PASS scoped personal preview: zero default official API, token and auth access');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -34,7 +34,7 @@ for(const school of ['teacher-volleyball.html','teacher-run.html']){
 assert.match(read('index.html'),/href="games.html"/);
 assert.match(read('games.html'),/href="teacher-volleyball.html"/);
 assert.match(read('games.html'),/href="teacher-run.html"/);
-assert.match(shell,/js\/arcade-history-v1\.js\?v=11116-disclosure/);
+assert.match(shell,/js\/arcade-history-v1\.js\?v=11119-unified-name/);
 assert.match(read('styles/arcade-cabinet-v1.css'),/arcade-rank-school-link::after/);
 const script=route.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);

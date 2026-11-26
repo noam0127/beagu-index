@@ -16,3 +16,5 @@
 - Report-only school detail UI; preserve existing server correction authorization and records. Rising school TOP10; region TOP5 only in v1.11.19; TOP10 SQL preserved for a separately authorized later release.
 - Official facts 2×2, protected price separate; matching heart/eye placement and geometry.
 - BGM and SFX share one per-game AudioContext unlocked during initiating gesture. Physical iOS/Android audio output still requires device verification.
+
+- Survival game user-facing name is 험난한 교직생활 everywhere, including title, result certificate and record archive. Retain existing stored records, score calculation, identifiers, local storage and disabled official client; no new submission/point changes. Unified record storage and official leaderboard activation deferred to v1.11.20; no version-based user display.

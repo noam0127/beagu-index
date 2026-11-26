@@ -10,4 +10,4 @@ assert.match(read('teacher-run.html'),/beagu-game-lv1-gate-v1\.js/);assert.match
 
 assert.doesNotMatch(html,/게임 방법에서 조작을 확인할 수 있습니다|기존 인증 후 학교를 선택하고 게임 방법을 확인하세요/);assert.match(html,/학교를 선택하고 25점 선착순 배구 경기에 도전하세요\./);assert.match(html,/24세 임용부터 62세 정년까지 살아남으세요\./);
 
-assert.doesNotMatch(html,/playground-run4-preview|4\.0 검수판|4\.0 명예의 전당/);assert.match(html,/험난한 교직생활 4\.0/);assert.equal(read("teacher-run.html"),read("teacher-run-4-preview.html"));assert.match(read('teacher-run-4-preview.html'),/beagu-game-lv1-gate-v1\.js/);assert.doesNotMatch(read('teacher-run-4-preview.html'),/new window\.ArcadeLeaderboard/);
+assert.doesNotMatch(html,/playground-run4-preview|4\.0 검수판|4\.0 명예의 전당/);assert.match(html,/<h3>험난한 교직생활<\/h3>/);assert.doesNotMatch(html,/험난한 교직생활 [34]\.0/);assert.equal(read("teacher-run.html"),read("teacher-run-4-preview.html"));assert.match(read('teacher-run-4-preview.html'),/beagu-game-lv1-gate-v1\.js/);assert.doesNotMatch(read('teacher-run-4-preview.html'),/new window\.ArcadeLeaderboard/);

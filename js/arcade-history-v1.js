@@ -67,7 +67,7 @@
   const card=el("article","history-record");
   const head=el("div","history-record-head"),about=el("div"),score=el("div","history-score",number(row.score)+"점");
   about.append(el("span","history-status","공개 점수 기록 "+rank+"위"),schoolHeading(row),
-    el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")+(game==="teacher_run_retirement"?" · v"+(row.version||"3.0"):"")));
+    el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")));
   const [label,kind]=titleFor(row);
   const visibleScore=game==="volleyball_25"&&["victory","defeat","stopped"].includes(result.outcome)&&Number.isSafeInteger(result.playerPoints)&&result.playerPoints>=0&&Number.isSafeInteger(result.cpuPoints)&&result.cpuPoints>=0?" "+result.playerPoints+":"+result.cpuPoints:"";
   about.append(el("span","history-status "+kind,label+visibleScore));
@@ -93,7 +93,7 @@
   }
   details.append(summary);
   if(stats.childElementCount)details.append(stats);
-  else details.append(el("p","history-note","이전 게임 버전에서 저장된 기록으로, 세부 항목이 없습니다."));
+  else details.append(el("p","history-note","세부 항목이 저장되지 않은 기록입니다."));
   card.append(details);
   return card;
  }

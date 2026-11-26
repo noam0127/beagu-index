@@ -14,7 +14,7 @@ const currentRunner=await readFile("teacher-run.html","utf8");
 // actual-page Chromium suite and 4.0 rule contracts, not by 3.0 source regexes.
 const runner=execFileSync("git",["show","8bc306ae6f4633937a84af6b56f0f000c286fa02:teacher-run.html"],{encoding:"utf8",maxBuffer:4*1024*1024});
 assert.equal(currentRunner,await readFile("teacher-run-4-preview.html","utf8"));
-assert.match(currentRunner,/<title>험난한 교직생활 4\.0 — 정년까지 살아남아라 \| 배구지수<\/title>/);
+assert.match(currentRunner,/<title>험난한 교직생활 — 정년까지 살아남아라 \| 배구지수<\/title>/);
 assert.match(currentRunner,/BeaguRun4Rules/);assert.match(currentRunner,/class="hud" hidden/);
 assert.match(currentRunner,/data-game-lv1-form/);assert.match(currentRunner,/recordPolicy\.save\(localStorage,result\)/);assert.doesNotMatch(currentRunner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
 for(const m of currentRunner.matchAll(/<script>([\s\S]*?)<\/script>/g))new Function(m[1]);
@@ -250,7 +250,7 @@ assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profil
 assert.match(shared,/arcade-rank-school/);
 assert.doesNotMatch(shared,/ENTER YOUR NAME|nickname:/,"no player names in leaderboard client");
 assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"volleyball homepage title should show 1.0");
-assert.match(hub,/<h3>험난한 교직생활 4\.0<\/h3>/,"teacher-run homepage title should show 4.0");
+assert.match(hub,/<h3>험난한 교직생활<\/h3>/,"teacher-run homepage title should be versionless");
 assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
 assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구지수<\/title>/);
 assert.doesNotMatch(hub,/<h3>험난한 교직생활 2\.0<\/h3>|<h3>선생님배구<\/h3>/,"old game titles removed from Playcourt headings");
@@ -312,7 +312,7 @@ assert.doesNotMatch(mainVolley,/class="top"|7 PTS|beagu-brand-mark/,"volleyball 
 assert.doesNotMatch(mainRun,/class="top"|ARCADE · LIFE|beagu-brand-mark/,"run duplicate game header removed");
 assert.doesNotMatch(html,/<details class="teacher-game-details"|게임 펼치기 · 접기/,"home game no longer has unnecessary fold text");
 assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"outer game name remains");
-assert.match(hub,/<h3>험난한 교직생활 4\.0<\/h3>/,"outer run name remains");
+assert.match(hub,/<h3>험난한 교직생활<\/h3>/,"outer run name remains");
 assert.match(runner,/id="teacher-run-lv1-gate"/,"standalone LV1 game gate is preserved");
 assert.match(picker,/this\.guide=make\("p","arcade-school-brief-note","학교를 선택해주세요\. 배구지수 자료가 없는 학교는 2026 조사에 참여해야 진행이 가능합니다\."/);
 assert.match(picker,/this\.mount\.append\(heading,this\.input,this\.guide,this\.changeButton/,"small help directly follows the school input");
