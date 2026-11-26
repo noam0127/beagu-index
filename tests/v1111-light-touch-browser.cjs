@@ -112,6 +112,15 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===10);
  assert.equal(await page.locator('#beagu2026Ranking').isVisible(),true);
  assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2','3','4','4','6','7','8','8','10']);
+ const podium=page.locator('#beagu2026Ranking [data-ranking-list] li');
+ const podiumRows=await podium.evaluateAll(nodes=>nodes.map(n=>({rank:n.dataset.rank,height:n.getBoundingClientRect().height,top:n.getBoundingClientRect().top,bg:getComputedStyle(n).backgroundColor,strong:n.querySelectorAll('strong').length,href:n.querySelector('a')?.getAttribute('href')})));
+ assert.deepEqual(podiumRows.map(x=>x.rank),['1','2','3','4','4','6','7','8','8','10']);
+ assert.ok(podiumRows[0].height>podiumRows[1].height&&podiumRows[0].height>podiumRows[2].height);
+ assert.ok(podiumRows[0].top<podiumRows[1].top&&podiumRows[1].top<podiumRows[2].top);
+ assert.equal(new Set(podiumRows.slice(0,3).map(x=>x.bg)).size,3);
+ assert.ok(podiumRows.every(x=>x.strong===1&&x.href?.includes('school_id=')));
+ assert.equal(await podium.nth(0).locator('strong').evaluate(n=>getComputedStyle(n,'::before').content),'"♛"');
+
 
  const ids=()=>page.locator('#beaguTodaySchools .beagu-home-school-name').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).searchParams.get('school_id')));
  const today=await ids();assert.equal(new Set(today).size,2);
