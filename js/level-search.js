@@ -458,7 +458,7 @@
       .filter(item=>year===2025&&item?.year===2025&&['Q03','Q04'].includes(item.questionId)
         &&Array.isArray(item.selectedOptions)&&item.selectedOptions.length>0
         &&item.selectedOptions.every(v=>typeof v==='string'&&v.trim().length>0&&v.length<=180))
-      .map(item=>[item.questionId,[...new Set(item.selectedOptions.map(v=>window.BeaguHistoricalClosedChoice?.(year,item.questionId,v)).filter(Boolean))]]));
+      .map(item=>[item.questionId,[...new Set(item.selectedOptions.map(v=>window.BeaguHistoricalClosedChoice?.(year,item.questionId,v)).filter(Boolean))]]).filter(([,values])=>values.length));
     const answerBadge=(value)=>{
       // Transform only exact yes/no/unknown choice labels. Explanatory
       // phrases such as "조금 있다" are never collapsed into O/X.

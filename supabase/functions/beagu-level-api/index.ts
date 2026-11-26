@@ -521,9 +521,7 @@ Deno.serve(async(req:Request)=>{
          !Array.isArray(record.selected_options)||
          record.selected_options.length<1||record.selected_options.length>24)continue;
       const selected=record.selected_options;
-      if(selected.some((v:unknown)=>!safeMode(v)||!checkboxAllowed[questionId].has(v as string))||
-         new Set(selected).size!==selected.length)continue;
-      const safeSelected=selected.map((v:string)=>historicalChoice(2025,questionId,v)).filter((v:unknown)=>typeof v==='string') as string[];
+      const safeSelected=[...new Set(selected.filter((v:unknown)=>safeMode(v)&&checkboxAllowed[questionId].has(v as string)).map((v:string)=>historicalChoice(2025,questionId,v)).filter((v:unknown)=>typeof v==='string'))] as string[];
       if(safeSelected.length)schoolQuestionSelections.push({year:2025,questionId,selectedOptions:safeSelected});
     }
   }

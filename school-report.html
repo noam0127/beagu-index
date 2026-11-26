@@ -2027,7 +2027,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const isFreeText=(state.selected===2026&&item.id==='Q51');
     const locked=!state.demo&&!isFreeText&&state.tier<requiredTier(item);
     const itemApproved=!isFreeText && (state.demo || ((data?.serverApproved===true && !locked) || (data?.publicApproved===true && Number(data?.n)>=5 && !locked)));
-    const displayed=itemApproved&&data&&typeof data.display==='string'?data.display.trim():null;
+    const displayed=itemApproved&&data&&typeof data.display==='string'?(state.demo||state.selected===2026?data.display.trim():window.BeaguHistoricalClosedChoice?.(state.selected,item.id,data.display)??null):null;
     const status=isFreeText?'전 등급 비공개':locked?'Lv.'+requiredTier(item)+' 인증 후 열람':displayed||missing;
     const row=document.createElement('article');row.className='question-row';
     row.innerHTML=`<div class="question-line"><div class="question-label"><span class="question-code">${escapeHTML(item.id)}</span>${escapeHTML(displayQuestionLabel((state.selected===2026&&window.Beagu2026Questionnaire?.[item.id]?.question)||window.BeaguHistoricalOriginalQuestions?.[state.selected]?.[item.id]||item.label))}</div><div class="question-value ${locked?'tier-locked':(!displayed?'missing':'')}">${locked?'<span class="mask-shape" aria-hidden="true"></span><span>'+escapeHTML(status)+' 🔒</span>':escapeHTML(status)}</div></div>`;
@@ -2082,10 +2082,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const optionValue=metric=>metric&&typeof metric==='object'
       ?(typeof metric.mean==='string'?metric.mean:
         typeof metric.mode==='string'?metric.mode:null):null;
-    const national=optionValue(sourceNation)||(itemApproved&&typeof data?.nationalMeanOption==='string'
-      ?data.nationalMeanOption:null);
-    const regional=optionValue(sourceRegion)||(itemApproved&&typeof data?.regionalMeanOption==='string'
-      ?data.regionalMeanOption:null);
+    const allowedBenchmark=value=>state.selected===2026?null:window.BeaguHistoricalClosedChoice?.(state.selected,item.id,value)??null;
+    const national=allowedBenchmark(optionValue(sourceNation))||(itemApproved?allowedBenchmark(data?.nationalMeanOption):null);
+    const regional=allowedBenchmark(optionValue(sourceRegion))||(itemApproved?allowedBenchmark(data?.regionalMeanOption):null);
     // 반드시 문항과 선택지보다 앞에 비교표가 나타납니다.
     if(!isFreeText){
       const chart=questionComparisonVisual({
