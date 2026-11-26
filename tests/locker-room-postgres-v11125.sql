@@ -82,3 +82,36 @@ begin
  if exists(select 1 from public.beagu_postit_posts where body='original' and locker_nickname is not null) then raise exception 'legacy nickname rewritten';end if;
  if has_table_privilege('anon','public.beagu_locker_aliases_v1','select') or has_table_privilege('authenticated','public.beagu_locker_operator_v1','select') then raise exception 'private mapping exposed';end if;
 end $nick$;
+
+-- Exercise actual service_role privileges (not only postgres superuser).
+-- The real admin migration grants SELECT to service_role; reproduce that ACL.
+grant select on public.beagu_admin_accounts to service_role;
+update public.beagu_admin_accounts set enabled=true where user_id='90000000-0000-4000-8000-000000000001';
+set role service_role;
+do $service$
+declare p uuid; name1 text; name2 text; flag boolean; r jsonb;
+begin
+ r:=public.beagu_postit_create_post_v3('91000000-0000-4000-8000-000000000001',gen_random_uuid(),'general',null,null,null,'service role post');
+ p:=(r->>'id')::uuid;
+ select locker_nickname,locker_operator into name1,flag from public.beagu_postit_posts where id=p;
+ if p is null or name1 is null or flag is distinct from false then raise exception 'service writer alias unavailable';end if;
+ r:=public.beagu_postit_create_comment_v2('91000000-0000-4000-8000-000000000001',gen_random_uuid(),p,'same writer');
+ select locker_nickname into name2 from public.beagu_postit_comments where id=(r->>'id')::uuid;
+ if name2 is distinct from name1 then raise exception 'service writer thread alias mismatch';end if;
+ r:=public.beagu_postit_create_comment_v2('90000000-0000-4000-8000-000000000002',gen_random_uuid(),p,'operator comment');
+ select locker_nickname,locker_operator into name2,flag from public.beagu_postit_comments where id=(r->>'id')::uuid;
+ if name2 is distinct from '카리브해매너티' or flag is distinct from true then raise exception 'operator service role mismatch';end if;
+ begin
+  update public.beagu_locker_operator_v1 set author_uid='91000000-0000-4000-8000-000000000001';
+  raise exception 'service role changed operator binding';
+ exception when insufficient_privilege then null; end;
+end $service$;
+reset role;
+do $privacy$
+begin
+ if has_function_privilege('anon','public.beagu_locker_allocate_alias_v1(uuid,uuid)','execute')
+ or has_function_privilege('authenticated','public.beagu_locker_allocate_alias_v1(uuid,uuid)','execute')
+ or has_table_privilege('service_role','public.beagu_locker_aliases_v1','update')
+ then raise exception 'alias privilege regression';end if;
+ raise notice 'PASS service role actual RPC, thread consistency, operator binding and alias ACL';
+end $privacy$;
