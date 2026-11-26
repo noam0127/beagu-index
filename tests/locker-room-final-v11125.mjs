@@ -39,5 +39,11 @@ assert.equal(result.posts[0].nickname,"익명");assert.equal(result.posts[0].is_
 assert.doesNotMatch(JSON.stringify(result),/author_uid|private/);
 assert.match(read("index.html"),/id="homeLockerList" hidden/);
 assert.match(read("js/beagu-admin-access-v1.js"),/BeaguLockerAdmin\?\.reset/);
-for(const name of ["beagu-level-api","beagu-postit-api-v1","beagu-admin-members-v1"])assert.equal(read("supabase/functions/"+name+"/index.ts"),read("supabase/preview/v11125/"+name+"/index.ts"));
+for(const name of ["beagu-postit-api-v1","beagu-admin-members-v1"])assert.equal(read("supabase/functions/"+name+"/index.ts"),read("supabase/preview/v11125/"+name+"/index.ts"));
+const currentLevel=read("supabase/functions/beagu-level-api/index.ts"),liveOverlay=read("supabase/preview/v11125/beagu-level-api/index.ts");
+const actions=s=>[...new Set([...s.matchAll(/body\.action==='([^']+)'/g)].map(m=>m[1]))];
+assert.ok(actions(liveOverlay).every(a=>actions(currentLevel).includes(a)));
+assert.match(currentLevel,/body.action==='home_ranking_2026'/);
+assert.match(currentLevel,/fact_key==='district_housing_price_mean'\?2:/);
+assert.match(currentLevel,/sort==='housing_price_won'&&Number\(session.access_level\)<2/);
 console.log("PASS actual home projection and owner MFA report API contracts");
