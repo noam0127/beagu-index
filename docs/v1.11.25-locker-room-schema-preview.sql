@@ -72,4 +72,15 @@ grant execute on function public.beagu_postit_create_post_v3(uuid,uuid,text,text
   to service_role;
 
 
+-- Counts are only returned by the authenticated Edge handler. No public access.
+create or replace function public.beagu_postit_school_counts_v1(p_ids text[])
+returns table(school_id text, post_count bigint)
+language sql stable security invoker set search_path='' as $fn$
+  select p.school_id, count(*) from public.beagu_postit_posts p
+  where cardinality(p_ids) between 1 and 50
+    and p.school_id=any(p_ids) and p.status='published'
+  group by p.school_id
+$fn$;
+revoke all on function public.beagu_postit_school_counts_v1(text[]) from public,anon,authenticated;
+grant execute on function public.beagu_postit_school_counts_v1(text[]) to service_role;
 commit;
