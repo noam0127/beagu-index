@@ -14,3 +14,7 @@
 .locker-feed-v11125 #lockerClearTag{margin-block:8px}
 .locker-feed-v11125 [hidden]{display:none!important}
 @media(max-width:560px){.locker-feed-v11125 .postit-layout{width:100%;padding-inline:10px}.locker-feed-v11125 .postit-paper{padding:12px 10px}}
+
+/* The text label is part of the trusted server projection; color is supplementary. */
+.locker-feed-v11125 .locker-operator-verified{color:#185a9d;font-weight:700}
+.locker-feed-v11125 .locker-operator-verified::before{content:'✓';display:inline-block;margin-inline-end:5px;border:1px solid currentColor;border-radius:50%;width:1.2em;height:1.2em;line-height:1.15em;text-align:center;font-size:.8em}
