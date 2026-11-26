@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {stripTypeScriptTypes} from "node:module";
-const source=readFileSync(new URL("../supabase/functions/beagu-postit-api-v1/index.ts",import.meta.url),"utf8");
+const source=readFileSync(new URL("../supabase/preview/v11125/beagu-postit-api-v1/index.ts",import.meta.url),"utf8");
 const start=source.indexOf("async function enrich("),end=source.indexOf("// Quotas and duplicate handling",start);
 assert.ok(start>=0&&end>start);
 const db={from(name){assert.ok(["beagu_postit_reactions","beagu_locker_visible_comments_v1"].includes(name));return {select(){return this},eq(){return this},in(){return this},async limit(){return {data:[],error:null}}};}};

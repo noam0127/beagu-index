@@ -193,32 +193,6 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
   await audit(actor.id, "member_" + operation, id, reason, duration);
   return { updated: true, user_id: id, operation };
 }
-// Anonymous locker reports: existing DB decision RPC is the audit record.
-// checkAdmin verifies Auth, owner allowlist and active AAL2 session first.
-async function lockerReports(actor: { id: string; role: string }) {
-  if (actor.role !== "owner") throw new HttpError(403, "owner_required");
-  const {data,error}=await db.rpc("beagu_postit_report_queue_v1");
-  if(error)throw new HttpError(503,"locker_reports_unavailable");
-  if(!Array.isArray(data))throw new HttpError(503,"locker_reports_unavailable");
-  return {rows:data.slice(0,50).map((r:any)=>({
-    target_type:r.target_type,target_id:r.target_id,body:r.body,status:r.status,
-    reports:r.reports,case_id:r.case_id??null,decision:r.decision??null,
-    expires_at:r.expires_at??null,restored_at:r.restored_at??null
-  }))};
-}
-async function lockerReportDecide(input: Record<string,unknown>,actor: { id:string; role:string }) {
-  if(actor.role!=="owner")throw new HttpError(403,"owner_required");
-  const type=String(input.target_type||""),id=String(input.target_id||""),decision=String(input.decision||"");
-  const reason=typeof input.reason==="string"?input.reason.trim():"";
-  if(!["post","comment"].includes(type)||!uuid.test(id)||!["dismiss","restrict_24h","restrict_7d","restore"].includes(decision)||reason.length<8||reason.length>200)
-    throw new HttpError(400,"invalid_moderation_request");
-  const {data,error}=await db.rpc("beagu_postit_report_decide_v1",{
-    p_type:type,p_target:id,p_decision:decision,p_reason:reason,p_admin:actor.id
-  });
-  if(error)throw new HttpError(503,"locker_reports_unavailable");
-  if(data?.ok!==true||!uuid.test(String(data.case_id||"")))throw new HttpError(409,"report_already_processed_or_unavailable");
-  return {updated:true,case_id:data.case_id};
-}
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
@@ -232,9 +206,7 @@ Deno.serve(async (request: Request) => {
     const action = String(input.action || "");
     const data = action === "list" ? await listMembers(input) :
       action === "detail" ? await details(input) :
-      action === "moderate" ? await moderate(input, actor) :
-      action === "locker_reports" ? await lockerReports(actor) :
-      action === "locker_report_decide" ? await lockerReportDecide(input,actor) : null;
+      action === "moderate" ? await moderate(input, actor) : null;
     if (data === null) throw new HttpError(400, "invalid_action");
     return reply(origin, 200, { ok: true, data, role: actor.role });
   } catch (error) {

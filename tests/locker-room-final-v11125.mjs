@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {stripTypeScriptTypes} from "node:module";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
-const admin=read("supabase/functions/beagu-admin-members-v1/index.ts");
+const admin=read("supabase/preview/v11125/beagu-admin-members-v1/index.ts");
 const start=admin.indexOf("async function lockerReports("),end=admin.indexOf("Deno.serve(",start);
 assert.ok(start>=0&&end>start);
 class HttpError extends Error{constructor(status,code){super(code);this.status=status;}}
@@ -24,7 +24,7 @@ assert.deepEqual(calls[1],["beagu_postit_report_decide_v1",{p_type:"post",p_targ
 assert.match(admin,/const actor = await checkAdmin\(request\);[\s\S]*action === "locker_reports" \? await lockerReports\(actor\)/);
 assert.match(admin,/claims\.aal !== "aal2"/);
 assert.match(admin,/beagu_admin_active_mfa_session/);
-const api=read("supabase/functions/beagu-postit-api-v1/index.ts");
+const api=read("supabase/preview/v11125/beagu-postit-api-v1/index.ts");
 const hs=api.indexOf('if(action==="home_latest")'),he=api.indexOf('if(action==="notifications")',hs);
 assert.ok(hs>api.indexOf("const viewer=await identity(req,2)")&&he>hs);
 const block=stripTypeScriptTypes("async function runHome(){\n"+api.slice(hs,he)+"\n}");

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {stripTypeScriptTypes} from "node:module";
 import {webcrypto} from "node:crypto";
-const s=readFileSync("supabase/functions/beagu-postit-api-v1/index.ts","utf8");
+const s=readFileSync("supabase/preview/v11125/beagu-postit-api-v1/index.ts","utf8");
 const block=stripTypeScriptTypes(s.slice(s.indexOf("async function identity("),s.indexOf("async function minimumLevel(")));
 const uid="20000000-0000-4000-8000-000000000001",token="a".repeat(64);
 function fixture(reader,writer){const calls=[];const db={async rpc(name,args){calls.push(name);assert.match(args.p_token_sha,/^[a-f0-9]{64}$/);assert.notEqual(args.p_token_sha,token);return name==="beagu_locker_notification_actor_v1"?reader:writer;}};return {...new Function("db","crypto","UUID",block+"\nreturn {identity,verifiedMember}")(db,webcrypto,/^[0-9a-f-]{36}$/i),calls};}

@@ -24,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node tests/locker-room-v58-overlay-v11125.mjs
       - run: node tests/locker-room-policy-v11125.mjs
       - run: node tests/locker-room-lv3-edge-v11125.mjs
       - run: node tests/locker-room-identity-v11125.mjs
