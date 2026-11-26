@@ -30,6 +30,8 @@ let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>pr
 assert.match(capture,/html2canvas\(root,\s*\{/);
 assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink/);
 assert.match(capture,/root\.textContent\.includes\(personalCode\)/);
+assert.match(capture,/root\.textContent\.includes\(loggedCode\(\)\)/);
+assert.match(html,/id="challengeLoginCodePanel"[^>]*data-html2canvas-ignore="true"[^>]*data-referral-secret/);
 assert.match(ref,/Math\.floor\(count\/10\)\*10/);
 assert.match(ref,/referral-status-changed/);
 assert.match(api,/typeof raw === 'number' && Number\.isSafeInteger\(raw\) && raw >= 0/);

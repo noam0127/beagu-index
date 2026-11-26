@@ -48,9 +48,13 @@
     const account3=verifiedLoginLevel===2&&get('challengeAccessPanel')?.dataset?.accountLevel==='3';
     const visualTier=premiumVisual?2:1;
     if(document.body)document.body.dataset.challengeTier=String(visualTier);
-    const personalVerified=verifiedLoginLevel===2&&get('challengeAccessPanel')?.dataset?.provisional==='false';
-    identityPanel.hidden=account3||(personalVerified&&!upgraded);
-    const loginPanel=get('challengeLoginCodePanel');if(loginPanel)loginPanel.hidden=verifiedLoginLevel<2||(!account3&&upgraded);
+    // An actual Lv.2 login always shows the entered-code membership card.
+    // A Lv.1 session upgraded through verified referrals may retain its earned card.
+    let upgradedFromLv1=false;
+    try{const saved=JSON.parse(sessionStorage.getItem('beagu-login-code-mask-v1')||'null');upgradedFromLv1=saved?.token===activeToken&&saved.level===1;}catch(_){}
+    const loginCard=verifiedLoginLevel>=2&&(account3||!upgraded||!upgradedFromLv1);
+    identityPanel.hidden=loginCard;
+    const loginPanel=get('challengeLoginCodePanel');if(loginPanel)loginPanel.hidden=!loginCard;
     const benefits=get('togetherBenefitsTitle'),list=get('togetherBenefitsList');
     if(benefits&&list){benefits.textContent='Lv.2 전용 혜택';
       const items=['확장 학교 상세자료 열람','최신 조사자료 열람','행정동 공동주택 평균 공시가격 열람','좋아요 누르기'];

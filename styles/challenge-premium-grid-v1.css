@@ -3,20 +3,20 @@ body.beagu-page-challenge main#main-content{max-width:1140px}
 body.beagu-page-challenge #certificate,
 body.beagu-page-challenge #challengeAccessPanel,
 body.beagu-page-challenge .steps{max-width:620px;margin-left:auto;margin-right:auto}
-body.beagu-page-challenge #challengeIdentityPanel,
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel),
 body.beagu-page-challenge #challengeReferralPanel{width:100%;border-radius:24px;padding:28px 30px}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2{
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2{
  position:relative;min-height:190px;padding:32px 35px 31px 164px;
  background:linear-gradient(115deg,#0b1831 0%,#142e59 64%,#0d1c3d 100%);
  border:2px solid #e1bb69;
  box-shadow:0 0 0 4px #fff,0 0 0 5px rgba(209,164,75,.46),0 16px 38px rgba(15,32,57,.16)
 }
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2::after{
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2::after{
  content:"";position:absolute;right:-45px;bottom:-38px;width:37%;height:115px;
  border-top:2px solid rgba(242,197,92,.8);border-radius:55% 0 0 0;transform:rotate(-10deg);pointer-events:none
 }
 body.beagu-page-challenge .challenge-premium-emblem{display:none}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-premium-emblem{
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-premium-emblem{
  display:flex;position:absolute;top:50%;left:30px;transform:translateY(-50%);
  width:108px;height:120px;align-items:center;justify-content:center;flex-direction:column;
  border:2px solid #e5c374;border-radius:50%;color:#ffdfa0;
@@ -24,17 +24,17 @@ body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-premium-embl
 }
 body.beagu-page-challenge .challenge-premium-crown{font-size:43px;line-height:1;color:#efca7e}
 body.beagu-page-challenge .challenge-premium-emblem strong{font-size:28px;line-height:1.1}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-head{align-items:flex-start;gap:12px;flex-wrap:wrap}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 h2{color:#fff8ec;font-size:clamp(22px,2.4vw,29px);line-height:1.25}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-tag{
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-head{align-items:flex-start;gap:12px;flex-wrap:wrap}
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 h2{color:#fff8ec;font-size:clamp(22px,2.4vw,29px);line-height:1.25}
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-tag{
  background:linear-gradient(135deg,#fff1b9,#ddb453);color:#291d09;
  border:1px solid #f5dc9d;padding:8px 14px;font-size:13px;font-weight:850
 }
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-value{
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-value{
  font-size:clamp(17px,2.55vw,28px);color:#ffe4a7;letter-spacing:.028em
 }
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-row{margin-top:14px;flex-wrap:wrap}
-body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-feedback{margin-top:8px}
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-row{margin-top:14px;flex-wrap:wrap}
+body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-feedback{margin-top:8px}
 body.beagu-page-challenge .challenge-referral-grid{
  display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px
 }
@@ -68,15 +68,15 @@ body.beagu-page-challenge .challenge-referral-count-card strong{
 }
 body.beagu-page-challenge #challengeReferralRetry{margin-top:12px}
 @media(max-width:700px){
- body.beagu-page-challenge #challengeIdentityPanel,
+ body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel),
  body.beagu-page-challenge #challengeReferralPanel{padding:22px 18px;border-radius:18px}
- body.beagu-page-challenge #challengeIdentityPanel.is-lv2{padding:24px 18px 22px}
- body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-premium-emblem{
+ body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2{padding:24px 18px 22px}
+ body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-premium-emblem{
   position:relative;left:auto;top:auto;transform:none;width:76px;height:80px;margin:0 0 12px
  }
  body.beagu-page-challenge .challenge-premium-crown{font-size:29px}
  body.beagu-page-challenge .challenge-premium-emblem strong{font-size:19px}
- body.beagu-page-challenge #challengeIdentityPanel.is-lv2 h2{font-size:21px}
+ body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 h2{font-size:21px}
  body.beagu-page-challenge .challenge-referral-grid{grid-template-columns:minmax(0,1fr)}
  body.beagu-page-challenge .challenge-referral-count-card{padding:17px;min-height:118px}
  body.beagu-page-challenge .challenge-referral-count-card strong{font-size:38px}
@@ -84,5 +84,10 @@ body.beagu-page-challenge #challengeReferralRetry{margin-top:12px}
 @media(max-width:430px){
  body.beagu-page-challenge .challenge-referral-link-row{flex-direction:column;align-items:stretch}
  body.beagu-page-challenge .challenge-referral-link-row button{width:100%;align-self:stretch}
- body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-tag{font-size:12px}
+ body.beagu-page-challenge :is(#challengeIdentityPanel,#challengeLoginCodePanel).is-lv2 .challenge-identity-tag{font-size:12px}
 }
+
+body.beagu-page-challenge #challengeLoginCodePanel[hidden],body.beagu-page-challenge #challengeIdentityPanel[hidden]{display:none!important}
+body.beagu-page-challenge #challengeLoginCodePanel .challenge-identity-value{overflow-wrap:anywhere;word-break:break-all;min-width:0;max-width:100%}
+body.beagu-page-challenge #challengeLoginCodePanel .challenge-vip-wordmark strong{color:#ffe4a7}
+body.beagu-page-challenge #challengeLoginCodePanel .challenge-identity-feedback{color:#e8d6b1}

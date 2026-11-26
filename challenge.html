@@ -185,7 +185,7 @@
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261127-deferred">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261127-deferred"></script>
-<link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
+<link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=112051-member">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
@@ -311,7 +311,13 @@
   <details id="togetherIdentityDetails" class="challenge-account-details" data-html2canvas-ignore="true">
     <summary><span>나의 인증정보 관리</span><span id="togetherCurrentAuth" class="together-auth-level" role="status">확인 중</span></summary>
     
-  <section id="challengeLoginCodePanel" class="together-login-code" hidden aria-labelledby="challengeLoginCodeTitle"><h3 id="challengeLoginCodeTitle">나의 참여코드</h3><strong id="challengeLoginCode" aria-live="polite">확인 중</strong><p class="together-private-note">개인정보 보호를 위해 앞 두 글자만 표시합니다.</p></section>
+  <section id="challengeLoginCodePanel" class="challenge-identity challenge-code-card is-lv2" hidden data-html2canvas-ignore="true" data-referral-secret aria-labelledby="challengeLoginCodeTitle">
+    <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
+    <div class="challenge-vip-crown"><div class="challenge-vip-emblem" aria-hidden="true">🏅</div><div class="challenge-vip-wordmark"><span class="challenge-vip-eyebrow">BAEGU INDEX · VERIFIED MEMBER</span><strong>VIP LEVEL 2</strong></div><span class="challenge-vip-star" aria-hidden="true">✦</span></div>
+    <div class="challenge-identity-head"><h2 id="challengeLoginCodeTitle">나의 Lv.2 참여코드</h2><span class="challenge-identity-tag">✓ Lv.2 인증 완료</span></div>
+    <div class="challenge-identity-row"><strong class="challenge-identity-value" id="challengeLoginCode" aria-live="polite"></strong></div>
+    <p id="challengeLoginCodeUnavailable" class="challenge-identity-feedback" hidden>이전에 입력한 코드는 확인할 수 없습니다. 필요할 때 로그아웃 후 참여코드로 인증하면 표시됩니다.</p>
+  </section>
   <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
     <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
     <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
@@ -351,9 +357,9 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=11123-ui1"></script>
-<script src="js/challenge-referral-v1.js?v=20261127-deferred"></script>
-<script src="js/challenge-access-v1.js?v=20261127-deferred"></script>
+<script src="js/challenge.js?v=112051-member"></script>
+<script src="js/challenge-referral-v1.js?v=112051-member"></script>
+<script src="js/challenge-access-v1.js?v=112051-member"></script>
 <script src="js/challenge-level3-v1.js?v=20261127-deferred"></script>
 </body>
 </html>

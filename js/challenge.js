@@ -9,10 +9,13 @@
   const levelSessionKey = 'beagu-level-session-v1';
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false, certificateRefreshPending = false;
   let epoch=0, certificateRevision=0, activeSession="", boundIdentity=false;
+  function loggedCode(){const p=byId('challengeAccessPanel');
+    if(!accessGranted||!activeSession||currentSession()!==activeSession||p?.getAttribute('data-challenge-verified-level')!=='2'||p.dataset.accountLevel==='3')return '';
+    try{const saved=JSON.parse(sessionStorage.getItem('beagu-login-code-mask-v1')||'null');return saved?.token===activeSession&&saved.level===2&&typeof saved.code==='string'&&/^[A-Za-z0-9-]{8,120}$/.test(saved.code)?saved.code:'';}catch(_){return '';}
+  }
   function paintLoginCode(){const target=byId('challengeLoginCode');if(!target)return;
-    let mask='';try{const saved=JSON.parse(sessionStorage.getItem('beagu-login-code-mask-v1')||'null');if(saved?.token===activeSession&&/^[A-Za-z0-9-]{2}\*{6,118}$/.test(saved.mask))mask=saved.mask;}catch(_){}
-    if(!mask&&boundIdentity&&personalCode)mask=personalCode.slice(0,2)+'*'.repeat(personalCode.length-2);
-    target.textContent=mask||'입력한 참여코드 확인 불가 · 다시 인증하면 확인할 수 있습니다.';
+    const code=loggedCode();target.textContent=code;
+    const unavailable=byId('challengeLoginCodeUnavailable');if(unavailable)unavailable.hidden=!!code;
   }
   const currentSession=()=>{try{return sessionStorage.getItem(levelSessionKey)||"";}catch(_){return "";}};
   function renderMilestone(n){
@@ -86,8 +89,8 @@
       if (!valid()) return;
       // Strictly capture only public information. Never serialize the whole page.
       const root=byId('certificate');
-      if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,[data-referral-secret]') ||
-         (personalCode && root.textContent.includes(personalCode)))
+      if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,#challengeLoginCodePanel,#challengeLoginCode,[data-referral-secret]') ||
+         (personalCode && root.textContent.includes(personalCode)) || (loggedCode() && root.textContent.includes(loggedCode())))
         throw new Error('개인 코드 노출 위험으로 인증 이미지 생성을 차단했습니다.');
       const revision=certificateRevision;
       const canvas = await deadline(html2canvas(root, {

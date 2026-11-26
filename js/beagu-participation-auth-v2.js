@@ -248,7 +248,7 @@
    }
    try{sessionStorage.setItem(KEY,result.token)}catch(_){throw Error('STORAGE_UNAVAILABLE')}
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
-   try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,mask:value.slice(0,2)+'*'.repeat(value.length-2)}))}catch(_){}
+   try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,level,mask:value.slice(0,2)+'*'.repeat(value.length-2),...(level===2&&checked.accountLevel!==3?{code:value}:{})}))}catch(_){}
    expiresAt=checked.expires_at||'';verifiedToken=result.token;verifiedLevel=level;verifiedProvisional=typeof checked.provisional==='boolean'?checked.provisional:null;verifiedAccount=checked.accountLevel===3&&level===2?3:level;
    message.textContent='';paint(level);
    if(!modal.hidden)close();

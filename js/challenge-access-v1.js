@@ -139,7 +139,7 @@
         return;
       }
       save(result.token);
-      try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,mask:code.slice(0,2)+'*'.repeat(code.length-2)}))}catch(_){}
+      try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,level:Number(result.level),mask:code.slice(0,2)+'*'.repeat(code.length-2),...(Number(result.level)===2&&result.accountLevel!==3&&/^[A-Za-z0-9-]{8,120}$/.test(code)?{code}:{})}))}catch(_){}
       unlock(result.token,Number(result.level),result.accountLevel,result.provisional===true);
     }catch(error){
       if(serial!==requestSerial)return;

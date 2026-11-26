@@ -195,6 +195,15 @@ async function search(page,level){
   await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.dataset.level==='1');
   assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
   await login(page,code,2);
+  await page.locator('#togetherIdentityDetails summary').click();
+  await waitText(page,'#challengeLoginCode',code);
+  assert.equal(await page.locator('#challengeLoginCodePanel').isVisible(),true);
+  assert.equal(await page.locator('#challengeIdentityPanel').isHidden(),true);
+  assert.ok(await page.locator('#challengeLoginCodePanel').evaluate(el=>el.classList.contains('is-lv2')));
+  assert.ok(!(await page.locator('#certificate').innerText()).includes(code));
+  await page.reload();await waitText(page,'#challengeLoginCode',code);
+  await page.locator('#togetherIdentityDetails summary').click();
+  assert.equal(await page.locator('#challengeIdentityPanel').isHidden(),true);
   await waitText(page,'#challengeReferralCount','0건');
   await waitText(page,'#togetherReferralState','Lv.2 인증 완료');
   assert.equal(await page.locator('#certificate').getAttribute('data-level'),'2');
@@ -211,11 +220,15 @@ async function search(page,level){
     await waitText(second,'#participantNo','777번째');await waitText(second,'#challengeReferralCount','3건');
     assert.equal(await second.locator('#challengeReferralLink').inputValue(),publicLink);
     await second.locator('#togetherIdentityDetails summary').click();
-    assert.equal(await second.locator('#identityCode').innerText(),code);
+    assert.equal(await second.locator('#challengeLoginCode').innerText(),code);
+    assert.equal(await second.locator('#challengeIdentityPanel').isHidden(),true);
+    assert.equal(await second.locator('#challengeLoginCodePanel').isVisible(),true);
     assert.equal(await second.locator('#challengeIdentityPanel').getAttribute('data-referral-state'),'earned');
     await second.locator('#beaguLevelState').click();await second.locator('#beaguParticipationLogout').click();
     await second.waitForFunction(()=>document.querySelector('#beaguLevelState')?.dataset.level==='0');
     assert.equal(await second.locator('#challengeReferralLink').inputValue(),'');
+    assert.equal(await second.locator('#challengeLoginCode').textContent(),'');
+    assert.equal(await second.evaluate(()=>sessionStorage.getItem('beagu-login-code-mask-v1')),null);
   }finally{await other.close();}
   assert.deepEqual(errors,[],'Unhandled page exceptions');
   console.log('PASS '+cfg.name+': Lv0/1/2, referral 0/1/3, legacy Lv2, actual PNG downloads, clipboard, special ordinal 777, search and compare; all external requests blocked.');

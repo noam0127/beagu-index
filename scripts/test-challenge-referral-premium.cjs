@@ -88,7 +88,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드 확인 중');
-  assert.equal(el.challengeIdentityPanel.hidden,false);
+  assert.equal(el.challengeIdentityPanel.hidden,true,'A verified Lv2 login must hide the unrelated code');
   assert.equal(el.challengeIdentityTag.textContent,'Lv.2 로그인 완료 · 개인 코드 미확정');
   assert.equal(el.copyIdentityCode.hidden,true);
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'pending');
