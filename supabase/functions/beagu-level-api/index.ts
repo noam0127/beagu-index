@@ -2,6 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
 import {projectOfficialProfiles2026,projectPublicSchoolBasics2026} from '../_shared/official-school-profile-2026.mjs';
+import {validPassword,passwordLookup,createCredential,verifyCredential} from '../_shared/level3-credential-v1.mjs';
+const lv3Enabled=()=>Deno.env.get('BEAGU_LEVEL3_ENABLED')==='true';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -16,7 +18,7 @@ async function check(req:Request){
  const v=(req.headers.get('X-Beagu-Session')||'').trim();
  if(!/^[a-f0-9]{64}$/.test(v))return null;
  const digest=await hash(v);
- const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at,identity_visitor_id,identity_campaign').eq('token_sha256',digest).maybeSingle();
+ const {data,error}=await admin.from('beagu_level_sessions').select(lv3Enabled()?'access_level,expires_at,identity_visitor_id,identity_campaign,level3_account_id':'access_level,expires_at,identity_visitor_id,identity_campaign').eq('token_sha256',digest).maybeSingle();
  if(error||!data||(!Number.isFinite(Date.parse(data.expires_at))||Date.parse(data.expires_at)<=Date.now()))return null;
  // Re-check earned Lv2 authorization on every protected request. Disabling a
  // referral profile immediately revokes its ability to read protected content.
@@ -61,6 +63,51 @@ Deno.serve(async(req:Request)=>{
    const {data:profiles,error}=await admin.from('beagu_2026_official_school_profiles').select('school_id,disclosure_code,source_year,teacher_total,profile').in('school_id',ids).eq('source_year',2026).limit(20);
    if(error)return send({error:'OFFICIAL_BASICS_UNAVAILABLE'},503,origin);
    return send({official2026:projectPublicSchoolBasics2026(profiles,ids)},200,origin);
+  }
+  if(body.action==='level3_register'||body.action==='level3_login'){
+   const secret=Deno.env.get('BEAGU_LEVEL3_PASSWORD_KEY')||'';
+   if(!lv3Enabled()||! /^[a-f0-9]{64}$/i.test(secret))return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
+   const registering=body.action==='level3_register';
+   const allowedFields=registering?['action','password','confirmation','acknowledged']:['action','password'];
+   if(Object.keys(body).some(k=>!allowedFields.includes(k)))return send({error:'INVALID_BODY'},400,origin);
+   if(!validPassword(body.password))return send({error:'INVALID_PASSWORD'},400,origin);
+   if(registering&&(body.password!==body.confirmation||body.acknowledged!==true))
+     return send({error:'INVALID_CONFIRMATION'},400,origin);
+   const {data:permitted,error:limitError}=await admin.rpc('beagu_consume_login_budget');
+   if(limitError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
+   if(!permitted)return send({error:'RATE_LIMITED'},429,origin);
+   const v=token(),expiry=new Date(Date.now()+6*60*60*1000).toISOString(),newDigest=await hash(v);
+   if(registering){
+     const current=await check(req);
+     if(!current||Number(current.access_level)!==2||!current.identity_visitor_id||current.identity_campaign!=='2026'||current.level3_account_id)
+       return send({error:'PERSONAL_LEVEL2_REQUIRED'},403,origin);
+     const credential=await createCredential(body.password,body.confirmation,secret);
+     const {data,error}=await admin.rpc('beagu_lv3_register_v1',{
+       p_session:await hash((req.headers.get('X-Beagu-Session')||'').trim()),
+       p_lookup:credential.lookup,p_salt:credential.salt,p_verifier:credential.verifier,
+       p_new_session:newDigest,p_expiry:expiry
+     });
+     if(error?.code==='23505')return send({error:'REGISTRATION_CONFLICT'},409,origin);
+     if(error?.code==='28000')return send({error:'PERSONAL_LEVEL2_REQUIRED'},403,origin);
+     if(error||!data)return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
+   }else{
+     const lookup=await passwordLookup(body.password,secret);
+     const {data:account,error}=await admin.from('beagu_lv3_accounts')
+       .select('account_id,visitor_id,salt,verifier,version').eq('lookup',lookup).maybeSingle();
+     if(error)return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
+     // Equal-cost verification for misses; never reveal whether a lookup exists.
+     const matched=await verifyCredential(body.password,secret,account||{version:1,salt:'0'.repeat(64),verifier:'0'.repeat(64)});
+     if(!account||!matched)return send({error:'INVALID_PASSWORD'},401,origin);
+     const {data:earned,error:earnedError}=await admin.rpc('beagu_has_earned_challenge_visitor',{p_visitor:account.visitor_id});
+     if(earnedError)return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
+     if(earned!==true)return send({error:'INVALID_PASSWORD'},401,origin);
+     const {error:writeError}=await admin.from('beagu_level_sessions').insert({
+       token_sha256:newDigest,access_level:2,expires_at:expiry,identity_campaign:'2026',
+       identity_visitor_id:account.visitor_id,level3_account_id:account.account_id
+     });
+     if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
+   }
+   return send({token:v,level:2,accountLevel:3,expires_at:expiry},200,origin);
   }
   if(body.action==='login'){
    // Database-backed global limiter cannot be evaded with forged IP headers.
@@ -129,7 +176,7 @@ Deno.serve(async(req:Request)=>{
    const {error}=await admin.from('beagu_level_sessions').delete().eq('token_sha256',await hash((req.headers.get('X-Beagu-Session')||'').trim()));
    return send(error?{error:'LOGOUT_UNAVAILABLE'}:{ok:true},error?503:200,origin);
   }
-  if(body.action==='verify')return send({level:session.access_level,provisional:Number(session.access_level)>=2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
+  if(body.action==='verify')return send({level:session.access_level,accountLevel:lv3Enabled()&&session.level3_account_id?3:session.access_level,provisional:Number(session.access_level)>=2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
   // Reuse exactly the existing school percentile projection, including edited-data precedence,
   // tier approval, current hold and privacy checks. No profile data is needed for ranking.
   async function readPercentileProjection(ids:string[],tier:number,sendSchoolProfiles:(values:Record<string,number>,common2026?:Record<string,number>)=>Promise<Response>){

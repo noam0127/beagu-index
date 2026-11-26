@@ -25,7 +25,7 @@ x=await fixture({identity_visitor_id:a,identity_campaign:'2026',access_level:1},
 assert.equal(x.out.status,403);assert.equal(x.calls.length,0);
 x=await fixture({identity_visitor_id:null,access_level:1},a,profile);
 assert.equal(x.out.unbound,true);assert.equal(x.calls.length,0);
-assert.match(identity,/const visitor = boundVisitor \|\| input\.visitor\.toLowerCase\(\)/);
+assert.match(identity,/const visitor = boundVisitor \|\| (?:input\.visitor|String\(input\.visitor\))\.toLowerCase\(\)/);
 assert.match(identity,/p_visitor: visitor/);assert.match(identity,/visitorId: visitor/);
 assert.match(client,/const visitor = data\.visitorId/);assert.match(client,/detail: \{ visitor, code: personalCode \}/);
 assert.doesNotMatch(client,/detail: \{ visitor: window\.beaguVisitor/);
