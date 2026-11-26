@@ -23,7 +23,11 @@ begin
  if (select count(*) from public.beagu_locker_notifications_list_v1(a) where comment_id=root and kind='comment')<>1 then raise exception 'post alert missing';end if;
  if (select count(*) from public.beagu_locker_notifications_list_v1(b) where comment_id=reply and kind='reply')<>1 then raise exception 'reply alert missing';end if;
  if exists(select 1 from public.beagu_locker_notifications_list_v1(c)) or public.beagu_locker_notification_read_v1(c,reply) then raise exception 'foreign notification access';end if;
- if not public.beagu_locker_notification_read_v1(b,reply) or not exists(select 1 from public.beagu_locker_notifications_list_v1(b) where comment_id=reply and is_read) then raise exception 'read mark missing';end if;
+ -- Model separate HTTP requests: a STABLE list function sees the snapshot
+ -- taken at the start of its statement, not another function's side effect
+ -- in the same SQL expression.
+ if not public.beagu_locker_notification_read_v1(b,reply) then raise exception 'read mark write failed';end if;
+ if not exists(select 1 from public.beagu_locker_notifications_list_v1(b) where comment_id=reply and is_read) then raise exception 'read mark missing';end if;
  insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,a,'self comment') returning id into own;
  if exists(select 1 from public.beagu_locker_notifications_v1 where comment_id=own) then raise exception 'self notification';end if;
  insert into public.beagu_postit_comments(post_id,author_uid,body,parent_id) values(p,b,'self reply',root) returning id into own;
