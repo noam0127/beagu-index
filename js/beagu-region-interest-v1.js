@@ -1,6 +1,16 @@
-/* Count only a genuine dropdown pair selection. Public top five contain labels only; TOP10 server activation deferred. */
+/* Public TOP10 contains labels only. On an older backend, retain TOP5 for compatibility. */
 (()=>{
 'use strict';
+async function readRegionRanking(client){
+ const primary=await client.rpc('beagu_region_interest_top10_v1');
+ if(!primary.error)return {data:primary.data,limit:10};
+ // Only an absent RPC permits fallback; authentication or transport errors fail closed.
+ if(!['PGRST202','42883'].includes(primary.error.code))throw Error('unavailable');
+ const legacy=await client.rpc('beagu_region_interest_top5_v1');
+ if(legacy.error)throw Error('unavailable');
+ return {data:legacy.data,limit:5};
+}
+if(typeof module==='object'&&module.exports){module.exports={readRegionRanking};return;}
 const root=document.getElementById('beaguRegionInterest'),schoolRank=document.getElementById('beaguInterest'),panel=document.getElementById('regionPanel'),region=document.getElementById('regionSelect'),office=document.getElementById('officeSelect');
 if(!root||!panel||!region||!office)return;
 const list=root.querySelector('[data-region-interest-list]'),status=root.querySelector('[data-region-interest-status]');
@@ -20,10 +30,10 @@ async function load(force=false){
  if(!visible()||(!force&&Date.now()-loadedAt<900000))return;
  const seq=++request;
  try{
-  const {data,error}=await client.rpc('beagu_region_interest_top5_v1');
+  const {data,limit}=await readRegionRanking(client);
   if(seq!==request||!visible())return;
-  if(error||!Array.isArray(data))throw Error('unavailable');
-  const rows=data.filter(r=>r&&typeof r.region==='string'&&r.region.length>0&&r.region.length<=24&&typeof r.office==='string'&&r.office.length>0&&r.office.length<=120).slice(0,5);
+  if(!Array.isArray(data))throw Error('unavailable');
+  const rows=data.filter(r=>r&&typeof r.region==='string'&&r.region.length>0&&r.region.length<=24&&typeof r.office==='string'&&r.office.length>0&&r.office.length<=120).slice(0,limit);
   list.replaceChildren();
   rows.forEach((r,i)=>{const item=el('li','beagu-interest-item');const body=el('div','beagu-interest-link');body.append(el('span','beagu-interest-rank',String(i+1)),el('strong','beagu-interest-school',r.region+' '+short(r.region,r.office)));item.append(body);list.append(item);});
   status.hidden=rows.length>0;status.textContent=rows.length?'':'아직 집계된 지역 선택 기록이 없습니다.';loadedAt=Date.now();
