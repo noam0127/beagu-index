@@ -30,6 +30,7 @@ jobs:
       - run: node tests/locker-room-policy-v11125.mjs
       - run: node tests/locker-room-auth-v11125.mjs
       - run: node tests/locker-room-identity-v11125.mjs
+      - run: node tests/locker-room-final-v11125.mjs
       - run: node --experimental-strip-types tests/account-v1-edge.mjs
       - name: Run isolated PostgreSQL fixtures
         env:
