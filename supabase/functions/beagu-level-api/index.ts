@@ -99,7 +99,7 @@ Deno.serve(async(req:Request)=>{
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
    return send({token:v,level,provisional,expires_at:expiry},200,origin);
   }
-  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons')return send({error:'UNKNOWN_ACTION'},400,origin);
+  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons'&&body.action!=='home_ranking_2026')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);
   if(!session)return send({error:'AUTH_REQUIRED'},401,origin);
   if(body.action==='logout'){
@@ -107,26 +107,9 @@ Deno.serve(async(req:Request)=>{
    return send(error?{error:'LOGOUT_UNAVAILABLE'}:{ok:true},error?503:200,origin);
   }
   if(body.action==='verify')return send({level:session.access_level,provisional:Number(session.access_level)>=2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
-  if(body.action==='percentiles'){
-   // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
-   const ids=body.schoolIds;
-   if(!Array.isArray(ids)||ids.length<1||ids.length>20||
-     ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
-     new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
-   const verifiedTier=Number(session.access_level);
-   const tier=body.viewLevel===undefined?verifiedTier:body.viewLevel;
-   if(typeof tier!=='number'||tier>verifiedTier)return send({error:'ACCESS_DENIED'},403,origin);
-   if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
-   const sendSchoolProfiles=async(values:Record<string,number>,common2026:Record<string,number>={})=>{
-     const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
-       .select('school_id,disclosure_code,source_year,teacher_total,profile')
-       .in('school_id',ids).eq('source_year',2026).limit(20);
-     if(profileError){
-       console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
-       return send({values,common2026,official2026_status:'UNAVAILABLE'},200,origin);
-     }
-     return send({values,common2026,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
-   };
+  // Reuse exactly the existing school percentile projection, including edited-data precedence,
+  // tier approval, current hold and privacy checks. No profile data is needed for ranking.
+  async function readPercentileProjection(ids:string[],tier:number,sendSchoolProfiles:(values:Record<string,number>,common2026?:Record<string,number>)=>Promise<Response>){
    const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier});
    if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
    if(edited.data.active===true){
@@ -183,6 +166,51 @@ Deno.serve(async(req:Request)=>{
      }
    }
    return await sendSchoolProfiles(out);
+  }
+  if(body.action==='home_ranking_2026'){
+   const tier=Number(session.access_level);
+   if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
+   const {data,error}=await admin.rpc('beagu_2026_home_ranking_read_v1',{p_level:tier});
+   if(error||!data)return send({error:'RANKING_UNAVAILABLE'},503,origin);
+   if(data.day===null&&Array.isArray(data.rows)&&data.rows.length===0)return send({level:tier,day:null,rows:[]},200,origin);
+   const rows=data.rows;
+   if(typeof data.day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(data.day)||!Array.isArray(rows)||rows.length>20||
+     rows.some((r:any)=>!r||typeof r.school_id!=='string'||!/^[A-Z0-9]{7}$/.test(r.school_id)||
+       typeof r.school_name!=='string'||!r.school_name.trim()||r.school_name.length>120||
+       typeof r.region!=='string'||r.region.length>100||!Number.isInteger(r.rank)||r.rank<1||r.rank>20||
+       typeof r.percentile!=='number'||!Number.isFinite(r.percentile)||r.percentile<0||r.percentile>100)||
+     new Set(rows.map((r:any)=>r.school_id)).size!==rows.length)return send({error:'RANKING_UNAVAILABLE'},503,origin);
+   if(rows.length){
+     const ids=rows.map((r:any)=>r.school_id);
+     const checked=await readPercentileProjection(ids,tier,async values=>send({values},200,origin));
+     if(!checked.ok)return send({error:'RANKING_REVALIDATION_UNAVAILABLE'},503,origin);
+     const current=await checked.json();
+     // An approval revocation or a changed score invalidates the entire snapshot.
+     if(rows.some((r:any)=>current.values?.[r.school_id]!==r.percentile))return send({error:'RANKING_REVALIDATION_REQUIRED'},503,origin);
+   }
+   return send({level:tier,day:data.day,rows:rows.map((r:any)=>({school_id:r.school_id,school_name:r.school_name,region:r.region,rank:r.rank,percentile:r.percentile}))},200,origin);
+  }
+  if(body.action==='percentiles'){
+   // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
+   const ids=body.schoolIds;
+   if(!Array.isArray(ids)||ids.length<1||ids.length>20||
+     ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
+     new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const verifiedTier=Number(session.access_level);
+   const tier=body.viewLevel===undefined?verifiedTier:body.viewLevel;
+   if(typeof tier!=='number'||tier>verifiedTier)return send({error:'ACCESS_DENIED'},403,origin);
+   if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
+   const sendSchoolProfiles=async(values:Record<string,number>,common2026:Record<string,number>={})=>{
+     const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
+       .select('school_id,disclosure_code,source_year,teacher_total,profile')
+       .in('school_id',ids).eq('source_year',2026).limit(20);
+     if(profileError){
+       console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
+       return send({values,common2026,official2026_status:'UNAVAILABLE'},200,origin);
+     }
+     return send({values,common2026,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
+   };
+   return await readPercentileProjection(ids,tier,sendSchoolProfiles);
 
   }
 

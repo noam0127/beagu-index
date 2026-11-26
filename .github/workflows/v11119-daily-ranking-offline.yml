@@ -1,0 +1,24 @@
+name: v1.11.19 daily ranking offline
+on:
+  push:
+    branches: [feat/v11119-daily-ranking]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check js/beagu-home-ranking-v1.js
+          node tests/2026-home-ranking-daily.mjs
+          node tests/v111181-court-completion.mjs
+          node tests/v11118-static-basics.mjs
+          node tests/v11117-public-school-basics.mjs
+          node tests/2026-public-projection-integrity.mjs
+          node tests/2026-question-results-pipeline.mjs
+          node tests/2026-percentile-v13-final-contract.mjs
