@@ -119,5 +119,73 @@ try{
   await context.close();
  }
  await scenario(1280,"");await scenario(390,codeOnly);await scenario(1280,verified);await scenario(390,verified);
+ // Load the actual page sections and production scripts in a minimal isolated
+ // fixture, avoiding unrelated homepage/admin telemetry and authentication UI.
+ const {readFileSync}=await import("node:fs");
+ const homeMarkup=readFileSync("index.html","utf8").match(/<section[^>]*id="beaguHomeLocker"[\s\S]*?<\/section>/)[0];
+ const adminMarkup=readFileSync("admin.html","utf8").match(/<section[^>]*id="adminLockerReports"[\s\S]*?<\/section>/)[0];
+ const fixture=await browser.newContext({viewport:{width:390,height:850},serviceWorkers:"block"});
+ const page=await fixture.newPage();let previewRequests=0,adminRequests=0,decision=null,allowOwner=false,allowPreview=false;
+ const errors=[];page.on("pageerror",e=>errors.push(e.message));
+ await fixture.route("**/*",async route=>{
+  const req=route.request(),u=new URL(req.url());
+  const headers={"access-control-allow-origin":origin,"access-control-allow-headers":"*","access-control-allow-methods":"GET,POST,OPTIONS","content-type":"application/json"};
+  const send=(body,status=200)=>route.fulfill({status,headers,body:JSON.stringify(body)});
+  if(u.origin===origin){
+   if(u.pathname==="/home-fixture")return route.fulfill({contentType:"text/html",body:'<a id="beaguLevelState" data-level="0"></a>'+homeMarkup+'<script src="/js/beagu-home-locker-v11125.js"></script>'});
+   if(u.pathname==="/admin-fixture")return route.fulfill({contentType:"text/html",body:adminMarkup+'<script>const SUPABASE_URL="https://fixture.invalid",SUPABASE_PUBLISHABLE_KEY="fixture";const supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:"synthetic"}}})}};</script><script src="/js/beagu-admin-locker-v11125.js"></script>'});
+   return route.continue();
+  }
+  if(req.method()==="OPTIONS")return route.fulfill({status:204,headers});
+  if(u.searchParams.get("action")==="home_latest"){
+   previewRequests++;
+   if(!allowPreview||req.headers()["x-beagu-level-session"]!==verified)return send({error:"LEVEL_REQUIRED"},403);
+   return send({posts:Array.from({length:4},(_,i)=>({id:operatorPost,excerpt:"홈 합성 글 "+i,nickname:"리베로",is_operator:false}))});
+  }
+  if(u.hostname==="fixture.invalid"){
+   adminRequests++;
+   if(!allowOwner)return send({error:"owner_required"},403);
+   const b=req.postDataJSON();
+   if(b.action==="locker_reports")return send({ok:true,data:{rows:decision?[]:[{target_type:"post",target_id:operatorPost,body:"신고 합성 글",reports:1,status:"published"}]}});
+   if(b.action==="locker_report_decide"){decision=b;return send({ok:true,data:{updated:true}});}
+  }
+  return route.abort();
+ });
+ await page.goto(origin+"/home-fixture");
+ assert.equal(previewRequests,0);
+ assert.equal(await page.locator("#homeLockerList li").count(),0);
+ await page.evaluate(t=>{sessionStorage.setItem("beagu-level-session-v1",t);document.getElementById("beaguLevelState").dataset.level="2";window.dispatchEvent(new Event("beagu:level-state-updated"));},codeOnly);
+ await page.waitForTimeout(250);
+ assert.equal(await page.locator("#homeLockerList li").count(),0);
+ allowPreview=true;
+ await page.evaluate(t=>{sessionStorage.setItem("beagu-level-session-v1",t);window.dispatchEvent(new Event("beagu:level-state-updated"));},verified);
+ await page.getByText("홈 합성 글 0",{exact:true}).waitFor();
+ assert.equal(await page.locator("#homeLockerList li").count(),3);
+ await page.evaluate(()=>{sessionStorage.removeItem("beagu-level-session-v1");document.getElementById("beaguLevelState").dataset.level="0";window.dispatchEvent(new Event("beagu:level-state-updated"));});
+ assert.equal(await page.locator("#homeLockerList li").count(),0);
+ await page.goto(origin+"/admin-fixture");
+ await page.evaluate(()=>window.BeaguLockerAdmin.mount("viewer"));
+ assert.equal(await page.locator("#adminLockerReports").isVisible(),false);
+ assert.equal(adminRequests,0);
+ await page.evaluate(()=>window.BeaguLockerAdmin.mount("owner"));
+ await page.getByText("신고 목록을 확인할 수 없습니다.",{exact:true}).waitFor();
+ assert.equal(await page.locator("#adminLockerRows article").count(),0);
+ allowOwner=true;
+ await page.locator("#adminLockerReload").click();
+ await page.getByText("신고 합성 글",{exact:true}).waitFor();
+ await page.locator("#adminLockerRows textarea").fill("합성 신고 검토 사유입니다");
+ page.once("dialog",d=>d.accept());
+ await page.getByRole("button",{name:"24시간 작성 제한",exact:true}).click();
+ await page.getByText("처리 완료 · 기록 저장",{exact:true}).waitFor();
+ assert.equal(decision.decision,"restrict_24h");
+ assert.equal(decision.target_id,operatorPost);
+ assert.equal("author_uid" in decision,false);
+ await page.evaluate(()=>window.BeaguLockerAdmin.reset());
+ assert.equal(await page.locator("#adminLockerRows article").count(),0);
+ assert.equal(await page.locator("#adminLockerReports").isVisible(),false);
+ assert.deepEqual(errors,[]);
+ await fixture.close();
+ console.log("PASS home three-item preview and owner report UI, unauthorized/cleared states");
+
  console.log("PASS desktop/mobile locker room: verified account gate, 300 characters, optional tag, shared deep link, no contact fields, one-level replies, notification click and revoke/purge");
 }finally{if(browser)await browser.close();server.kill();}
