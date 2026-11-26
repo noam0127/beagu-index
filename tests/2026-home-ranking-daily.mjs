@@ -24,6 +24,8 @@ assert.ok(api.includes('current.values?.[r.school_id]!==r.percentile'));
 assert.ok(sql.includes('beagu_2026_percentile_v13_values(b.ids,tier)'));
 assert.ok(sql.includes('c.source_version=cfg.source_version and c.percentile_method=cfg.percentile_method'));
 assert.ok(sql.includes("0 15 * * *"));
+assert.ok(sql.includes("l.source_version=d.source_version"));
+assert.ok(sql.includes("l.source_version=c.source_version"));
 assert.ok(!/insert into beagu_private\.beagu_2026_home_rank_config_v1/i.test(sql));
 assert.ok(!/localStorage|innerHTML|service_role|public-lv0-percentiles/.test(js));
 console.log('PASS daily 2026 ranking KST, ties, access, source and UI contracts');

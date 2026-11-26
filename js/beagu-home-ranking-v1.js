@@ -43,12 +43,12 @@
  }
  async function refresh(){
   const seq=++sequence,start=token(),level=tier();
-  controller?.abort();controller=new AbortController();const signal=controller.signal;
+  controller?.abort();controller=new AbortController();const requestController=controller,signal=requestController.signal;
   clear('공개 승인 자료 확인 중');
   if(!/^[a-f0-9]{64}$/.test(start)||![1,2].includes(level)){
    clear('Lv.1 이상 승인 자료를 확인할 수 있습니다.',true);schedule();return;
   }
-  const timeout=setTimeout(()=>controller?.abort(),15000);
+  const timeout=setTimeout(()=>requestController.abort(),15000);
   try{
    const res=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json','X-Beagu-Session':start},body:JSON.stringify({action:'home_ranking_2026'}),cache:'no-store',signal});
    if(seq!==sequence||token()!==start||tier()!==level)return;

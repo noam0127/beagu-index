@@ -22,3 +22,24 @@ jobs:
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-percentile-v13-final-contract.mjs
+  postgres-fixture:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: rank_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate isolated SQL fixture
+        env:
+          PGPASSWORD: fixture
+        run: psql -h 127.0.0.1 -U postgres -d rank_fixture -v ON_ERROR_STOP=1 -f tests/2026-home-ranking-daily-fixture.sql
