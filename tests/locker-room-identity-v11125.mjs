@@ -5,7 +5,7 @@ import {stripTypeScriptTypes} from "node:module";
 const source=readFileSync(new URL("../supabase/functions/beagu-postit-api-v1/index.ts",import.meta.url),"utf8");
 const start=source.indexOf("async function enrich("),end=source.indexOf("// Quotas and duplicate handling",start);
 assert.ok(start>=0&&end>start);
-const db={from(name){assert.ok(["beagu_postit_reactions","beagu_postit_comments"].includes(name));return {select(){return this},eq(){return this},in(){return this},async limit(){return {data:[],error:null}}};}};
+const db={from(name){assert.ok(["beagu_postit_reactions","beagu_locker_visible_comments_v1"].includes(name));return {select(){return this},eq(){return this},in(){return this},async limit(){return {data:[],error:null}}};}};
 const enrich=new Function("db","schoolInfo","GAMES",stripTypeScriptTypes(source.slice(start,end))+"\nreturn enrich;")(db,async()=>({}),{});
 const base={id:"post1",author_uid:"private-actor",body:"fixture",created_at:"2026-11-26T00:00:00Z",subject_type:"general",admin_user_id:"secret-admin",token_sha256:"secret-session"};
 const fixtures=[
