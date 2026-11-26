@@ -3,9 +3,10 @@ import {catalog} from '../supabase/functions/_shared/questionnaire-2026.mjs';
 import {publicQuestionResults} from '../supabase/functions/_shared/results-2026.mjs';
 const q={id:'Q01',row:-1,valid:1,invalid:0,counts:catalog.Q01.options.map((_,i)=>i===0?1:0),minutes_sum:0};
 assert.deepEqual(publicQuestionResults([q]),[{questionId:'Q01',row:-1,values:[catalog.Q01.options[0]]}]);
-for(const change of [x=>({...x,valid:-1}),x=>({...x,valid:1.5}),x=>({...x,valid:50001}),x=>({...x,invalid:1}),x=>({...x,row:0}),x=>({...x,counts:[]}),x=>({...x,counts:x.counts.map(()=>0)}),x=>({...x,counts:x.counts.map(()=>1)}),x=>({...x,counts:[...x.counts.slice(0,-1),-1]}),x=>({...x,minutes_sum:1}),x=>({...x,raw_answers:['private']}),x=>({...x,id:'Q31'}),x=>({...x,id:'Q51'}),x=>({...x,id:'__proto__'})]){
+for(const change of [x=>({...x,valid:-1}),x=>({...x,valid:1.5}),x=>({...x,valid:50001}),x=>({...x,invalid:-1}),x=>({...x,invalid:1.5}),x=>({...x,invalid:50000}),x=>({...x,row:0}),x=>({...x,counts:[]}),x=>({...x,counts:x.counts.map(()=>0)}),x=>({...x,counts:x.counts.map(()=>1)}),x=>({...x,counts:[...x.counts.slice(0,-1),-1]}),x=>({...x,minutes_sum:1}),x=>({...x,raw_answers:['private']}),x=>({...x,id:'Q31'}),x=>({...x,id:'Q51'}),x=>({...x,id:'__proto__'})]){
  assert.deepEqual(publicQuestionResults([change(q)]),[]);
 }
+assert.deepEqual(publicQuestionResults([{...q,invalid:1}]),publicQuestionResults([q]));
 assert.deepEqual(publicQuestionResults([q,{...q}]),[]);
 assert.deepEqual(publicQuestionResults([null,q]),publicQuestionResults([q]));
 assert.deepEqual(publicQuestionResults(null),[]);

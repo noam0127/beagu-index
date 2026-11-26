@@ -1216,6 +1216,27 @@
         "계정 테이블 및 세션 컬럼·RPC 운영 적용 승인 필요",
         "아이디 인증 API 운영 적용 및 비밀키 설정 필요"
       ]
+    },
+    {
+      "order": 53,
+      "version": "v1.12.04",
+      "name": "안전한 응답",
+      "scope": "역대 기타 자유입력 공개 차단 및 검증된 객관식·학교정보 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v11204-safe-responses-integrated",
+      "pr": 337,
+      "baseline_sha": "a0875f2c9235211cbc9d97befd7b234d2e7b437c",
+      "dependencies": [
+        "v1.12.02.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        {
+          "name": "Exact candidate code-only and registration CI",
+          "result": "PENDING"
+        }
+      ]
     }
   ],
   "source_manifest": {

@@ -644,8 +644,8 @@
       for(const record of Array.isArray(data?.schoolQuestionModes)?data.schoolQuestionModes:[]){
         const year=Number(record?.year),qid=String(record?.questionId||'');
         if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
-           !validServerText(record.modeOption,180))continue;
-        approved.items[year][qid]=String(record.modeOption);
+           !window.BeaguHistoricalClosedChoice?.(year,qid,record.modeOption))continue;
+        approved.items[year][qid]=window.BeaguHistoricalClosedChoice(year,qid,record.modeOption);
       }
       Object.assign(approved.items[2026],window.Beagu2026ApprovedResults?.summary(data.schoolQuestionResults2026)||{});
       if(epoch===state.authEpoch && token===state.sessionToken)

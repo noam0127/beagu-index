@@ -3,7 +3,7 @@ on:
   push:
     branches: ['release/v1.12.02-account-ui','release/v1.12.02.1-anonymous-account']
   pull_request:
-    branches: ['release/base-pages-v11202-current-production','release/base-pages-v112021-current-production']
+    branches: ['release/base-pages-v11202-current-production','release/base-pages-v112021-current-production','release/base-pages-v11204-current-production']
 permissions:
   contents: read
 jobs:

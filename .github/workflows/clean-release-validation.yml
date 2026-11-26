@@ -58,6 +58,7 @@ jobs:
           node tests/arcade-fire-court-v11115.mjs
           node tests/2026-civic-feedback-safe.cjs
           node tests/school-likes-contract.mjs
+          node tests/closed-choice-privacy-v1.mjs
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-release-consent-gate.mjs

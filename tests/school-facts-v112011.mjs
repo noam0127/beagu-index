@@ -36,3 +36,10 @@ assert.equal(find(2026,'Q48',0).active,true);
 const all=Object.entries(C).flatMap(([q,v])=>v.kind==='grid'?v.rows.map((_,i)=>r(q,i,v.columns[0])):v.kind==='multi'?[r(q,-1,...v.options.filter(x=>!x.includes('없다')&&!x.includes('모르겠다')&&!x.includes('운영하지 않는다')))]:v.kind==='choice'?[r(q,-1,v.options[0])]:[]);
 const facts=F.collectFacts([],all,2);assert.ok(facts.length>=95);assert.ok(facts.every(x=>x.questionId!=='Q31'&&x.questionId!=='Q51'));
 console.log('PASS',facts.length,'2026 factual icon candidates; year gates, exact choices, explicit negatives, exclusions and future plans');
+
+assert.equal(find(2025,'Q04',5),undefined,'unverified historical label cannot produce a negative icon');
+assert.equal(find(2025,'Q02',0).active,true,'canonical choice preserves existing fact');
+const mixed=F.collectFacts([],[],2,[s('Q04','운동회','SYNTHETIC_PRIVATE_OTHER_TEXT')]);
+assert.equal(mixed.length,0,'unverified selection cannot activate an icon');
+assert.equal(F.collectFacts([],[],2,[s('Q04','수학여행')]).length,0,'not a confirmed fixed 2025 Q04 option');
+assert.ok(F.collectFacts([],[],2,[s('Q04','운동회')]).some(x=>x.id==='2025:Q04:6'&&x.active));
