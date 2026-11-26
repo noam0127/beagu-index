@@ -41,71 +41,61 @@
       "rank": 1,
       "school_id": "7551071",
       "school_name": "서현초등학교",
-      "region": "경기 성남",
-      "percentile": 100
+      "region": "경기 성남"
     },
     {
       "rank": 2,
       "school_id": "7569043",
       "school_name": "안양호암초등학교",
-      "region": "경기 안양과천",
-      "percentile": 99.8
+      "region": "경기 안양과천"
     },
     {
       "rank": 3,
       "school_id": "7361332",
       "school_name": "인천아라초등학교",
-      "region": "인천 서부",
-      "percentile": 99.6
+      "region": "인천 서부"
     },
     {
       "rank": 4,
       "school_id": "7631121",
       "school_name": "평택도곡초등학교",
-      "region": "경기 평택",
-      "percentile": 99.3
+      "region": "경기 평택"
     },
     {
       "rank": 4,
       "school_id": "8801086",
       "school_name": "고아초등학교",
-      "region": "경북 구미",
-      "percentile": 99.3
+      "region": "경북 구미"
     },
     {
       "rank": 6,
       "school_id": "7051126",
       "school_name": "서울상경초등학교",
-      "region": "서울 북부",
-      "percentile": 99.1
+      "region": "서울 북부"
     },
     {
       "rank": 7,
       "school_id": "7132081",
       "school_name": "서울관악초등학교",
-      "region": "서울 동작관악",
-      "percentile": 98.9
+      "region": "서울 동작관악"
     },
     {
       "rank": 8,
       "school_id": "7361296",
       "school_name": "인천가원초등학교",
-      "region": "인천 서부",
-      "percentile": 98.6
+      "region": "인천 서부"
     },
     {
       "rank": 8,
       "school_id": "7679337",
       "school_name": "아인초등학교",
-      "region": "경기 화성오산",
-      "percentile": 98.6
+      "region": "경기 화성오산"
     },
     {
       "rank": 10,
       "school_id": "8151043",
       "school_name": "도장초등학교",
-      "region": "충남 천안",
-      "percentile": 98.4
+      "region": "충남 천안"
     }
   ]
 };
@@ -129,11 +119,15 @@
  paint();
  let pending=false;
  async function refresh(){
-  if(pending)return;pending=true;
+  if(pending)return;
+  let token='';try{token=sessionStorage.getItem('beagu-level-session-v1')||'';}catch{}
+  if(tier()<2||!token){rows=manualSnapshot.rows;status.textContent=manualSnapshot.day+' 기준 · 수동 집계';if(note)note.textContent='수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';paint();return;}
+  pending=true;
   try{
-   const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'home_vi13_sheet_top10'}),cache:'no-store',credentials:'omit'});
+   const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json','X-Beagu-Session':token},body:JSON.stringify({action:'home_vi13_sheet_top10'}),cache:'no-store',credentials:'omit'});
    if(!res.ok)throw Error('VI13_UNAVAILABLE');
    const data=await res.json();if(!validAuto(data))throw Error('VI13_INVALID');
+   if(tier()<2||sessionStorage.getItem('beagu-level-session-v1')!==token)throw Error('VI13_SESSION_CHANGED');
    rows=data.rows;status.textContent=data.day+' 기준 · 자동 집계';
    if(note)note.textContent='자동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
   }catch{
@@ -141,5 +135,5 @@
    if(note)note.textContent='수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
   }finally{pending=false;paint();}
  }
- window.addEventListener('pageshow',refresh);refresh();
+ window.addEventListener('beagu:level-state-updated',refresh);window.addEventListener('pageshow',refresh);refresh();
 })();

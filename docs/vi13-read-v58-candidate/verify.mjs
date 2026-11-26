@@ -1,19 +1,40 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {METHOD} from './_shared/vi13-sheet-sync.mjs';
-import {approvedSheetValues,approvedSheetTop10} from './_shared/vi13-read-projection.mjs';
+import {METHOD,parseVI13Sheet} from './_shared/vi13-sheet-sync.mjs';
+import {automaticVI13Values,autoSheetValues,autoSheetTop10} from './_shared/vi13-read-projection.mjs';
+import {normalizeTimeMinutes,sanitizeEditedQuestions} from './_shared/publication-v14-sanitize.mjs';
+import {publicQuestionResults} from './_shared/results-2026.mjs';
 globalThis.Deno={env:{get:()=> '1'}};
 const n=604,stamp=new Date().toISOString(),rows=Array.from({length:n},(_,i)=>[String(7000000+i),'fixture','fixture',Math.round(1000*(n-i-1)/(n-1))/10,i+1,i<120?2:1,(i<120?2:1)*i*1000,0]);
+rows[12][7]=1;
 const values=[['VI13_SYNC_V1',stamp,604,724,METHOD,797,'PRIVATE',''],['school_id','school_name','region','percentile','rank','observations','sum_units','flags'],...rows];
-let approved={},auto={},broken=false;
-const admin={rpc:async(name,params)=>name==='beagu_2026_vi13_sheet_read_v1'?{data:values}:name==='beagu_2026_percentile_v13_values'?{data:approved,error:broken?{}:null}:name==='beagu_2026_auto_percentiles'?{data:auto}:Promise.reject(Error(name))};
-assert.deepEqual(await approvedSheetValues(admin,['7000000']),{});await assert.rejects(approvedSheetTop10(admin));
-approved={'7000000':99.9};assert.deepEqual(await approvedSheetValues(admin,['7000000']),{});
-approved={'7000000':100};assert.deepEqual(await approvedSheetValues(admin,['7000000']),{'7000000':100});await assert.rejects(approvedSheetTop10(admin));
-approved=Object.fromEntries(rows.slice(0,10).map(r=>[r[0],r[3]]));let top=await approvedSheetTop10(admin);assert.equal(top.rows.length,10);assert.ok(top.rows.every(r=>Object.keys(r).sort().join(',')==='rank,region,school_id,school_name'));
-broken=true;assert.deepEqual(await approvedSheetValues(admin,['7000000']),{});await assert.rejects(approvedSheetTop10(admin));
-const src=readFileSync(new URL('beagu-level-api/index.ts',import.meta.url),'utf8');assert.ok(src.indexOf('const session=await check(req)')<src.indexOf('const sheetValues='));assert.ok(src.indexOf('if(tier===1)return await sendSchoolProfiles({},{})')<src.indexOf('const sheetValues='));assert.ok(src.includes('editedPercentile:level>=2?'));assert.ok(src.includes("q.questionId!=='Q31'&&q.questionId!=='Q51'"));
+const snap=parseVI13Sheet(values);
+const c=r=>({percentile:r[3],identity:true,sourceAgreement:true,notice:true,smallSample:true,reidentification:true,priorCombination:true,manipulation:true,blocked:false});
+let checks={generatedAt:stamp,schools:Object.fromEntries(rows.map(r=>[r[0],c(r)]))},calls=[];
+const admin={rpc:async(name,params)=>{calls.push(name);if(name==='beagu_2026_vi13_sheet_read_v1')return {data:values};if(name==='beagu_2026_vi13_v14_checks')return {data:checks};throw Error(name);}};
+const id='7000120',p=rows[120][3];
+assert.deepEqual(await autoSheetValues(admin,[id],1),{});assert.equal(calls.length,0);
+assert.deepEqual(await autoSheetValues(admin,[id],2),{[id]:p}); // n=1, no manual approval
+assert.deepEqual(await autoSheetValues(admin,['7000012'],2),{}); // flagged
+for(const key of ['identity','sourceAgreement','notice','smallSample','reidentification','priorCombination','manipulation']){
+ const old=checks.schools[id][key];checks.schools[id][key]=null;assert.deepEqual(await autoSheetValues(admin,[id],2),{});checks.schools[id][key]=old;
+}
+checks.schools[id].blocked=true;assert.deepEqual(await autoSheetValues(admin,[id],2),{});checks.schools[id].blocked=false;
+checks.schools[id].percentile=0;assert.deepEqual(await autoSheetValues(admin,[id],2),{});checks.schools[id].percentile=p;
+assert.deepEqual(automaticVI13Values(snap,[id],{...checks,generatedAt:'stale'},2),{});
+const top=await autoSheetTop10(admin,2);assert.equal(top.rows.length,10);assert.ok(top.rows.every(r=>Object.keys(r).sort().join(',')==='rank,region,school_id,school_name'));
+await assert.rejects(autoSheetTop10(admin,1));checks.schools['7000000'].blocked=true;await assert.rejects(autoSheetTop10(admin,2));
+assert.deepEqual(await autoSheetValues({rpc:async()=>({error:{}})},[id],2),{});
+assert.equal(normalizeTimeMinutes('Q19',20*60+30),510);assert.equal(normalizeTimeMinutes('Q20',4*60+30),990);assert.equal(normalizeTimeMinutes('Q20',-1),null);
+const q=(id,n,sum)=>({id,row:-1,valid:n,invalid:0,counts:[],minutes_sum:sum});
+assert.deepEqual(publicQuestionResults([q('Q19',1,1230),q('Q20',1,270)]).map(x=>x.values[0]),['08:30','16:30']);
+assert.deepEqual(publicQuestionResults([q('Q19',2,1000),q('Q31',1,0),q('Q50',1,0),q('Q51',1,0)]),[]);
+assert.deepEqual(sanitizeEditedQuestions(['Q31','Q50','Q51','Q19'].map(questionId=>({questionId,row:-1,values:['private']}))),[]);
+assert.deepEqual(sanitizeEditedQuestions([{questionId:'Q12',row:-1,values:['기타','free text','운영하지 않는다']}]),[{questionId:'Q12',row:-1,values:['운영하지 않는다']}]);
+const source=readFileSync(new URL('beagu-level-api/index.ts',import.meta.url),'utf8');
+assert.ok(source.indexOf('if(tier===1)return await sendSchoolProfiles({},{})')<source.indexOf('const sheetValues='));
+assert.ok(source.includes('autoSheetValues(admin,ids,tier)'));assert.ok(source.includes('sanitizeEditedQuestions(finalRow.questions)'));
+assert.ok(source.includes("Number(verified.access_level)<2"));assert.ok(!calls.some(x=>x.includes('approval')||x.includes('percentile_v13_values')));
 const require=createRequire(import.meta.url),h=require('../../js/beagu-home-ranking-v1.js');assert.ok(h.validAuto(top));assert.equal(h.validAuto({...top,rows:top.rows.map(r=>({...r,percentile:100}))}),false);
-assert.equal(h.validAuto({...top,generatedAt:'2000-01-01T00:00:00Z'}),false);
-console.log('PASS 604/724 synthetic snapshot, no approval, mismatched approval, exact approval, TOP10 allowlist, stale client, tier guards');
+console.log('PASS synthetic one-observation automatic gate, unknown/flagged/blocked denial, Lv0-1, time and private question protection');

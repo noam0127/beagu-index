@@ -1,4 +1,5 @@
 import {catalog} from './questionnaire-2026.mjs';
+import {prohibited2026,normalizeTimeMinutes} from './publication-v14-sanitize.mjs';
 export const sourceId='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4';
 const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max;
 const keys=(v,expected)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join('|')===[...expected].sort().join('|');
@@ -45,7 +46,7 @@ export function publicQuestionResults(questions) {
   }
   return questions.flatMap(q=>{
     if(!keys(q,['id','row','valid','invalid','counts','minutes_sum'])||
-      typeof q.id!=='string'||!Object.hasOwn(catalog,q.id)||q.id==='Q31'||q.id==='Q51'||
+      typeof q.id!=='string'||!Object.hasOwn(catalog,q.id)||prohibited2026(q.id)||
       occurrences.get(q.id+':'+q.row)!==1||q.invalid!==0||!integer(q.valid,50000)||q.valid<1)return [];
     const m=catalog[q.id],grid=m.kind==='grid';
     if(!Number.isSafeInteger(q.row)||(grid?(q.row<0||q.row>=m.rows.length):q.row!==-1))return [];
@@ -58,7 +59,10 @@ export function publicQuestionResults(questions) {
     if(options.some((v,i)=>v==='기타'&&q.counts[i]>0))return [];
     let values=[];
     if(m.kind==='time'){
-      const minutes=Math.round(q.minutes_sum/q.valid);
+      // Older aggregates cannot be normalized per input after averaging. Single input is exact.
+      if(q.valid!==1)return [];
+      const minutes=normalizeTimeMinutes(q.id,q.minutes_sum);
+      if(minutes===null)return [];
       values=[String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0')];
     }else if(m.kind==='multi'||q.id==='Q45'){
       values=options.filter((_,i)=>q.counts[i]>0);

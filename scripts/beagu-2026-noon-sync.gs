@@ -725,6 +725,8 @@ function beagu26BuildResults(values, schools, catalog) {
           return;
         }
         if(m[1])hour=hour%12+(m[1]==='오후'?12:0);
+        // v1.4: normalize each input before aggregation. Never change source cells.
+        if(s.id==='Q19'||s.id==='Q20')hour=hour%12+(s.id==='Q20'?12:0);
         q.valid++;q.minutes_sum+=hour*60+minute;return;
       }
       const selected=beagu26Selections(raw,s.options,s.multiple);
