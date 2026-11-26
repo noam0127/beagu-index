@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
+import {historicalChoice,comparisonMean,sanitize2026Results} from '../_shared/closed-choice-privacy.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
 import {projectOfficialProfiles2026,projectPublicSchoolBasics2026} from '../_shared/official-school-profile-2026.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
@@ -206,12 +207,12 @@ Deno.serve(async(req:Request)=>{
     for(const row of nation.data||[]){
       const k=String(row.question_id);
       if(!/^Q\d{2}$/.test(k))continue;
-      items[k]={national:{mean:row.mean_option||null,mode:row.mode_option||null,kind:row.comparison_kind}};
+      items[k]={national:{mean:comparisonMean(year,k,row.mean_option),mode:historicalChoice(year,k,row.mode_option),kind:row.comparison_kind}};
     }
     for(const row of prov.data||[]){
       const k=String(row.question_id);
       if(!/^Q\d{2}$/.test(k))continue;
-      items[k]={...(items[k]||{}),regional:{mean:row.mean_option||null,mode:row.mode_option||null,kind:row.comparison_kind}};
+      items[k]={...(items[k]||{}),regional:{mean:comparisonMean(year,k,row.mean_option),mode:historicalChoice(year,k,row.mode_option),kind:row.comparison_kind}};
     }
     return send({year,region,source:'historical-source-workbook-sample',fullPopulationVerified:false,items},200,origin);
   }
@@ -454,7 +455,8 @@ Deno.serve(async(req:Request)=>{
     if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
        record.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
        !safeMode(record.mode_option))continue;
-    modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:record.mode_option});
+    const closed=historicalChoice(year,qid,record.mode_option);
+    if(closed!==null)modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:closed});
   }
 
   // Owner-authorized 1+ historical closed-choice aggregates. Keep the
@@ -474,7 +476,8 @@ Deno.serve(async(req:Request)=>{
       const mode=question?.modeOption;
       if(!/^Q\d{2}$/.test(qid)||!safeMode(mode)||
          !Number.isInteger(question?.validRows)||question.validRows<1)continue;
-      modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode});
+      const closed=historicalChoice(year,qid,mode);
+       if(closed!==null)modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:closed});
     }
   }
   // A 2025 checkbox question receives a school mode only when every included
@@ -492,8 +495,9 @@ Deno.serve(async(req:Request)=>{
     for(const row of supplement||[]){
       const qid=String(row.question_id||'');
       if(!['Q03','Q04','Q30'].includes(qid)||!safeMode(row.mode_option))continue;
-      if(!modeIndex.has('2025:'+qid))
-        modeIndex.set('2025:'+qid,{year:2025,questionId:qid,modeOption:row.mode_option});
+      const closed=historicalChoice(2025,qid,row.mode_option);
+      if(closed!==null&&!modeIndex.has('2025:'+qid))
+        modeIndex.set('2025:'+qid,{year:2025,questionId:qid,modeOption:closed});
     }
   }
   const schoolQuestionModes=[...modeIndex.values()].sort((a,b)=>
@@ -587,7 +591,7 @@ Deno.serve(async(req:Request)=>{
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
   const finalRow=edited.data.active===true?edited.data.schools?.[id]:null;
-  const schoolQuestionResults2026=edited.data.active===true?(Array.isArray(finalRow?.questions)?finalRow.questions.filter((q:any)=>q.questionId!=='Q31'&&q.questionId!=='Q51'):[]):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
+  const schoolQuestionResults2026=sanitize2026Results(edited.data.active===true?(Array.isArray(finalRow?.questions)?finalRow.questions.filter((q:any)=>q.questionId!=='Q31'&&q.questionId!=='Q51'):[]):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[]);
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:finalRow?.percentile??null},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
