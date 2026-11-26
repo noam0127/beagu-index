@@ -1,0 +1,34 @@
+name: VI13 ingest v12 isolated validation
+on:
+  push:
+    branches: [fix/v11123-vi13-ingest-v12-only]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify existing v12 and VI13 request paths
+        run: node docs/vi13-ingest-v12-candidate/verify.mjs
+      - name: Verify private SQL on disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          container=vi13-fixture-${GITHUB_RUN_ID}
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 30); do
+            if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          printf '%s\n' 'create role anon;' 'create role authenticated;' 'create role service_role bypassrls;' 'create schema beagu_private;' | psql_local
+          psql_local < supabase/2026-vi13-sheet-push-v1.sql
+          psql_local < tests/2026-vi13-sheet-push-postgres.sql
