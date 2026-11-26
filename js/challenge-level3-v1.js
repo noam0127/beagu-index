@@ -52,7 +52,7 @@
      if(checked.level!==2||checked.accountLevel!==3||session()!==start)throw Error('INVALID_SESSION');
      sessionStorage.setItem(key,data.token);
      // Never carry a shared or stale code into a password-authenticated session.
-     try{sessionStorage.removeItem('beagu-login-code-mask-v1')}catch(_){}
+     try{const maskKey='beagu-login-code-mask-v1',saved=JSON.parse(sessionStorage.getItem(maskKey)||'null');sessionStorage.removeItem(maskKey);if(register&&saved?.token===start&&/^[A-Za-z0-9-]{2}\*{6,118}$/.test(saved.mask))sessionStorage.setItem(maskKey,JSON.stringify({token:data.token,mask:saved.mask}));}catch(_){}
      window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{detail:{token:data.token,level:2,accountLevel:3,provisional:false}}));
      window.dispatchEvent(new Event('beagu:level-state-change'));
      account=3;verified=2;provisional=false;paint();

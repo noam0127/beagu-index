@@ -69,7 +69,7 @@
         boundIdentity=data.lv2Access===true;paintLoginCode();
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         renderMilestone(n);
-        identityCode.textContent = code;
+        identityCode.textContent = byId('challengeAccessPanel')?.dataset.accountLevel==='3' ? code.slice(0,2)+'*'.repeat(code.length-2) : code;
         copyIdentityCode.disabled = byId('challengeIdentityPanel')?.dataset.referralState !== 'earned';
         identityCopyFeedback.textContent = '';
         // Referral display is separate from the certificate PNG and requires a validated session.
@@ -160,7 +160,7 @@
     accessGranted=false;activeSession="";epoch++;busy=false;certificateRefreshPending=false;resetIdentity();
     status.textContent="";retry.hidden=true;
   });
-  window.addEventListener('beagu:challenge-verified-level-changed',paintLoginCode);
+  window.addEventListener('beagu:challenge-verified-level-changed',()=>{paintLoginCode();if(byId('challengeAccessPanel')?.dataset.accountLevel==='3'&&personalCode){identityCode.textContent=personalCode.slice(0,2)+'*'.repeat(personalCode.length-2);copyIdentityCode.disabled=true;}});
   window.addEventListener('beagu:referral-status-changed', () => {
     if(!accessGranted)return;
     invalidateImage();

@@ -4,7 +4,7 @@
  const selector='.beagu-survey-limit';
  function disclosure(p){
    if(p.dataset.beaguFolded||p.closest('details'))return;
-   const value=p.textContent.trim(),match=value.match(/^(.+?[.!?])(?:\\s+)([\\s\\S]+)$/);
+   const value=p.textContent.trim(),match=value.match(/^(.+?[.!?])(?:\s+)([\s\S]+)$/);
    if(!match)return;
    const details=document.createElement('details');details.className='beagu-survey-fold';
    const summary=document.createElement('summary');summary.textContent=match[1];
@@ -18,5 +18,5 @@
    const summary=document.createElement('summary');summary.textContent=paragraphs[0].textContent;details.append(summary);
    paragraphs[0].replaceWith(details);paragraphs.slice(1).forEach(p=>details.append(p));
  }}
- scan();new MutationObserver(scan).observe(document.body,{subtree:true,childList:true});
+ scan();new MutationObserver(records=>{for(const record of records){for(const node of record.addedNodes){if(node.nodeType!==1)continue;if(node.matches(selector))disclosure(node);node.querySelectorAll(selector).forEach(disclosure);}}}).observe(document.body,{subtree:true,childList:true});
 })();
