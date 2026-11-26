@@ -21,7 +21,7 @@
    q('level3Current').textContent=signed?'Lv.3 · 계정 이용 중':eligible()?'Lv.2 · 계정 생성 가능':verified===null?'인증 확인 중':'Lv.'+verified+' · 나의 계정';
    open.setAttribute('aria-pressed',String(mode==='register'));login.setAttribute('aria-pressed',String(mode==='login'));
    if(signed){form.hidden=true;clear();mode='';status.textContent='Lv.3 나의 계정 이용 중';}
-   else if(mode==='register'&&!eligible()){form.hidden=true;clear();mode='';status.textContent='개인 Lv.2 인증을 다시 확인해 주세요.';open.setAttribute('aria-pressed','false');}
+   else if(mode==='register'&&!eligible()){if(verified===null)pendingCreate=true;form.hidden=true;clear();mode='';status.textContent='개인 Lv.2 인증을 다시 확인해 주세요.';open.setAttribute('aria-pressed','false');}
  }
  function show(next){
    if(busy||account===3)return;

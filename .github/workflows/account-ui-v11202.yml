@@ -1,0 +1,29 @@
+name: v1.12.02 account UI isolated validation
+on:
+  push:
+    branches: ['release/v1.12.02-account-ui']
+  pull_request:
+    branches: ['release/base-pages-v11202-current-production']
+permissions:
+  contents: read
+jobs:
+  account-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node tests/level3-credential-v1.mjs
+          node tests/level3-account-contract.mjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+      - run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: node tests/account-ui-v11202-browser.mjs
