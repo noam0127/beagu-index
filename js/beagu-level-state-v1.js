@@ -46,14 +46,15 @@
 
     }
   };
-  const setState=(level,label,aria,provisional=false)=>{
+  const setState=(level,label,aria,provisional=false,accountLevel=0)=>{
+    indicator.dataset.accountLevel=String(accountLevel===3?3:Number(level)||0);
     indicator.dataset.provisional=provisional?'true':'false';
     indicator.dataset.level=level;
     indicator.textContent=label;
     indicator.setAttribute('aria-label',aria);
     indicator.title=aria;
     syncLevelCards(level,provisional);
-    window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level,provisional}}));
+    window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level,provisional,accountLevel:accountLevel===3?3:Number(level)||0}}));
   };
   async function refresh(){
     const seq=++generation;
@@ -86,8 +87,9 @@
         lastValidatedToken=token;
         const tier=result.level>=2?2:1;
         const provisional=tier===2&&result.provisional===true;
-        const label='Lv.'+tier;
-        setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
+        const accountLevel=tier===2&&result.accountLevel===3?3:tier;
+        const label='Lv.'+accountLevel;
+        setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional,accountLevel);
       }else{
         lastValidatedToken='';
         try{if(getToken()===token)sessionStorage.removeItem(KEY);}catch(_){}
