@@ -308,10 +308,11 @@ function handleLevel(e){
 }
 async function findSchools(){
  const q=$("postitSchoolSearch").value.trim();const list=$("postitSchoolResults");
+ if(!canRead()){state.queryTicket++;list.replaceChildren();return;}
  if(q.length<2){list.replaceChildren();return}
  const ticket=++state.queryTicket;
  try{
-  const {schools}=await request("schools",{q});if(ticket!==state.queryTicket)return;
+  const {schools}=await request("schools",{q});if(ticket!==state.queryTicket||!canRead())return;
   list.replaceChildren();
   for(const s of schools){
    const b=node("button","",""+s.name+" · "+s.region);b.type="button";b.setAttribute("role","option");
@@ -332,7 +333,7 @@ window.addEventListener("beagu:postit-account-status",event=>{
  state.accountLinked=event?.detail?.linked===true;
  state.accountReadable=event?.detail?.readable===true;
  state.accountToken=event?.detail?.token||"";
- if(!canRead()){state.expanded.clear();state.pendingActions.clear();}
+ if(!canRead()){state.expanded.clear();state.pendingActions.clear();state.queryTicket++;$("postitSchoolResults").replaceChildren();}
  updateComposeAccess();
  void loadPosts();
 });
