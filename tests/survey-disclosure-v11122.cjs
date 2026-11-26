@@ -5,7 +5,8 @@ for(const p of ['index.html','school-report.html','statistics.html','js/school-s
 for(const p of ['index.html','search.html','search-lv1.html','school-report.html','statistics.html'])assert.ok(read(p).includes('styles/beagu-survey-disclosure-v1.css'),p);
 assert.ok(read('js/school-search-card-v1.js').includes('simple_report'));
 assert.ok(read('js/statistics-compare.js').includes('1,458개교'));
-assert.equal(JSON.parse(read('release-info.json')).version,'v1.11.22');
+const releaseVersion=JSON.parse(read('release-info.json')).version;
+assert.ok(['v1.11.22','v1.11.23'].includes(releaseVersion),'Supported disclosure-preserving release');
 console.log('survey disclosure static contract passed');
 const snapshot=JSON.parse(read('data/public-lv0-percentiles-v1.2.json'));
 assert.match(snapshot.percentile_methods['2025'],/1,458개교/);
@@ -13,7 +14,7 @@ assert.ok(read('index.html').includes('교육부·교육청의 공식 평가가 
 for(const p of ['js/school-search-card-v1.js','js/statistics-compare.js','js/beagu-home-schools-v1.js','school-report.html'])assert.ok(read(p).includes('공개 자료에서 확인되지 않음'),p);
 
 assert.ok(read('index.html').includes('개별 사실의 확인이나 학교·교직원의 우열을 판정한 결과가 아닙니다.'));
-assert.equal(JSON.parse(read('release-candidate.json')).version,'v1.11.22');
+assert.equal(JSON.parse(read('release-candidate.json')).version,releaseVersion,'Candidate and release metadata must agree');
 
 for(const p of ['games.html','js/arcade-school-picker-v1.js','js/arcade-result-share-v1.js'])assert.ok(read(p).includes("게임 속 상황과 난이도는 실제 학교의 근무환경이나 특정 교직원의 행동을 재현·평가한 결과가 아닙니다."),p);
 assert.ok(read('js/arcade-result-share-v1.js').includes('가상 게임 기록 · 실제 학교의 근무환경 및 교직원 행동 평가가 아님'));
