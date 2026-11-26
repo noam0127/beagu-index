@@ -1,0 +1,78 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {chromium} from 'playwright';
+const read=p=>readFileSync(p,'utf8');
+const card=read('challenge.html').match(/<section id="level3-account"[\s\S]*?<\/section>/)?.[0];
+assert.ok(card);
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:375,height:800}});
+ const shared='a'.repeat(64), rejected='b'.repeat(64), personal='c'.repeat(64), account='d'.repeat(64);
+ await page.route('**/*',r=>r.request().url()==='https://fixture.invalid/challenge.html'?r.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width"><a id="beaguLevelState" data-level="2" data-provisional="true" data-account-level="2">Lv.2</a><div id="challengeAccessPanel" data-challenge-verified-level="2" data-provisional="true" data-account-level="2"></div>'+card}):r.abort());
+ await page.goto('https://fixture.invalid/challenge.html');
+ await page.evaluate(({shared,rejected,personal,account})=>{
+  window.SUPABASE_URL='https://fixture.invalid';
+  sessionStorage.setItem('beagu-level-session-v1',shared);
+  window.calls=[];
+  window.fetch=async(_url,opts)=>{
+   const body=JSON.parse(opts.body),token=opts.headers['X-Beagu-Session'];window.calls.push({action:body.action,token});
+   const send=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
+   if(body.action==='login')return send({token:body.code==='PERSONAL1234'?personal:rejected});
+   if(body.action==='verify')return send({level:2,accountLevel:token===account?3:2,provisional:token===shared||token===rejected});
+   if(body.action==='level3_register'){if(token!==personal||body.password!==body.confirmation||!body.acknowledged)return send({},403);return send({token:account,accountLevel:3});}
+   if(body.action==='level3_login')return body.password==='FixturePass123'?send({token:account,accountLevel:3}):send({},401);
+   return send({},400);
+  };
+  window.addEventListener('beagu:participation-authenticated',e=>{
+   const detail=e.detail,panel=document.getElementById('challengeAccessPanel');
+   panel.dataset.challengeVerifiedLevel=String(detail.level);panel.dataset.accountLevel=String(detail.accountLevel);panel.dataset.provisional=String(detail.provisional);
+   window.dispatchEvent(new Event('beagu:challenge-access-granted'));
+   window.dispatchEvent(new CustomEvent('beagu:level-state-updated',{detail:{level:null,status:'checking'}}));
+   window.dispatchEvent(new CustomEvent('beagu:level-state-updated',{detail}));
+  });
+ },{shared,rejected,personal,account});
+ await page.addStyleTag({content:read('styles/beagu-participation-auth-v2.css')});
+ await page.addScriptTag({content:read('js/beagu-participation-auth-v2.js')});
+ await page.addScriptTag({content:read('js/challenge-level3-v1.js')});
+ await page.locator('#level3Upgrade').click();
+ assert.equal(await page.locator('#beaguParticipationOverlay').isVisible(),true);
+ assert.equal(await page.locator('#beaguParticipationForm').isVisible(),true);
+ assert.equal(await page.locator('#beaguParticipationCodeLabel').textContent(),'개인 Lv.2 참여코드');
+ assert.equal(await page.locator('#beaguParticipationOverlay a[href="levels.html"]').count(),1);
+ await page.locator('#beaguParticipationCode').fill('SHARED1234');
+ await page.locator('#beaguParticipationSubmit').click();
+ await page.waitForFunction(()=>document.getElementById('beaguParticipationMessage').textContent.includes('기존 인증은 유지'));
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),shared);
+ await page.locator('#beaguParticipationCode').fill('PERSONAL1234');
+ await page.locator('#beaguParticipationSubmit').click();
+ await page.locator('#level3Form').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),personal);
+ await page.locator('#level3Password').fill('FixturePass123');
+ await page.locator('#level3Reveal').click();
+ assert.equal(await page.locator('#level3Password').getAttribute('type'),'text');
+ await page.locator('#level3Reveal').click();
+ await page.locator('#level3Confirm').fill('FixturePass123');
+ await page.locator('#level3Ack').check();
+ await page.locator('#level3Submit').click();
+ await page.waitForFunction(()=>document.getElementById('level3Current').textContent.includes('계정 이용 중'));
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),account);
+ assert.equal(await page.locator('#level3Upgrade').isVisible(),false);
+ assert.equal(await page.locator('#level3Password').inputValue(),'');
+ await page.evaluate(()=>{sessionStorage.removeItem('beagu-level-session-v1');window.dispatchEvent(new Event('beagu:participation-logged-out'));});
+ await page.locator('#level3Login').click();
+ assert.equal(await page.locator('#level3RegisterFields').isVisible(),false);
+ await page.locator('#level3Password').fill('FixturePass123');
+ await page.locator('#level3Submit').click();
+ await page.waitForFunction(()=>document.getElementById('level3Current').textContent.includes('계정 이용 중'));
+ assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),account);
+ assert.equal(await page.evaluate(()=>window.calls.filter(x=>x.action==='level3_register').length),1);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await page.setContent(read('levels.html').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+ await page.addStyleTag({content:read('styles/beagu-level-guide-v1.css')});
+ await page.evaluate(()=>{const b=document.getElementById('beaguLevelState');b.dataset.level='2';b.dataset.accountLevel='3';});
+ await page.addScriptTag({content:read('js/beagu-level-guide-v1.js')});
+ assert.equal(await page.locator('.beagu-level-guide-card[data-tier="3"]').count(),1);
+ assert.equal(await page.locator('.beagu-level-guide-card[data-tier="3"]').evaluate(e=>e.classList.contains('is-current')),true);
+ for(const width of [320,375,768,1280]){await page.setViewportSize({width,height:800});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
+ console.log('PASS: provisional code rebind, registration, login, password reveal, level guide, mobile and desktop fixture');
+}finally{await browser.close();}

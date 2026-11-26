@@ -1186,6 +1186,11 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "ceffeacba51dce6130fdfa8344222421bba63b2d"
+    },
+    {
+      "order": 50,
+      "version": "v1.12.02",
+      "name": "계정 다듬기"
     }
   ],
   "source_manifest": {
