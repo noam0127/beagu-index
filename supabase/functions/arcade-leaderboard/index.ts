@@ -7,6 +7,8 @@ const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguinde
 const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
+// Code-only candidate; never enable until archive, verified replay and public-scope approval are confirmed.
+const RUN4_UNIFIED_READS = Deno.env.get("RUN4_UNIFIED_READS_V11120") === "true";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
 type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null };
 type FastEntry = { session_id?: string | null; win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
@@ -301,7 +303,17 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
   ...(result.healthPercent===undefined?{}:{healthPercent:result.healthPercent})
  };
 }
+async function unifiedRunHistory(tier:string|null,page:number,topOnly=false){
+ const result=await db("rpc/beagu_run_unified_records_v11120","POST",{p_tier:tier,p_page:page,p_top_only:topOnly});
+ if(!Array.isArray(result)||result.length>(topOnly?10:31))throw new Error("database_unavailable");
+ return result;
+}
 async function gameHistory(game:Game,tier:string|null,page:number){
+ if(game==="teacher_run_retirement"&&RUN4_UNIFIED_READS){
+  const rows=await unifiedRunHistory(tier,page);
+  const pageSize=30,limit=Math.min(pageSize,100-(page-1)*pageSize);
+  return {game,page,pageSize,maxRecords:100,sort:"score_desc",hasMore:page<4&&rows.length>pageSize,records:rows.slice(0,limit)};
+ }
  const pageSize=30,offset=(page-1)*pageSize;
  const q=new URLSearchParams({
   select:"id,score,created_at,school_id,school_name,difficulty,win_time_tenths,public_result",
@@ -376,6 +388,10 @@ Deno.serve(async (req:Request)=>{
       if(game==="volleyball_25"){
          const [top10,fastestTop10]=await Promise.all([top(game,tier),fastest25(tier)]);
          return json({game,top10,fastestTop10},200,origin);
+       }
+       if(game==="teacher_run_retirement"&&RUN4_UNIFIED_READS){
+         const rows=await unifiedRunHistory(tier,1,true);
+         return json({game,top10:rows.map((r:any)=>({score:r.score,created_at:r.createdAt,school_id:r.schoolId,school_name:r.schoolName,difficulty:r.difficulty}))},200,origin);
        }
        return json({game,top10:await top(game,tier)},200,origin);
     }

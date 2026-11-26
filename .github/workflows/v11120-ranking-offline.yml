@@ -48,3 +48,18 @@ jobs:
         env:
           PGPASSWORD: fixture
         run: psql -h 127.0.0.1 -U postgres -d rank_fixture -v ON_ERROR_STOP=1 -f tests/2026-home-ranking-daily-fixture.sql
+      - name: Validate actual region TOP10 SQL with private-event fixtures
+        env:
+          PGPASSWORD: fixture
+        run: |
+          createdb -h 127.0.0.1 -U postgres region_fixture
+          # Roles are cluster-wide; reuse roles from previous fixture.
+          tail -n +3 tests/region-interest-fixture.sql | psql -h 127.0.0.1 -U postgres -d region_fixture -v ON_ERROR_STOP=1
+          for f in supabase/region-interest-v1.sql tests/region-interest-assertions.sql supabase/region-interest-top10-v11119.sql tests/v11120-region-top10-assertions.sql; do psql -h 127.0.0.1 -U postgres -d region_fixture -v ON_ERROR_STOP=1 -f "$f"; done
+      - name: Verify unified archive, points, verified status and grants
+        env:
+          PGPASSWORD: fixture
+        run: |
+          createdb -h 127.0.0.1 -U postgres arcade_fixture
+          tail -n +5 tests/v1114-school-points-fixture.sql | psql -h 127.0.0.1 -U postgres -d arcade_fixture -v ON_ERROR_STOP=1
+          for f in tests/v11115-archive-fixture.sql scripts/sql/v1.11.14-school-game-points-candidate.sql scripts/sql/v1.11.15-arcade-archive-candidate.sql tests/v11115-archive-assertions.sql docs/run4-ranking-preflight/schema-draft.sql docs/run4-ranking-preflight/store-draft.sql scripts/sql/v1.11.15-run4-archive-adapter-candidate.sql tests/v11115-run4-archive-assertions.sql scripts/sql/v1.11.15-run4-archive-adapter-candidate.sql scripts/sql/v1.11.20-run-unified-read-candidate.sql tests/v11120-run-unified-assertions.sql; do psql -h 127.0.0.1 -U postgres -d arcade_fixture -v ON_ERROR_STOP=1 -f "$f"; done
