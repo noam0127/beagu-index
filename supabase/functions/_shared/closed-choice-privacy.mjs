@@ -40,3 +40,15 @@ export function filterEdited2026Results(results){
     return values.length?[{questionId:id,row:r.row,values}]:[];
   });
 }
+
+// Story API has no per-grid-row coordinate; only canonical fixed labels may leave it.
+export function storySignalChoice(year,id,value){
+  if(!Number.isInteger(year)||typeof id!=='string'||!/^Q\d{2}$/.test(id)||typeof value!=='string'||value.length>200)return null;
+  if(year>=2023&&year<=2025)return historicalChoice(year,id,value);
+  if(year!==2026||id==='Q31'||id==='Q51'||!Object.hasOwn(questionnaire2026,id))return null;
+  const m=questionnaire2026[id];
+  const v=value.trim();
+  if(m.kind==='time')return /^([01]\d|2[0-3]):[0-5]\d$/.test(v)?v:null;
+  const options=m.kind==='grid'?m.columns:m.options;
+  return v!=='기타'&&options.includes(v)?v:null;
+}
