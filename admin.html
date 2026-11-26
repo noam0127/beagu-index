@@ -261,6 +261,12 @@
         <p class="subtle">문자 수신 동의는 서버 기록에 근거해 표시하며, 전화번호 자체는 제공하지 않습니다. 이용 정지는 새 로그인에 적용되지만 기존 로그인 세션이나 참여코드의 즉시 차단을 보장하지 않습니다.</p>
       </section>
 
+      <section class="dash-section" id="adminLockerReports" hidden aria-labelledby="adminLockerHeading">
+        <div class="section-title"><h3 id="adminLockerHeading">라커룸 신고 관리</h3><small>소유자 2단계 인증 전용 · 익명 신고 대상만 표시</small></div>
+        <button type="button" class="secondary" id="adminLockerReload">새로고침</button>
+        <p id="adminLockerStatus" role="status" aria-live="polite">소유자 인증 후 표시됩니다.</p>
+        <div id="adminLockerRows"></div>
+      </section>
       <section class="dash-section" id="adminReferralFunnel" aria-labelledby="adminReferralFunnelHeading">
         <div class="section-title">
           <h3 id="adminReferralFunnelHeading">전용 조사 링크 · 단계별 현황</h3>
@@ -352,6 +358,7 @@
   <script defer src="js/beagu-2026-edited-admin-v1.js?v=11117-sheet1"></script>
   <script defer src="js/beagu-2026-civic-admin-v1.js?v=11117-excel1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
+  <script defer src="js/beagu-admin-locker-v11125.js"></script>
 
 </body>
 </html>
