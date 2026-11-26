@@ -106,10 +106,10 @@
   for(const r of rows){
    const li=el('li'),rank=el('strong',r.rank),identity=el('span'),a=el('a',r.school_name);
    a.href=detailHref(r.school_id,tier());
-   identity.append(a,el('small',r.region));li.append(rank,identity,el('strong',r.percentile.toFixed(1)+'%'));list.append(li);
+   identity.append(a,el('small',r.region));li.append(rank,identity);list.append(li);
   }
  }
- document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 TOP10';
+ document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 전국 TOP10';
  const note=root.querySelector('.beagu-home-school-note');
  if(note)note.textContent='수동 집계 · 수직성 백분위 기준 · 잠정 순위';
  status.textContent=manualSnapshot.day+' 기준 · 수동 집계';
