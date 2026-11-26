@@ -1,0 +1,32 @@
+name: v1.12.02.1 anonymous account database fixture
+on:
+  pull_request:
+    branches: ['release/base-pages-v112021-current-production']
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Disposable database only
+        run: |
+          set -euo pipefail
+          c="beagu-lv3-fixture-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          # TCP is unavailable during the temporary init server; wait for the final listener.
+          psql_local() { docker exec -i -e PGPASSWORD=fixture-only "$c" psql -h 127.0.0.1 -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+          ready=0
+          for i in $(seq 1 40); do
+            if psql_local -Atqc "select 1" >/dev/null 2>&1; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          psql_local < tests/lv3-anonymous-fixture.sql
+          psql_local < docs/level3-account-schema-preview.sql
+          psql_local < tests/lv3-anonymous-assertions.sql
