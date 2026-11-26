@@ -79,8 +79,13 @@ try{
    await page.getByText("가".repeat(300),{exact:true}).waitFor();
    assert.equal(await page.locator("#postitSchoolSearch").isVisible(),true);
    // Verify same tagged post via existing school-detail deep link, not a second store.
-   await page.goto(origin+"/postit.html?school_id=TEST001");
+   await page.getByRole("link",{name:"#가상초등학교",exact:true}).first().click();
+   await page.waitForURL("**/postit.html?school_id=TEST001");
    await page.getByText("학교 이야기",{exact:true}).waitFor();
+   assert.equal(await page.getByText("가".repeat(300),{exact:true}).count(),0);
+   await page.goto(origin+"/postit.html?school_id=TEST001&compose=1");
+   await page.locator("#postitBody").waitFor({state:"visible"});
+   await page.waitForFunction(()=>document.activeElement?.id==="postitBody");
    assert.equal(await page.getByText("가".repeat(300),{exact:true}).count(),0);
    assert.equal(await page.locator('input[type="email"],input[type="tel"]').count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,"mobile horizontal overflow");
