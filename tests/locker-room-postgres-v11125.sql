@@ -29,12 +29,12 @@ begin
  if has_function_privilege('anon','public.beagu_postit_create_post_v3(uuid,uuid,text,text,text,text,text)','execute') or has_function_privilege('authenticated','public.beagu_postit_create_post_v3(uuid,uuid,text,text,text,text,text)','execute') or not has_function_privilege('service_role','public.beagu_postit_create_post_v3(uuid,uuid,text,text,text,text,text)','execute') then raise exception 'RPC ACL regression'; end if;
  result:=public.beagu_postit_create_post_v3(a,n,'general',null,null,null,repeat('가',300));
  if result->>'id' is null or not exists(select 1 from public.beagu_postit_posts where id=(result->>'id')::uuid and author_uid=a and school_id is null and subject_type='general' and char_length(body)=300) then raise exception 'general create failed: %',result; end if;
- if public.beagu_postit_create_post_v3(a,n,'general',null,null,null,'retry')->>'replayed'<>'true' then raise exception 'idempotency'; end if;
- if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general',null,null,null,repeat('가',301))->>'error'<>'INVALID_POST' then raise exception 'length'; end if;
- if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general','A123456',null,null,'bad')->>'error'<>'INVALID_POST' then raise exception 'invalid tag'; end if;
- if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general',null,null,null,'cooldown')->>'error'<>'POST_RATE_LIMIT' then raise exception 'cooldown'; end if;
+ if public.beagu_postit_create_post_v3(a,n,'general',null,null,null,'retry')->>'replayed' is distinct from 'true' then raise exception 'idempotency'; end if;
+ if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general',null,null,null,repeat('가',301))->>'error' is distinct from 'INVALID_POST' then raise exception 'length'; end if;
+ if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general','A123456',null,null,'bad')->>'error' is distinct from 'INVALID_POST' then raise exception 'invalid tag'; end if;
+ if public.beagu_postit_create_post_v3(a,gen_random_uuid(),'general',null,null,null,'cooldown')->>'error' is distinct from 'POST_RATE_LIMIT' then raise exception 'cooldown'; end if;
  result:=public.beagu_postit_create_post_v3('20000000-0000-4000-8000-000000000003',gen_random_uuid(),'school','A123456',null,null,'tagged');
  if result->>'id' is null or not exists(select 1 from public.beagu_postit_posts where id=(result->>'id')::uuid and school_id='A123456' and subject_type='school') then raise exception 'school tag'; end if;
- if public.beagu_postit_create_post_v2(a,gen_random_uuid(),'school','A123456',null,null,repeat('가',201))->>'error'<>'INVALID_POST' then raise exception 'legacy RPC changed'; end if;
+ if public.beagu_postit_create_post_v2(a,gen_random_uuid(),'school','A123456',null,null,repeat('가',201))->>'error' is distinct from 'INVALID_POST' then raise exception 'legacy RPC changed'; end if;
  raise notice 'locker room schema checks passed';
 end $test$;
