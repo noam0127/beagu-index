@@ -1,0 +1,30 @@
+name: v1.11.23 survey disclosure validation
+on:
+  push:
+    branches: ['release/v1.11.23-fair-disclosure']
+  pull_request:
+    branches: ['qa/v1.11.23-base']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check js/school-search-card-v1.js
+          node --check js/statistics-compare.js
+          node --check js/beagu-home-schools-v1.js
+      - name: Disclosure and existing release contract
+        run: |
+          node tests/survey-disclosure-v11123.cjs
+          node tests/clean-release-contract.cjs
+      - name: Verify changed files exclude data and backend
+        run: |
+          git diff --name-only HEAD^ HEAD | tee /tmp/changed
+          if grep -E '^(supabase/|data/|scripts/)' /tmp/changed; then exit 1; fi

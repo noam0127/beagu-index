@@ -7,3 +7,7 @@ assert.ok(read('js/school-search-card-v1.js').includes('simple_report'));
 assert.ok(read('js/statistics-compare.js').includes('1,458개교'));
 assert.equal(JSON.parse(read('release-info.json')).version,'v1.11.23');
 console.log('survey disclosure static contract passed');
+const snapshot=JSON.parse(read('data/public-lv0-percentiles-v1.2.json'));
+assert.match(snapshot.percentile_methods['2025'],/1,458개교/);
+assert.ok(read('index.html').includes('교육부·교육청의 공식 평가가 아닙니다'));
+for(const p of ['js/school-search-card-v1.js','js/statistics-compare.js','js/beagu-home-schools-v1.js','school-report.html'])assert.ok(read(p).includes('공개 자료에서 확인되지 않음'),p);
