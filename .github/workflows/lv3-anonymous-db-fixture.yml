@@ -20,7 +20,7 @@ jobs:
           docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
           trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
           # TCP is unavailable during the temporary init server; wait for the final listener.
-          psql_local() { docker exec -i -e PGPASSWORD=fixture-only "$c" psql -h 127.0.0.1 -X -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+          psql_local() { docker exec -i -e PGPASSWORD=fixture-only "$c" psql -h 127.0.0.1 -X -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
           ready=0
           for i in $(seq 1 40); do
             if psql_local -Atqc "select 1" >/dev/null 2>&1; then ready=1; break; fi
