@@ -132,8 +132,8 @@ try{
   const headers={"access-control-allow-origin":origin,"access-control-allow-headers":"*","access-control-allow-methods":"GET,POST,OPTIONS","content-type":"application/json"};
   const send=(body,status=200)=>route.fulfill({status,headers,body:JSON.stringify(body)});
   if(u.origin===origin){
-   if(u.pathname==="/home-fixture")return route.fulfill({contentType:"text/html",body:'<a id="beaguLevelState" data-level="0"></a>'+homeMarkup+'<script src="/js/beagu-home-locker-v11125.js"></script>'});
-   if(u.pathname==="/admin-fixture")return route.fulfill({contentType:"text/html",body:adminMarkup+'<script>const SUPABASE_URL="https://fixture.invalid",SUPABASE_PUBLISHABLE_KEY="fixture";const supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:"synthetic"}}})}};</script><script src="/js/beagu-admin-locker-v11125.js"></script>'});
+   if(u.pathname==="/home-fixture")return route.fulfill({contentType:"text/html; charset=utf-8",body:'<!doctype html><meta charset="utf-8"><a id="beaguLevelState" data-level="0"></a>'+homeMarkup+'<script src="/js/beagu-home-locker-v11125.js"></script>'});
+   if(u.pathname==="/admin-fixture")return route.fulfill({contentType:"text/html; charset=utf-8",body:'<!doctype html><meta charset="utf-8">'+adminMarkup+'<script>const SUPABASE_URL="https://fixture.invalid",SUPABASE_PUBLISHABLE_KEY="fixture";const supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:"synthetic"}}})}};</script><script src="/js/beagu-admin-locker-v11125.js"></script>'});
    return route.continue();
   }
   if(req.method()==="OPTIONS")return route.fulfill({status:204,headers});
