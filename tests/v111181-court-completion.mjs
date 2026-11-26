@@ -27,7 +27,7 @@ fail=true;await assert.rejects(api.readTotals(['0000001']),/POINTS_UNAVAILABLE/)
 nodes[0].textContent='—';await api.refreshCards({querySelectorAll:()=>[nodes[0]]});assert.equal(nodes[0].textContent,'불러오기 실패');
 const card={window:{}};vm.runInNewContext(read('js/school-search-card-v1.js'),card);
 const fmt=card.window.BeaguSchoolSearchCard.formatHousingPrice;
-for(const [input,expected] of [[326123000,'3억26백만원'],[580712000,'5억81백만원'],[99999999,'1억원'],[83000000,'83백만원'],['326,123,000원','3억26백만원'],[null,'자료 없음']])assert.equal(fmt(input),expected);
+for(const [input,expected] of [[326123000,'3억 2천 6백만 원'],[580712000,'5억 8천 1백만 원'],[99999999,'1억 원'],[83000000,'8천 3백만 원'],['326,123,000원','3억 2천 6백만 원'],[null,'자료 없음']])assert.equal(fmt(input),expected);
 const html=read('search-lv1.html'),client=read('js/level-search.js'),server=read('supabase/functions/beagu-level-api/index.ts'),compare=read('js/statistics-compare.js');
 assert.match(html,/value="game_points">포인트순/);
 assert.match(html,/value="housing_price_won"[^>]* disabled>/);
