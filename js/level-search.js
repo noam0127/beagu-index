@@ -889,7 +889,10 @@
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
     if(![1,2].includes(viewerTier)){host.replaceChildren(make('p','beagu-detail-feedback','Lv.1 인증 후 상세조회할 수 있습니다.'));return;}
-    host.replaceChildren(yearlyPercentileHistory(school,viewerTier));
+    const facilities=make('section','beagu-facilities');
+    window.BeaguSchoolFacilities?.render(facilities,modes,results2026,viewerTier);
+    if(!window.BeaguSchoolFacilities)facilities.hidden=true;
+    host.replaceChildren(facilities,yearlyPercentileHistory(school,viewerTier));
     const allowedYears=[1,2].includes(viewerTier)?YEARS:[];
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
@@ -924,6 +927,7 @@
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,viewerTier===1&&year!==2025?null:vals[year-2023]??null,
           school.school_id,modes,school,data,status,selections,results2026,viewerTier);
+        window.BeaguSchoolFacilities?.fold(content,year);
       };
       if(year===2026){draw(null,latest2026Status);return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
@@ -979,6 +983,7 @@
         viewerTier=Number(fresh?.level)||viewerTier;
         latest2026Status='ready';
       }
+      window.BeaguSchoolFacilities?.render(facilities,modes,results2026,failed?viewerTier:Number(fresh?.level));
       if(currentYear===2026)choose(2026);
     });
     // A school can have approved historical question distributions even when
