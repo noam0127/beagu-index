@@ -229,14 +229,14 @@ const gateElements=Object.fromEntries([
   'challengeAccessBadge','challengeAccessToggle'
 ].map(id=>[id,{hidden:id==='challengeProtected'||id==='challengeAccessForm',
   disabled:false,value:'',type:id==='challengeAccessCode'?'password':'',textContent:'',
-  attributes:{},className:'',listeners:{},
+  attributes:{},dataset:{},className:'',listeners:{},
   classList:{toggle(_name,_flag){}},
   setAttribute(name,value){this.attributes[name]=value;},
   addEventListener(type,fn){this.listeners[type]=fn;}}]));
 const gateEvents=[];
 let returnedLevel=0;
 const gateFetchCalls=[];
-let storedGateToken='';
+let storedGateToken='';const gateStorage=new Map();
 const gateWindow={
   addEventListener(){},
   dispatchEvent(event){gateEvents.push(event.type);}
@@ -247,9 +247,9 @@ runInNewContext(challengeGate,{
   window:gateWindow,
   Event:class{constructor(type){this.type=type;}},
   sessionStorage:{
-    getItem(){return storedGateToken;},
-    setItem(key,value){assert.equal(key,'beagu-level-session-v1');storedGateToken=value;},
-    removeItem(){storedGateToken='';}
+    getItem(key){return key==='beagu-level-session-v1'?storedGateToken:gateStorage.get(key)||null;},
+    setItem(key,value){if(key==='beagu-level-session-v1')storedGateToken=value;else gateStorage.set(key,value);},
+    removeItem(key){if(key==='beagu-level-session-v1')storedGateToken='';else gateStorage.delete(key);}
   },
   fetch:async(_url,options)=>{
     const payload=JSON.parse(options.body);
@@ -283,6 +283,7 @@ assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.1 인증 완료',
 assert.equal(gateElements.challengeAccessPanel.attributes['data-auth-level'],'1','Shared signed-in state styles');
 assert.equal(gateElements.challengeAccessToggle.attributes['aria-pressed'],'false','Reveal is cleared after authentication');
 assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search');
+assert.deepEqual(JSON.parse(gateStorage.get('beagu-login-code-mask-v1')),{token:storedGateToken,mask:'sa********'});
 assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
 assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
 await gateElements.challengeLogout.listeners.click();
@@ -290,5 +291,6 @@ assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.0 · 미인증','
 assert.equal(gateElements.challengeAccessForm.hidden,false,'Logout restores input form');
 assert.equal(gateElements.challengeProtected.hidden,true,'Logout hides participation certificate');
 assert.equal(storedGateToken,'','Logout forgets the Lv1 session');
+assert.equal(gateStorage.has('beagu-login-code-mask-v1'),false,'Logout clears the display-only mask');
 
 console.log('PASS: existing participant ordinal only, 999/1000/1001, error≠0, intentional school events, privacy and original permissions');
