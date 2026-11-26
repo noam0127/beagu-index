@@ -1933,6 +1933,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       section.append(wrap);
       el.append(section);
     }
+    window.BeaguSchoolFacilities?.fold(el,state.selected,{search:!!state.q});
   }
   // Original response options vetted against the 2026 source scoring code.
   // A missing option list is never filled from guesses or fabricated survey choices.
