@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {METHOD,parseVI13Sheet,publicVI13Top10,permittedVI13Values} from '../supabase/functions/_shared/vi13-sheet-sync.mjs';
+const stamp='2026-11-26T09:24:51.340Z',now=Date.parse(stamp),n=604;
+const header=['school_id','school_name','region','percentile','rank','observations','sum_units','flags'];
+const rows=Array.from({length:n},(_,i)=>[String(7000000+i),'fixture','fixture',Math.round(1000*(n-i-1)/(n-1))/10,i+1,i<120?2:1,(i<120?2:1)*i*1000,0]);
+const matrix=[['VI13_SYNC_V1',stamp,n,724,METHOD,797,'PRIVATE'],header,...rows];
+const parsed=parseVI13Sheet(matrix,now);
+const numeric=matrix.map((r,i)=>i<2?r:[Number(r[0]),...r.slice(1)]);
+assert.deepEqual(parseVI13Sheet(numeric,now),parsed);
+const mixed=matrix.map((r,i)=>i<2||i%2?r:[Number(r[0]),...r.slice(1)]);
+assert.deepEqual(parseVI13Sheet(mixed,now),parsed);
+assert.equal(parsed.rows.length,604);assert.equal(parsed.rows.reduce((s,r)=>s+r.observations,0),724);
+for(const id of [123456,12345678,7000000.5,null,true,' 7000000','07000000']){
+ const bad=matrix.map(r=>r.slice());bad[2][0]=id;assert.throws(()=>parseVI13Sheet(bad,now),/VI13_SHEET_ROW/);
+}
+const dup=matrix.map(r=>r.slice());dup[3][0]=Number(dup[2][0]);assert.throws(()=>parseVI13Sheet(dup,now),/VI13_SHEET_ROW/);
+const approved=Object.fromEntries(parsed.rows.map(r=>[r.school_id,r.percentile]));
+assert.equal(publicVI13Top10(parsed,approved).rows.length,10);
+assert.ok(publicVI13Top10(parsed,approved).rows.every(r=>Object.keys(r).length===4));
+assert.throws(()=>publicVI13Top10(parsed,{}));assert.deepEqual(permittedVI13Values(parsed,['7000000'],{}),{});
+assert.deepEqual(permittedVI13Values(parsed,['7000000'],approved),{'7000000':100});
+assert.throws(()=>parseVI13Sheet(matrix,now+49*3600000));
+const api=readFileSync('supabase/functions/beagu-level-api/index.ts','utf8');
+assert.match(api,/if\(vi13SheetEnabled\(\)&&tier===2\)/);
+assert.ok(api.includes('readPercentileProjection(ids,2,'));
+assert.ok(readFileSync('js/beagu-home-ranking-v1.js','utf8').includes('산출 대상 학교 간 잠정 순위'));
+console.log('PASS exact numeric/mixed IDs, 604/724 synthetic cohort, unchanged approval gate and disclosure');

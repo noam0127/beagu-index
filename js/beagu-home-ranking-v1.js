@@ -1,4 +1,4 @@
-/* Manual 2026 TOP10 snapshot; provisional, no ranking API calls. Existing detail routes unchanged. */
+/* VI13 rank-only automatic TOP10 with last-known/manual fallback. Existing detail routes unchanged. */
 (function(){
  'use strict';
  const SEOUL=9*3600000, DAY=86400000;
@@ -20,7 +20,20 @@
    ids.add(r.school_id);prev=r;return true;
   });
  }
- if(typeof module==='object'&&module.exports){module.exports={koreaDay,nextMidnight,validPayload,detailHref};return;}
+ function validRankSnapshot(data){
+  if(!data||!Array.isArray(data.rows)||data.rows.length!==10||
+   typeof data.day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(data.day)||data.day>koreaDay(Date.now()))return false;
+  const ids=new Set();let prev=null;
+  return data.rows.every((r,i)=>{
+   if(!r||typeof r.school_id!=='string'||!/^[A-Z0-9]{7}$/.test(r.school_id)||ids.has(r.school_id)||
+    typeof r.school_name!=='string'||!r.school_name.trim()||r.school_name.length>120||
+    typeof r.region!=='string'||!r.region.trim()||r.region.length>100||
+    !Number.isInteger(r.rank)||r.rank<1||r.rank>10||
+    (i===0?r.rank!==1:r.rank!==prev.rank&&r.rank!==i+1))return false;
+   ids.add(r.school_id);prev=r;return true;
+  });
+ }
+ if(typeof module==='object'&&module.exports){module.exports={koreaDay,nextMidnight,validPayload,validRankSnapshot,detailHref};return;}
  const root=document.getElementById('beagu2026Ranking');if(!root||root.hidden)return;
  const list=root.querySelector('[data-ranking-list]'),status=root.querySelector('[data-ranking-status]');
  const tier=()=>Number(document.getElementById('beaguLevelState')?.dataset.level);
@@ -99,22 +112,38 @@
     }
   ]
 };
- const rows=manualSnapshot.rows;
+ const publicSnapshot=d=>({day:d.day,rows:d.rows.map(({rank,school_id,school_name,region})=>({rank,school_id,school_name,region}))});
+ let snapshot=publicSnapshot(manualSnapshot),automatic=false,stale=false,loading=false;
+ const cacheKey='beagu-vi13-home-rank-only-v1';
+ try{const cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(validRankSnapshot(cached)&&cached.day>=manualSnapshot.day){snapshot=publicSnapshot(cached);automatic=true;stale=true;}}catch{}
+ async function refresh(){
+  if(loading)return;loading=true;
+  try{
+   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
+   let data;
+   try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json',apikey:SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action:'home_vi13_sheet_top10'}),signal:controller.signal,cache:'no-store'});
+    if(!r.ok)throw Error('ranking unavailable');data=await r.json();
+   }finally{clearTimeout(timer);}
+   if(!validRankSnapshot(data)||data.day<snapshot.day)throw Error('invalid ranking');
+   snapshot=publicSnapshot(data);automatic=true;stale=false;
+   try{sessionStorage.setItem(cacheKey,JSON.stringify(snapshot));}catch{}
+  }catch{stale=true;}finally{loading=false;paint();}
+ }
  function el(tag,value){const n=document.createElement(tag);if(value!==undefined)n.textContent=String(value);return n;}
  function paint(){
   list.replaceChildren();
-  for(const r of rows){
+  for(const r of snapshot.rows){
    const li=el('li'),rank=el('strong',r.rank),identity=el('span'),a=el('a',r.school_name);
    li.dataset.rank=String(r.rank);
    a.href=detailHref(r.school_id,tier());
    identity.append(a,el('small',r.region));li.append(rank,identity);list.append(li);
   }
+  status.textContent=snapshot.day+' 기준 · '+(automatic?(stale?'마지막 정상 자동 집계':'자동 집계'):'수동 집계');
+  const note=root.querySelector('.beagu-home-school-note');if(note)note.textContent=(automatic?'자동 집계':'수동 집계')+' · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
  }
  document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 전국 TOP10';
- const note=root.querySelector('.beagu-home-school-note');
- if(note)note.textContent='수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
- status.textContent=manualSnapshot.day+' 기준 · 수동 집계';
  window.addEventListener('beagu:level-state-updated',paint);
- window.addEventListener('pageshow',paint);
- paint();
+ window.addEventListener('pageshow',()=>{paint();refresh();});
+ paint();refresh();setInterval(refresh,300000);
 })();

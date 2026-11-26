@@ -1,3 +1,4 @@
+import {readVI13Sheet,vi13SheetEnabled,permittedVI13Values,publicVI13Top10} from '../_shared/vi13-sheet-sync.mjs';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
@@ -98,6 +99,20 @@ Deno.serve(async(req:Request)=>{
    const {error:writeError}=await admin.from('beagu_level_sessions').insert(record);
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
    return send({token:v,level,provisional,expires_at:expiry},200,origin);
+  }
+  // New rank-only projection. Existing home exception remains fixed until owner enables
+  // the private-sheet pipeline; the existing approval/hold gate is not bypassed.
+  if(body.action==='home_vi13_sheet_top10'){
+   if(!vi13SheetEnabled())return send({error:'VI13_SYNC_DISABLED'},503,origin);
+   if(Object.keys(body).some(k=>k!=='action'))return send({error:'INVALID_BODY'},400,origin);
+   try{
+    const snapshot=await readVI13Sheet();
+    const ids=snapshot.rows.slice(0,10).map((r:any)=>r.school_id);
+    const checked=await readPercentileProjection(ids,2,async values=>send({values},200,origin));
+    if(!checked.ok)return send({error:'VI13_RANKING_APPROVAL_UNAVAILABLE'},503,origin);
+    const data=await checked.json();
+    return send(publicVI13Top10(snapshot,data.values||{}),200,origin);
+   }catch{return send({error:'VI13_RANKING_UNAVAILABLE'},503,origin);}
   }
   if(body.action==='home_ranking_2026'){
    // Public exception: only the fixed TOP 10 snapshot, never caller-selected IDs or tier.
@@ -210,6 +225,14 @@ Deno.serve(async(req:Request)=>{
      }
      return send({values,common2026,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
+   if(vi13SheetEnabled()&&tier===2){
+    return await readPercentileProjection(ids,tier,async approved=>{
+     try{
+      const snapshot=await readVI13Sheet();
+      return await sendSchoolProfiles(permittedVI13Values(snapshot,ids,approved),{});
+     }catch{return send({error:'VI13_SHEET_UNAVAILABLE'},503,origin);}
+    });
+   }
    return await readPercentileProjection(ids,tier,sendSchoolProfiles);
 
   }
