@@ -12,6 +12,11 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='home_vi13_sheet_top10'){
+  assert.deepEqual(route.request().postDataJSON(),{action:'home_vi13_sheet_top10'});
+  assert.equal(token,undefined);
+  return route.fulfill({status:503,headers:cors,body:JSON.stringify({error:'VI13_SYNC_DISABLED'})});
+ }
  if(a==='home_ranking_2026'){
   assert.deepEqual(route.request().postDataJSON(),{action:'home_ranking_2026'});
   assert.equal(token,undefined);

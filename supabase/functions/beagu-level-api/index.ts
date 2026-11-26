@@ -106,7 +106,7 @@ Deno.serve(async(req:Request)=>{
    if(!vi13SheetEnabled())return send({error:'VI13_SYNC_DISABLED'},503,origin);
    if(Object.keys(body).some(k=>k!=='action'))return send({error:'INVALID_BODY'},400,origin);
    try{
-    const snapshot=await readVI13Sheet();
+    const snapshot=await readVI13Sheet(admin);
     const ids=snapshot.rows.slice(0,10).map((r:any)=>r.school_id);
     const checked=await readPercentileProjection(ids,2,async values=>send({values},200,origin));
     if(!checked.ok)return send({error:'VI13_RANKING_APPROVAL_UNAVAILABLE'},503,origin);
@@ -228,9 +228,9 @@ Deno.serve(async(req:Request)=>{
    if(vi13SheetEnabled()&&tier===2){
     return await readPercentileProjection(ids,tier,async approved=>{
      try{
-      const snapshot=await readVI13Sheet();
+      const snapshot=await readVI13Sheet(admin);
       return await sendSchoolProfiles(permittedVI13Values(snapshot,ids,approved),{});
-     }catch{return send({error:'VI13_SHEET_UNAVAILABLE'},503,origin);}
+     }catch{return await sendSchoolProfiles({},{});}
     });
    }
    return await readPercentileProjection(ids,tier,sendSchoolProfiles);

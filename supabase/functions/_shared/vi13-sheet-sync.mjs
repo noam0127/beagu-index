@@ -32,6 +32,10 @@ export function parseVI13Sheet(values,now=Date.now()){
   total+=n;seen.add(id);rows.push(row);prev=row;
  }
  if(total!==meta[3])throw Error('VI13_SHEET_TOTAL');
+ for(let i=0;i<rows.length;){let j=i+1;while(j<rows.length&&rows[j].rank===rows[i].rank)j++;
+  const exact=Math.round(1000*(rows.length-j)/(rows.length-1))/10;
+  for(let k=i;k<j;k++)if(rows[k].percentile!==exact)throw Error('VI13_SHEET_PERCENTILE');i=j;
+ }
  return {day:new Date(stamp+9*3600000).toISOString().slice(0,10),generatedAt:meta[1],rows};
 }
 // Existing owner-approved values remain the permission gate. Changed/unapproved values
@@ -47,48 +51,20 @@ export function publicVI13Top10(snapshot,approved){
   throw Error('VI13_TOP10_APPROVAL_PENDING');
  return {day:snapshot.day,generatedAt:snapshot.generatedAt,rows:top.map(({school_id,school_name,region,rank})=>({school_id,school_name,region,rank}))};
 }
-const encode=new TextEncoder();
-const b64url=bytes=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-const jwtPart=obj=>b64url(encode.encode(JSON.stringify(obj)));
-let tokenCache=null,snapshotCache=null,flight=null;
+// Existing ingest endpoint stores a private, validated aggregate snapshot; no Google credentials.
 export function vi13SheetEnabled(){return Deno.env.get('BEAGU_VI13_SHEET_SYNC_ENABLED')==='1';}
-async function accessToken(account){
- const now=Math.floor(Date.now()/1000);
- if(tokenCache&&tokenCache.email===account.client_email&&tokenCache.until>now+60)return tokenCache.token;
- if(typeof account.client_email!=='string'||!account.client_email.endsWith('.gserviceaccount.com')||
-  typeof account.private_key!=='string'||!account.private_key.includes('BEGIN PRIVATE KEY'))throw Error('VI13_GOOGLE_CONFIG');
- const audience='https://oauth2.googleapis.com/token';
- const unsigned=jwtPart({alg:'RS256',typ:'JWT'})+'.'+jwtPart({iss:account.client_email,
-  scope:'https://www.googleapis.com/auth/spreadsheets.readonly',aud:audience,iat:now,exp:now+3600});
- const pem=account.private_key.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g,'');
- const pk=Uint8Array.from(atob(pem),c=>c.charCodeAt(0));
- const key=await crypto.subtle.importKey('pkcs8',pk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
- const sig=new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',key,encode.encode(unsigned)));
- const r=await fetch(audience,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-  body:new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer',assertion:unsigned+'.'+b64url(sig)}),
-  signal:AbortSignal.timeout(8000)});
- if(!r.ok)throw Error('VI13_GOOGLE_AUTH');
- const data=await r.json();
- if(typeof data.access_token!=='string'||!integer(data.expires_in,60,7200))throw Error('VI13_GOOGLE_AUTH');
- tokenCache={email:account.client_email,token:data.access_token,until:now+data.expires_in};
- return data.access_token;
-}
-export async function readVI13Sheet(){
+export async function readVI13Sheet(admin){
  if(!vi13SheetEnabled())throw Error('VI13_SYNC_DISABLED');
- const now=Date.now();
- if(snapshotCache&&now-snapshotCache.loadedAt<300000)return snapshotCache.data;
- if(flight)return await flight;
- flight=(async()=>{
-  const workbook=Deno.env.get('BEAGU_VI13_PRIVATE_WORKBOOK_ID')||'';
-  if(!/^[A-Za-z0-9_-]{25,100}$/.test(workbook))throw Error('VI13_GOOGLE_CONFIG');
-  const account=JSON.parse(Deno.env.get('BEAGU_VI13_SHEETS_SERVICE_ACCOUNT_JSON')||'{}');
-  const token=await accessToken(account);
-  const range=encodeURIComponent("'"+TAB+"'!A1:H10002");
-  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+workbook+'/values/'+range+'?valueRenderOption=UNFORMATTED_VALUE',
-   {headers:{Authorization:'Bearer '+token},signal:AbortSignal.timeout(12000)});
-  if(!r.ok)throw Error('VI13_GOOGLE_READ');
-  const body=await r.json(),data=parseVI13Sheet(body.values);
-  snapshotCache={loadedAt:Date.now(),data};return data;
- })();
- try{return await flight;}finally{flight=null;}
+ const {data,error}=await admin.rpc('beagu_2026_vi13_sheet_read_v1');
+ if(error||!data)throw Error('VI13_SNAPSHOT_UNAVAILABLE');
+ return parseVI13Sheet(data);
+}
+export function validateVI13Push(payload,now=Date.now()){
+ if(!payload||typeof payload!=='object'||Array.isArray(payload)||Object.keys(payload).sort().join(',')!=='kind,values'||payload.kind!=='VI13_SHEET_PUSH_V1')throw Error('VI13_PUSH_SCHEMA');
+ const snapshot=parseVI13Sheet(payload.values,now);
+ if(snapshot.rows.length<604||snapshot.rows.reduce((n,r)=>n+r.observations,0)<724)throw Error('VI13_BASELINE_REGRESSION');
+ // Canonicalize IDs and reject extra cell data before persistence.
+ const [m,h,...r]=payload.values;
+ if(m.length>8||h.length!==8||r.some(row=>row.length!==8))throw Error('VI13_PUSH_SCHEMA');
+ return [[m[0],m[1],m[2],m[3],m[4],m[5],m[6],'' ],HEADER,...snapshot.rows.map(x=>[x.school_id,x.school_name,x.region,x.percentile,x.rank,x.observations,x.sum_units,x.flags])];
 }

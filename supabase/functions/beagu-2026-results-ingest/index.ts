@@ -1,4 +1,5 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import {validateVI13Push} from '../_shared/vi13-sheet-sync.mjs';
 import {validateSnapshot} from '../_shared/results-2026.mjs';
 import {validateWaterwayRun} from '../_shared/waterway-run-v1.mjs';
 const send=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
@@ -19,6 +20,13 @@ Deno.serve(async(req:Request)=>{
       raw+=decoder.decode(part.value,{stream:true});}
     const parsed=JSON.parse(raw+decoder.decode());
     const admin=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+    if(parsed?.kind==='VI13_SHEET_PUSH_V1'){
+      if(bytes>4*1024*1024)return send(413,{error:'VI13_PAYLOAD_TOO_LARGE'});
+      const values=validateVI13Push(parsed);
+      const {data,error}=await admin.rpc('beagu_2026_vi13_sheet_store_v1',{p_values:values});
+      if(error)return send(409,{error:'VI13_SNAPSHOT_NOT_ACCEPTED'});
+      return send(200,{ok:true,kind:'VI13_SHEET_PUSH_V1',schools:values[0][2],observations:values[0][3],stored:data===true});
+    }
     if(parsed?.kind==='WATERWAY_RUN_V1'){
       if(bytes>8192)return send(413,{error:'HEARTBEAT_TOO_LARGE'});
       const data=validateWaterwayRun(parsed);
