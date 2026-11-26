@@ -28,7 +28,26 @@ jobs:
           node-version: '22'
       - run: node tests/locker-room-policy-v11125.mjs
       - run: node tests/locker-room-auth-v11125.mjs
+      - run: node --experimental-strip-types tests/account-v1-edge.mjs
       - name: Run isolated PostgreSQL fixtures
         env:
           PGPASSWORD: fixture-only
         run: psql -h 127.0.0.1 -p 5432 -U postgres -d locker_fixture -v ON_ERROR_STOP=1 -f tests/locker-room-postgres-v11125.sql
+      - name: Actual anonymous account SQL and ownership regression in second fixture DB
+        env:
+          PGPASSWORD: fixture-only
+          PGHOST: 127.0.0.1
+          PGUSER: postgres
+        run: |
+          set -euo pipefail
+          createdb account_fixture
+          export PGDATABASE=account_fixture
+          psql -X -v ON_ERROR_STOP=1 -f tests/account-v1-postgres-fixture.sql
+          for migration in 20261121103000_beagu_postit_member_auth 20261120_beagu_postit_school_conversations 20261120_beagu_postit_session_identity 20261120_beagu_postit_game_subjects 20261120_beagu_postit_comparison_subjects 20261120_beagu_postit_game_school_refs 20261121140000_beagu_postit_atomic_write; do
+            psql -X -v ON_ERROR_STOP=1 -f "supabase/migrations/$migration.sql"
+          done
+          psql -X -v ON_ERROR_STOP=1 -c "INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('00000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','60000000-0000-4000-8000-000000000002')"
+          psql -X -v ON_ERROR_STOP=1 -f supabase/account-identity-v1.sql
+          psql -X -v ON_ERROR_STOP=1 --single-transaction -f supabase/account-provisional-v1.sql
+          psql -X -v ON_ERROR_STOP=1 -f docs/v1.11.25-locker-room-schema-preview.sql
+          psql -X -v ON_ERROR_STOP=1 -f tests/account-v1-postgres-assertions.sql
