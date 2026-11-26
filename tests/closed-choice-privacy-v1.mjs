@@ -22,3 +22,7 @@ assert.equal(JSON.stringify(context.window.Beagu2026ApprovedResults.summary(inpu
 assert.equal(JSON.stringify(context.window.Beagu2026ApprovedResults.summary(input)).includes(catalog.Q01.options[0]),true);
 for(const f of ['js/level-search.js','js/statistics-compare.js','school-report.html'])assert.match(fs.readFileSync(f,'utf8'),/BeaguHistoricalClosedChoice/);
 console.log('PASS closed-choice allowlist, synthetic other, Q31/Q51, server/browser parity');
+
+assert.equal(historicalChoice(2025,'Q01','1 그런 일이 존재한다는 게 믿을 수 없다'),'① 그런 일이 존재한다는 게 믿을 수 없다');
+assert.equal(historicalChoice(2025,'Q01','① SYNTHETIC_PRIVATE_OTHER_TEXT'),null);
+assert.equal(historicalChoice(2025,'Q01','①'),null);

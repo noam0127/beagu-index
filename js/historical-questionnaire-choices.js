@@ -1,6 +1,7 @@
 /* Source: 사용자 Google Docs '전국 학교 배구지수(교직문화지수) 2023-2025 문항 체계 종합 보고서'.
  * Only exact documented choices, never reconstructed respondent-level data.
  * 2024 Q03 phone-number item and unknown 2025 Q01-Q30 choices are NOT fabricated.
+ * 2025 Q01-Q29 additions: 125 labels independently matched by question and text to the questionnaire development document and the prior observed-choice catalogue; draft evidence is not a full final-form verification. Candidate only.
  * 2024 numbering mapped by explicitly matching verified question topics.
  * 2025 Q31-Q50 original documented factual-choice response scale. */
 window.BeaguHistoricalQuestionnaire=Object.freeze({
@@ -291,6 +292,185 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "있다",
       "없다",
       "모름"
+    ],
+    "Q01": [
+      "① 그런 일이 존재한다는 게 믿을 수 없다",
+      "② 나는 하지 않는데 가끔 누가 한다(자율)",
+      "③ 모두 하는 편이다(자율)",
+      "④ 안 하면 누가 하라고 시킨다(강요)",
+      "⑤ 구두보고 없이 조퇴할 수 없다(강요)"
+    ],
+    "Q02": [
+      "① 가지 않는다.",
+      "② 1회",
+      "③ 2회",
+      "④ 3회",
+      "⑤ 4회 이상"
+    ],
+    "Q05": [
+      "① 안 한다",
+      "② 나는 안 하지만 누군가 한다(자율)",
+      "③ 자율적으로 하루 정도 근무한다.",
+      "④ 구성원들이 자율적으로 방학 근무조를 꾸려 근무한다"
+    ],
+    "Q06": [
+      "② 없다",
+      "③ 곧 생길 것 같다",
+      "④ 1명 있다",
+      "⑤ 2명 있다",
+      "⑥ 3명 이상 있다"
+    ],
+    "Q07": [
+      "① 19시간 이하",
+      "② 20시간",
+      "③ 21시간",
+      "④ 22시간",
+      "⑤ 23시간 이상"
+    ],
+    "Q08": [
+      "① 없다",
+      "② 1번",
+      "③ 2번",
+      "④ 3번",
+      "⑤ 4번 이상"
+    ],
+    "Q09": [
+      "② 없다",
+      "③ 1회",
+      "④ 2회",
+      "⑤ 3회",
+      "⑥ 4회 이상"
+    ],
+    "Q10": [
+      "① 교사 지원을 아끼지 않는다",
+      "② 주어진 업무를 성실히 한다",
+      "③ 무슨 일을 하는지 모르겠다",
+      "④ 자신의 업무를 교사에게 부탁한다",
+      "⑤ 교사에게 업무를 시킨다"
+    ],
+    "Q11": [
+      "① 원칙이 분명하고 지켜진다",
+      "② 원칙은 있으나 지켜지지 않는다",
+      "③ 원칙이 없다",
+      "④ 원칙이 없이 소수에 의해 정해진다",
+      "⑤ 힘없는 신규·저연차가 기피 업무를 당연히 맡는다"
+    ],
+    "Q12": [
+      "① 2일 이하",
+      "② 3일",
+      "③ 4일",
+      "④ 5일",
+      "⑤ 6일 이상"
+    ],
+    "Q13": [
+      "① 안 한다",
+      "② 회비 없는 친목회(자율)",
+      "③ 매달 회비 걷는 친목회(자율)",
+      "④ 가입 안 하면 눈치 준다(강요)",
+      "⑤ 1박 2일 여행도 간다(강요)"
+    ],
+    "Q14": [
+      "② 실제로 분리된다",
+      "③장소는 있으나 실제 분리는 안 된다",
+      "④분리 장소가 없다"
+    ],
+    "Q15": [
+      "① 1회미만",
+      "② 1회",
+      "③ 2~3회",
+      "④ 4~5회",
+      "⑤ 6회 이상"
+    ],
+    "Q16": [
+      "① 즉각",
+      "② 1시간 미만",
+      "③2~3시간",
+      "⑤4시간 이상"
+    ],
+    "Q17": [
+      "① ★★★★★ (매우 만족)",
+      "② ★★★★☆",
+      "③ ★★★☆☆",
+      "④ ★★☆☆☆",
+      "⑤ ★☆☆☆☆(매우 불만족)"
+    ],
+    "Q18": [
+      "① 충분한 예산으로 호화로운 간식이 제공된다",
+      "② 예산이 책정·집행된다",
+      "③ 책정되어 있으나 나는 집행된 간식을 본 적 없다",
+      "④ 예산 자체가 없고 교사 돈으로 충당한다(자율)",
+      "⑤ 다과비를 강제적으로 부담한다(강제)"
+    ],
+    "Q19": [
+      "② 대부분 적용된다",
+      "③ 몇몇만 적용된다",
+      "⑤ 협의회조차 안 한다"
+    ],
+    "Q20": [
+      "① 학년연구실 외 다양한 공간이 있다",
+      "② 모든 학년에 연구실이 있다",
+      "③ 일부 학년에만 연구실이 있다",
+      "④ 연구실이 있으나 창고 수준이다",
+      "⑤ 늘봄교실로 인해 교실에서도 쉴 수 없다"
+    ],
+    "Q21": [
+      "① 발언 자체가 없다(부조리 없음, 복지만족)",
+      "② 지원 발언이 이어진다",
+      "③ 아무런 반응이 없다",
+      "④ 뒷담·따돌림이 따른다",
+      "⑤ 발언 기회조차 없다"
+    ],
+    "Q22": [
+      "① 1회 이하",
+      "② 2회",
+      "③ 3회",
+      "④ 4회",
+      "⑤ 5회 이상"
+    ],
+    "Q23": [
+      "① 1회 이하",
+      "② 2회",
+      "③ 3회",
+      "④ 4회",
+      "⑤ 5회 이상"
+    ],
+    "Q24": [
+      "① 없다",
+      "② 있는데 자율적이다",
+      "③ 안 하면 눈치 준다",
+      "④ 안 하면 욕먹는다",
+      "⑤ 너무 당연해서 문제라 생각하지 않는다"
+    ],
+    "Q25": [
+      "① 스포츠활동이 없다",
+      "② 자율적이다",
+      "③ 가지 않으면 눈치 준다",
+      "④ 가지 않으면 뒷담한다",
+      "⑤ 가지 않으면 대놓고 욕한다"
+    ],
+    "Q26": [
+      "① 모든 교직원이 배려와 사랑이 넘친다",
+      "② 대부분의 교직원이 배려와 사랑이 넘친다",
+      "③ 유난히 특정 교직원으로 인해 갈등이 생긴다",
+      "④ 파벌 간의 갈등이 눈에 띄게 나타난다",
+      "⑤ ‘만인에 대한 만인의 투쟁’ 상태다"
+    ],
+    "Q27": [
+      "② 몇몇만 바르게 인사한다",
+      "③ 대부분 무시한다",
+      "④ 몇몇은 서로 욕을 하며 지나간다",
+      "⑤ 교사에게 욕하며 지나간다"
+    ],
+    "Q28": [
+      "① 모두 환하게 웃으며 인사한다",
+      "② 대부분 환하게 웃으며 인사한다",
+      "④ 몇몇은 인사를 받지 않는다"
+    ],
+    "Q29": [
+      "① 당장 오늘 아파도 쉴 수 있다.",
+      "② 사전에 이야기한 경우만 쉴 수 있다.",
+      "④ 몸이 많이 아픈 게 아니면 참고 나와야 한다.",
+      "⑤ 무슨 일이 있어도 학교에 나와야한다."
     ]
   }
 });
@@ -301,7 +481,13 @@ const closedChoice=(catalog,year,id,value)=>{
   const options=catalog?.[String(year)]?.[id];
   if(!Array.isArray(options))return null;
   const v=value.trim();
-  return options.includes(v)?v:null;
+  if(options.includes(v))return v;
+  // Compare only equivalent numbered labels, never arbitrary text or an ordinal alone.
+  const ordinal=text=>{const m=text.match(/^([①②③④⑤⑥⑦⑧⑨⑩]|10|[1-9])(?:\s*점\s*[:.]?|\s*[.)、:]|\s+)?\s*(\S.*)$/);if(!m)return null;const n='①②③④⑤⑥⑦⑧⑨⑩'.includes(m[1])?'①②③④⑤⑥⑦⑧⑨⑩'.indexOf(m[1])+1:Number(m[1]);return n+':'+m[2].replace(/\s+/g,'').replace(/[.]$/,'');};
+  const key=ordinal(v);
+  if(!key)return null;
+  const matches=options.filter(o=>ordinal(o)===key);
+  return matches.length===1?matches[0]:null;
 };
 
 window.BeaguHistoricalClosedChoice=(year,id,value)=>closedChoice(window.BeaguHistoricalQuestionnaire,year,id,value);})();

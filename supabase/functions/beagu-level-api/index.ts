@@ -455,7 +455,7 @@ Deno.serve(async(req:Request)=>{
     if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
        record.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
        !safeMode(record.mode_option)||!historicalChoice(year,qid,record.mode_option))continue;
-    modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:record.mode_option});
+    modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:historicalChoice(year,qid,record.mode_option)!});
   }
 
   // Owner-authorized 1+ historical closed-choice aggregates. Keep the
@@ -475,7 +475,7 @@ Deno.serve(async(req:Request)=>{
       const mode=question?.modeOption;
       if(!/^Q\d{2}$/.test(qid)||!safeMode(mode)||!historicalChoice(year,qid,mode)||
          !Number.isInteger(question?.validRows)||question.validRows<1)continue;
-      modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode});
+      modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:historicalChoice(year,qid,mode)!});
     }
   }
   // A 2025 checkbox question receives a school mode only when every included
@@ -494,7 +494,7 @@ Deno.serve(async(req:Request)=>{
       const qid=String(row.question_id||'');
       if(!['Q03','Q04','Q30'].includes(qid)||!safeMode(row.mode_option)||!historicalChoice(2025,qid,row.mode_option))continue;
       if(!modeIndex.has('2025:'+qid))
-        modeIndex.set('2025:'+qid,{year:2025,questionId:qid,modeOption:row.mode_option});
+        modeIndex.set('2025:'+qid,{year:2025,questionId:qid,modeOption:historicalChoice(2025,qid,row.mode_option)!});
     }
   }
   const schoolQuestionModes=[...modeIndex.values()].sort((a,b)=>
