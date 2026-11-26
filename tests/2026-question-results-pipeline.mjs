@@ -81,7 +81,15 @@ for(const change of [p=>p.schools[0].raw_answers=['secret'],p=>p.totals.official
 questions[0].valid=1;questions[0].counts[2]=1;
 assert.deepEqual(publicQuestionResults(questions),[{questionId:'Q01',row:-1,values:['보통이다']}]);
 assert.ok(!JSON.stringify(publicQuestionResults(questions)).includes('counts'));
-questions[0].invalid=1;assert.deepEqual(publicQuestionResults(questions),[]);
+questions[0].invalid=1;assert.deepEqual(publicQuestionResults(questions),[{questionId:'Q01',row:-1,values:['보통이다']}]);
+questions[0].invalid=-1;assert.deepEqual(publicQuestionResults(questions),[]);
+questions[0].invalid=0;
+const m12=catalog.Q12.options;
+const mixed12={id:'Q12',row:-1,valid:4,invalid:1,counts:m12.map((v,i)=>v==='기타'?3:i===0?1:0),minutes_sum:0};
+assert.deepEqual(publicQuestionResults([mixed12]),[{questionId:'Q12',row:-1,values:[m12[0]]}]);
+assert.deepEqual(publicQuestionResults([{...mixed12,valid:3,counts:m12.map(v=>v==='기타'?3:0)}]),[]);
+assert.deepEqual(publicQuestionResults([{...mixed12,valid:1}]),[]);
+assert.deepEqual(publicQuestionResults([mixed12,mixed12]),[]);
 // Compile all Apps Script files in one context to detect duplicate lexical declarations.
 const gs=['noon','mbti-review'].map(name=>fs.readFileSync('scripts/beagu-2026-'+name+'-sync.gs','utf8')).join('\n');
 new vm.Script(gs);
