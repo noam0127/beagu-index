@@ -1,0 +1,31 @@
+name: Locker room v1.11.25 isolated Chromium validation
+on:
+  push:
+    branches: [feature/v1.11.25-locker-room]
+  pull_request:
+    branches: [feature/v1.11.24-my-account]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser test dependency
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then
+            echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"
+          else
+            npx playwright install chromium
+          fi
+      - name: Local fixture browser regression; all external requests intercepted
+        run: node tests/locker-room-browser-v11125.mjs

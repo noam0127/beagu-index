@@ -321,6 +321,18 @@
 
     <div class="beagu-home-actions"><a class="data-access-link" href="search.html">학교 검색하기</a><a class="survey-access-link" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여하기</a></div>
 <section class="beagu-survey-purpose" aria-labelledby="beaguSurveyPurposeTitle"><h2 id="beaguSurveyPurposeTitle">배구지수 조사 목적 및 취지</h2><p>교원의 교직문화에 대한 경험과 인식을 조사하여 민주적이고 상호 존중하는 학교문화 조성에 기여하고, 근무환경에 관한 정보의 비대칭을 완화하며 교육공동체 발전을 위한 논의의 기초자료를 제공하는 민간 조사입니다.</p><p>특정 학교의 우열이나 특정 교직원의 인격·능력·행위를 확정적으로 평가하거나 비방하는 목적이 아니며, 교육부·교육청의 공식 평가가 아닙니다.</p><p class="beagu-survey-limit">본 수치는 익명·자발적 설문 응답을 바탕으로 산출된 인식조사 결과입니다. 응답자의 교원 신분과 실제 학교 소속이 확인되지 않았을 수 있으며, 해당 학교 전체의 교직문화를 대표하지 않습니다.</p></section>
+<section class="beagu-home-showcase" id="beaguHomeLocker" aria-labelledby="homeLockerHeading">
+ <div class="beagu-home-showcase-head"><h2 id="homeLockerHeading">라커룸</h2><a href="postit.html">전체 이야기 보기</a></div>
+ <p id="homeLockerStatus" role="status">Lv.2 익명 계정 인증 후 최신 이야기를 볼 수 있습니다.</p>
+ <ul id="homeLockerList" hidden aria-label="최신 게시글 3개"></ul>
+</section>
+<style>
+#homeLockerList[hidden]{display:none!important}
+#homeLockerList{padding:0;list-style:none;margin:0}
+#homeLockerList li{border-top:1px solid rgba(128,128,128,.25);padding:.6rem 0}
+#homeLockerList a{display:flex;flex-direction:column;gap:.2rem;color:inherit;text-decoration:none;overflow-wrap:anywhere}
+#homeLockerList small{opacity:.8}
+</style>
 <section class="beagu-home-showcase" id="beaguTodaySchools" aria-labelledby="beaguTodayTitle">
 <div class="beagu-home-showcase-head"><h2 id="beaguTodayTitle">오늘의 학교</h2></div>
 <p class="beagu-home-showcase-status" data-today-status role="status">공개된 2025년 자료에서 학교를 선정하는 중입니다.</p>
@@ -384,6 +396,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script defer src="js/beagu-home-notice-public-v1.js?v=11113-minimal"></script>
+<script defer src="js/beagu-home-locker-v11125.js"></script>
 <script defer src="js/beagu-home-schools-v1.js?v=11123-disclosure"></script>
 <script defer src="js/beagu-home-ranking-v1.js?v=11122-sheet"></script>
 <script defer src="js/beagu-court-tidy-v1110.js?v=1110"></script>
