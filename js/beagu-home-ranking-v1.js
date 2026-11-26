@@ -1,4 +1,4 @@
-/* Public fixed 2026 TOP 10; existing authenticated detail routes are unchanged. */
+/* Manual 2026 TOP10 snapshot; provisional, no ranking API calls. Existing detail routes unchanged. */
 (function(){
  'use strict';
  const SEOUL=9*3600000, DAY=86400000;
@@ -24,7 +24,82 @@
  const root=document.getElementById('beagu2026Ranking');if(!root||root.hidden)return;
  const list=root.querySelector('[data-ranking-list]'),status=root.querySelector('[data-ranking-status]');
  const tier=()=>Number(document.getElementById('beaguLevelState')?.dataset.level);
- let rows=[],sequence=0,controller=null,timer=null;
+ const manualSnapshot={
+  "day": "2026-11-26",
+  "rows": [
+    {
+      "rank": 1,
+      "school_id": "7551071",
+      "school_name": "서현초등학교",
+      "region": "경기 성남",
+      "percentile": 100
+    },
+    {
+      "rank": 2,
+      "school_id": "7569043",
+      "school_name": "안양호암초등학교",
+      "region": "경기 안양과천",
+      "percentile": 99.8
+    },
+    {
+      "rank": 3,
+      "school_id": "7361332",
+      "school_name": "인천아라초등학교",
+      "region": "인천 서부",
+      "percentile": 99.6
+    },
+    {
+      "rank": 4,
+      "school_id": "7631121",
+      "school_name": "평택도곡초등학교",
+      "region": "경기 평택",
+      "percentile": 99.3
+    },
+    {
+      "rank": 4,
+      "school_id": "8801086",
+      "school_name": "고아초등학교",
+      "region": "경북 구미",
+      "percentile": 99.3
+    },
+    {
+      "rank": 6,
+      "school_id": "7051126",
+      "school_name": "서울상경초등학교",
+      "region": "서울 북부",
+      "percentile": 99.1
+    },
+    {
+      "rank": 7,
+      "school_id": "7132081",
+      "school_name": "서울관악초등학교",
+      "region": "서울 동작관악",
+      "percentile": 98.9
+    },
+    {
+      "rank": 8,
+      "school_id": "7361296",
+      "school_name": "인천가원초등학교",
+      "region": "인천 서부",
+      "percentile": 98.6
+    },
+    {
+      "rank": 8,
+      "school_id": "7679337",
+      "school_name": "아인초등학교",
+      "region": "경기 화성오산",
+      "percentile": 98.6
+    },
+    {
+      "rank": 10,
+      "school_id": "8151043",
+      "school_name": "도장초등학교",
+      "region": "충남 천안",
+      "percentile": 98.4
+    }
+  ]
+};
+ const rows=manualSnapshot.rows;
  function el(tag,value){const n=document.createElement(tag);if(value!==undefined)n.textContent=String(value);return n;}
  function paint(){
   list.replaceChildren();
@@ -34,23 +109,11 @@
    identity.append(a,el('small',r.region));li.append(rank,identity,el('strong',r.percentile.toFixed(1)));list.append(li);
   }
  }
- function clear(message){rows=[];paint();status.textContent=message;}
- function schedule(){clearTimeout(timer);const now=Date.now();timer=setTimeout(refresh,Math.max(1000,Math.min(300000,nextMidnight(now)-now+1000)));}
- async function refresh(){
-  const seq=++sequence;controller?.abort();controller=new AbortController();const requestController=controller,signal=requestController.signal;
-  const timeout=setTimeout(()=>requestController.abort(),15000);
-  try{
-   const res=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'home_ranking_2026'}),cache:'no-store',signal});
-   if(seq!==sequence||signal.aborted)return;
-   if(!res.ok)throw Error('RANKING_UNAVAILABLE');
-   const data=await res.json();if(seq!==sequence||signal.aborted)return;
-   if(!validPayload(data))throw Error('INVALID_RANKING');
-   rows=data.rows;paint();status.textContent=data.day===null?'2026 공개 승인 순위 준비 중':data.day+' 기준'+(data.day!==koreaDay(Date.now())?' · 직전 정상 집계':'')+(rows.length?'':' · 공개 승인 학교 없음');
-  }catch(_){if(seq===sequence)clear('최신 공개 승인 순위를 확인하지 못했습니다.');}
-  finally{clearTimeout(timeout);if(seq===sequence)schedule();}
- }
+ document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 TOP10';
+ const note=root.querySelector('.beagu-home-school-note');
+ if(note)note.textContent='수동 집계 · 수직성 백분위 기준 · 잠정 순위';
+ status.textContent=manualSnapshot.day+' 기준 · 수동 집계';
  window.addEventListener('beagu:level-state-updated',paint);
- window.addEventListener('pageshow',()=>void refresh());
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});
- void refresh();
+ window.addEventListener('pageshow',paint);
+ paint();
 })();
