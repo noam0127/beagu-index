@@ -8,7 +8,7 @@ const browser=await chromium.launch({headless:true});
 try{
  const page=await browser.newPage({viewport:{width:375,height:800}});
  const shared='a'.repeat(64), rejected='b'.repeat(64), personal='c'.repeat(64), account='d'.repeat(64);
- await page.route('**/*',r=>r.request().url()==='https://fixture.invalid/challenge.html'?r.fulfill({contentType:'text/html',body:'<!doctype html><meta name="viewport" content="width=device-width"><a id="beaguLevelState" data-level="2" data-provisional="true" data-account-level="2">Lv.2</a><div id="challengeAccessPanel" data-challenge-verified-level="2" data-provisional="true" data-account-level="2"></div>'+card}):r.abort());
+ await page.route('**/*',r=>r.request().url()==='https://fixture.invalid/challenge.html'?r.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><a id="beaguLevelState" data-level="2" data-provisional="true" data-account-level="2">Lv.2</a><div id="challengeAccessPanel" data-challenge-verified-level="2" data-provisional="true" data-account-level="2"></div>'+card}):r.abort());
  await page.goto('https://fixture.invalid/challenge.html');
  await page.evaluate(({shared,rejected,personal,account})=>{
   window.SUPABASE_URL='https://fixture.invalid';

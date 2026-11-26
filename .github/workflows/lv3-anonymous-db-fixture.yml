@@ -19,8 +19,14 @@ jobs:
           c="beagu-lv3-fixture-${GITHUB_RUN_ID}"
           docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
           trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
-          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres && break; sleep 1; done
-          psql_local() { docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          # TCP is unavailable during the temporary init server; wait for the final listener.
+          psql_local() { docker exec -i -e PGPASSWORD=fixture-only "$c" psql -h 127.0.0.1 -X -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+          ready=0
+          for i in $(seq 1 40); do
+            if psql_local -Atqc "select 1" >/dev/null 2>&1; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
           psql_local < tests/lv3-anonymous-fixture.sql
           psql_local < docs/level3-account-schema-preview.sql
           psql_local < tests/lv3-anonymous-assertions.sql
