@@ -1,7 +1,7 @@
 (()=> {
  'use strict';
  const card=document.getElementById('level3-account');
- if(!card)return;
+ if(!card||card.hidden||card.inert)return;
  const q=id=>document.getElementById(id);
  const badge=q('beaguLevelState'), key='beagu-level-session-v1';
  const endpoint=SUPABASE_URL+'/functions/v1/beagu-level-api';
