@@ -1,4 +1,4 @@
-// Server-only credential primitives for the password-only Lv.3 account.
+// Server-only credential primitives. Username lookup is domain-separated from legacy password lookup.
 const encoder = new TextEncoder();
 export const MIN_PASSWORD_LENGTH = 10;
 export const MAX_PASSWORD_LENGTH = 128;
@@ -53,4 +53,22 @@ export async function verifyCredential(password, secret, record) {
   let diff = 0;
   for (let i = 0; i < expected.length; i++) diff |= actual[i] ^ expected[i];
   return diff === 0;
+}
+
+export function normalizeUsername(username) {
+  if (typeof username !== "string" || !/^[A-Za-z0-9_]{4,20}$/.test(username)) return null;
+  return username.toLowerCase();
+}
+export async function usernameLookup(username, secret) {
+  const normalized = normalizeUsername(username);
+  if (!normalized) throw new Error("INVALID_USERNAME");
+  return hex(await hmac(secret, "username-lookup", normalized));
+}
+export async function createUsernameCredential(username, password, confirmation, secret) {
+  requirePassword(password);
+  if (password !== confirmation) throw new Error("PASSWORD_MISMATCH");
+  const lookup = await usernameLookup(username, secret);
+  const salt = hex(crypto.getRandomValues(new Uint8Array(32)));
+  const verifier = await deriveVerifier(password, secret, salt);
+  return {version: 1, lookup, salt, verifier};
 }

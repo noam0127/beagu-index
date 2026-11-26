@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
 import {projectOfficialProfiles2026,projectPublicSchoolBasics2026} from '../_shared/official-school-profile-2026.mjs';
-import {validPassword,passwordLookup,createCredential,verifyCredential} from '../_shared/level3-credential-v1.mjs';
+import {validPassword,normalizeUsername,usernameLookup,createUsernameCredential,verifyCredential} from '../_shared/level3-credential-v1.mjs';
 const lv3Enabled=()=>Deno.env.get('BEAGU_LEVEL3_ENABLED')==='true';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -68,8 +68,9 @@ Deno.serve(async(req:Request)=>{
    const secret=Deno.env.get('BEAGU_LEVEL3_PASSWORD_KEY')||'';
    if(!lv3Enabled()||! /^[a-f0-9]{64}$/i.test(secret))return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
    const registering=body.action==='level3_register';
-   const allowedFields=registering?['action','password','confirmation','acknowledged']:['action','password'];
+   const allowedFields=registering?['action','username','password','confirmation','acknowledged']:['action','username','password'];
    if(Object.keys(body).some(k=>!allowedFields.includes(k)))return send({error:'INVALID_BODY'},400,origin);
+   if(!normalizeUsername(body.username))return send({error:'INVALID_USERNAME'},400,origin);
    if(!validPassword(body.password))return send({error:'INVALID_PASSWORD'},400,origin);
    if(registering&&(body.password!==body.confirmation||body.acknowledged!==true))
      return send({error:'INVALID_CONFIRMATION'},400,origin);
@@ -81,7 +82,7 @@ Deno.serve(async(req:Request)=>{
      const current=await check(req);
      if(!current||Number(current.access_level)!==2||!current.identity_visitor_id||current.identity_campaign!=='2026'||current.level3_account_id)
        return send({error:'PERSONAL_LEVEL2_REQUIRED'},403,origin);
-     const credential=await createCredential(body.password,body.confirmation,secret);
+     const credential=await createUsernameCredential(body.username,body.password,body.confirmation,secret);
      const {data,error}=await admin.rpc('beagu_lv3_register_v1',{
        p_session:await hash((req.headers.get('X-Beagu-Session')||'').trim()),
        p_lookup:credential.lookup,p_salt:credential.salt,p_verifier:credential.verifier,
@@ -91,7 +92,7 @@ Deno.serve(async(req:Request)=>{
      if(error?.code==='28000')return send({error:'PERSONAL_LEVEL2_REQUIRED'},403,origin);
      if(error||!data)return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
    }else{
-     const lookup=await passwordLookup(body.password,secret);
+     const lookup=await usernameLookup(body.username,secret);
      const {data:account,error}=await admin.from('beagu_lv3_accounts')
        .select('account_id,visitor_id,salt,verifier,version').eq('lookup',lookup).maybeSingle();
      if(error)return send({error:'ACCOUNT_UNAVAILABLE'},503,origin);
