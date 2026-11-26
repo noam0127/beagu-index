@@ -34,7 +34,8 @@ assert.deepEqual(sanitizeEditedQuestions(['Q31','Q50','Q51','Q19'].map(questionI
 assert.deepEqual(sanitizeEditedQuestions([{questionId:'Q12',row:-1,values:['기타','free text','운영하지 않는다']}]),[{questionId:'Q12',row:-1,values:['운영하지 않는다']}]);
 const source=readFileSync(new URL('beagu-level-api/index.ts',import.meta.url),'utf8');
 assert.ok(source.indexOf('if(tier===1)return await sendSchoolProfiles({},{})')<source.indexOf('const sheetValues='));
-assert.ok(source.includes('autoSheetValues(admin,ids,tier)'));assert.ok(source.includes('sanitizeEditedQuestions(finalRow.questions)'));
+assert.ok(source.includes('autoSheetValues(admin,ids,tier)'));assert.ok(source.includes('sanitizeEditedQuestions(finalRow?.questions)'));
+assert.ok(source.includes('const schoolQuestionResults2026=level!==2?[]'));assert.ok(source.includes('(m.year!==2026||(level===2&&tierPublished2026))'));assert.ok(!source.includes('lv1Approved2026'));
 assert.ok(source.includes("Number(verified.access_level)<2"));assert.ok(!calls.some(x=>x.includes('approval')||x.includes('percentile_v13_values')));
 const require=createRequire(import.meta.url),h=require('../../js/beagu-home-ranking-v1.js');assert.ok(h.validAuto(top));assert.equal(h.validAuto({...top,rows:top.rows.map(r=>({...r,percentile:100}))}),false);
 console.log('PASS synthetic one-observation automatic gate, unknown/flagged/blocked denial, Lv0-1, time and private question protection');

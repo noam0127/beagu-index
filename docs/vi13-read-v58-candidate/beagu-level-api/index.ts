@@ -314,12 +314,7 @@ Deno.serve(async(req:Request)=>{
     if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
     if(Array.isArray(data))lv2Approved2026=data;
   }
-  let lv1Approved2026:null|unknown[]=null;
-  if(level===1&&tierPublished2026){
-    const {data,error}=await admin.rpc('beagu_2026_released_question_results',{p_school_id:id});
-    if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
-    if(Array.isArray(data))lv1Approved2026=data;
-  }
+  // v1.4: Lv1 never reads 2026 survey results; basic school facts remain available.
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
    admin.from('beagu_release_metrics_v2').select('survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence').eq('school_id',id).eq('approval_status','APPROVED').lte('access_level',level).order('release_version',{ascending:false}).limit(1000),
@@ -331,7 +326,7 @@ Deno.serve(async(req:Request)=>{
   if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
-    .filter((m:any)=>(m.year!==2026||([1,2].includes(level)&&tierPublished2026))&&
+    .filter((m:any)=>(m.year!==2026||(level===2&&tierPublished2026))&&
       !(level===1&&(m.year<2025||m.year===2026)&&m.key==='percentile')&&!(m.year===2026&&/^Q(?:31|50|51)(?:$|[._-])/.test(String(m.key||''))));
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
@@ -600,7 +595,7 @@ Deno.serve(async(req:Request)=>{
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
   const finalRow=edited.data.active===true?edited.data.schools?.[id]:null;
-  const schoolQuestionResults2026=edited.data.active===true?(Array.isArray(finalRow?.questions)?sanitizeEditedQuestions(finalRow.questions):[]):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
+  const schoolQuestionResults2026=level!==2?[]:edited.data.active===true?sanitizeEditedQuestions(finalRow?.questions):Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):[];
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:level>=2?(finalRow?.percentile??null):null},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
