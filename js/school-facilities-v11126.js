@@ -35,7 +35,9 @@ function collect(modes,results,tier){
  const add=(id,yes,year)=>{let item=out.get(id);if(!item){item={yes:new Set(),no:new Set()};out.set(id,item);}item[yes?'yes':'no'].add(year);};
  const compare=(v,values)=>values.some(x=>norm(x)===v);
  for(const m of list(modes)){
-  const y=yearOf(m?.year),q=m?.questionId,v=norm(m?.modeOption);if(!v)continue;
+  const y=yearOf(m?.year),q=m?.questionId;
+  const fixed=y===2025?window.BeaguHistoricalClosedChoice?.(y,q,m?.modeOption):m?.modeOption;
+  const v=norm(fixed);if(!v)continue;
   if(y===2025&&['Q36','Q37','Q43'].includes(q)){
    const id={Q36:'gradeWater',Q37:'toilet',Q43:'supplies'}[q];
    if(v==='있다')add(id,true,y);else if(v==='없다')add(id,false,y);
@@ -50,7 +52,7 @@ function collect(modes,results,tier){
    if(compare(v,['교실에서만 쉴 수 있음']))add('extraRest',false,y);
   }
   if((y===2024&&q==='Q11')||(y===2025&&q==='Q20')){
-   const opts=y===2024?window.BeaguHistoricalQuestionnaire?.['2024']?.Q11:window.Beagu2025ObservedChoices?.Q20;
+   const opts=y===2024?window.BeaguHistoricalQuestionnaire?.['2024']?.Q11:window.BeaguHistoricalQuestionnaire?.['2025']?.Q20;
    if(!Array.isArray(opts))continue;
    if(compare(v,opts.slice(0,4)))add('grade',true,y);
    if(compare(v,opts.slice(0,1)))add('extraRest',true,y);
@@ -152,30 +154,31 @@ function collectFacts(modes,results,tier,selections=[]){
   out.set(id,{id,year,questionId:q,group,icon,label,active});
  };
  const historical=window.BeaguHistoricalQuestionnaire?.['2025']||{};
- const observed=window.Beagu2025ObservedChoices||{};
  for(const m of list(modes)){
   if(Number(m?.year)!==2025||typeof m.modeOption!=='string')continue;
-  const q=m.questionId,v=norm(m.modeOption);
+  const q=m.questionId,fixed=window.BeaguHistoricalClosedChoice?.(2025,q,m.modeOption);
+  if(!fixed)continue;
+  const v=norm(fixed);
   const binary=binary25.find(x=>x[0]===q);
   if(binary&&Array.isArray(historical[q])&&historical[q].join('|')==='있다|없다|모름'){
    const [,g,icon,label]=binary;add(2025,q,0,g,icon,label,v==='있다'?true:v==='없다'?false:null);
   }
   const choice=choice25.find(x=>x[0]===q);
-  if(choice&&Array.isArray(observed[q])){
+  if(choice&&Array.isArray(historical[q])){
    const [,g,icon,label,yes,no]=choice;
-   const i=observed[q].findIndex(x=>norm(x)===v);
+   const i=historical[q].indexOf(fixed);
    add(2025,q,0,g,icon,label,yes.includes(i)?true:no.includes(i)?false:null);
   }
  }
  const addMulti=(year,q,values,spec,catalog)=>{
   if(!spec||!Array.isArray(values)||!values.length||!Array.isArray(catalog)||values.some(v=>typeof v!=='string'||!catalog.includes(v)))return;
   const [g,icon,labels,none]=spec;
-  if(!labels.every(v=>catalog.includes(v))||!catalog.includes(none))return;
+  if(!catalog.includes(none)||(year!==2025&&!labels.every(v=>catalog.includes(v))))return;
   // An omitted choice is unknown; only an explicit standalone "none" supplies X.
   const absent=values.every(v=>v===none);
-  labels.forEach((label,i)=>{if(values.includes(label)||absent)add(year,q,i,g,groupIcon(q,i,icon),label,values.includes(label));});
+  labels.forEach((label,i)=>{if(catalog.includes(label)&&(values.includes(label)||absent))add(year,q,i,g,groupIcon(q,i,icon),label,values.includes(label));});
  };
- for(const s of list(selections))if(Number(s?.year)===2025)addMulti(2025,s.questionId,s.selectedOptions,multi25[s.questionId],observed[s.questionId]);
+ for(const s of list(selections))if(Number(s?.year)===2025)addMulti(2025,s.questionId,s.selectedOptions,multi25[s.questionId],historical[s.questionId]);
  if(tier===2){
   const catalog=window.Beagu2026Questionnaire||{};
   for(const r of list(results)){
