@@ -61,7 +61,7 @@
     experience.setAttribute('aria-label',school.name+' 학교체험 · 선생님배구');
     actions.append(detail,experience);
     footer.append(el('span','beagu-home-school-year','2025년 기준'),actions);
-    host.append(header,identity,footer);
+    host.append(header,identity,footer,el('p','beagu-survey-meta',"유효 응답 건수: 공개 자료에서 확인되지 않음 · 2025년 백분위 비교 모집단: 1,458개교"),el('p','beagu-survey-limit',"본 수치는 익명·자발적 설문 응답을 바탕으로 산출된 인식조사 결과입니다. 응답자의 교원 신분과 실제 학교 소속이 확인되지 않았을 수 있으며, 해당 학교 전체의 교직문화를 대표하지 않습니다."));
   }
   function render(){
     if(!selectedHigh||!selectedLow)return;
