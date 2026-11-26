@@ -329,13 +329,14 @@
 <p class="beagu-home-showcase-status" data-today-status role="status">공개된 2025년 자료에서 학교를 선정하는 중입니다.</p>
 <div class="beagu-home-school-grid"><article class="beagu-home-school beagu-home-school--high" data-today-high aria-label="2025년 인식조사 백분위 90 이상 학교"></article><article class="beagu-home-school beagu-home-school--low" data-today-low aria-label="2025년 인식조사 백분위 10 이하 학교"></article></div>
 </section>
-<section class="beagu-home-showcase" id="beagu2026Ranking" aria-labelledby="beagu2026RankingTitle">
+<section class="beagu-home-showcase" id="beagu2026Ranking" hidden aria-labelledby="beagu2026RankingTitle">
  <div class="beagu-home-showcase-head"><h2 id="beagu2026RankingTitle">2026 배구지수 전국 TOP10</h2></div>
  <p data-ranking-status role="status">수동 집계 자료 불러오는 중</p>
  <ol data-ranking-list aria-label="2026 배구지수 순위"></ol>
  <p class="beagu-home-school-note">수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위</p><p class="beagu-survey-meta">유효 응답 건수: 공개 자료에서 확인되지 않음 · 백분위 비교 모집단 수: 공개 자료에서 확인되지 않음</p><p class="beagu-survey-limit">본 수치는 익명·자발적 설문 응답을 바탕으로 산출된 인식조사 결과입니다. 응답자의 교원 신분과 실제 학교 소속이 확인되지 않았을 수 있으며, 해당 학교 전체의 교직문화를 대표하지 않습니다. 백분위와 순위는 해당 연도 산출 대상 학교 간 조사값의 상대적 위치이며, 개별 사실의 확인이나 학교·교직원의 우열을 판정한 결과가 아닙니다.</p>
 </section>
 <style>
+body.beagu-page-home main.container > .beagu-survey-purpose{grid-column:1/-1;min-width:0;width:100%;overflow-wrap:anywhere}
 #beagu2026Ranking[hidden],#beagu2026Ranking [hidden]{display:none!important}
 #beagu2026Ranking [data-ranking-list]{list-style:none;padding:0;margin:0}
 #beagu2026Ranking [data-ranking-list] li{display:grid;grid-template-columns:1.8rem minmax(0,1fr);gap:.5rem;align-items:center;padding:.25rem 0;border-bottom:1px solid rgba(128,128,128,.25)}
