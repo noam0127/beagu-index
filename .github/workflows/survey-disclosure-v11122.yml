@@ -22,6 +22,10 @@ jobs:
           node --check js/school-search-card-v1.js
           node --check js/statistics-compare.js
           node --check js/beagu-home-schools-v1.js
+          node --check js/beagu-home-ranking-v1.js
+          node --check js/arcade-school-picker-v1.js
+          node --check js/arcade-result-share-v1.js
+          node --check js/school-mbti-v1.js
       - name: Disclosure and existing release contract
         run: |
           node tests/survey-disclosure-v11122.cjs
