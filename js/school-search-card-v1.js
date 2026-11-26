@@ -255,6 +255,9 @@
   card.append(points,el('div','glory-record-years'));
   updateRecordedYears(card,[]);
   if(detail)card.append(detail);
+  const publishedYears=(percentile.dataset.publishedYears||'').split(',');
+  const metadata=publishedYears.filter(y=>/^(2023|2024|2025|2026)$/.test(y)).map(y=>y+'년: '+(y==='2025'?'백분위 비교 모집단 1,458개교':'비교 모집단 수 미확인')).join(' · ');
+  card.append(el('p','beagu-survey-meta',"유효 응답 건수: 공개 자료에서 확인되지 않음"+(metadata?' · '+metadata:'')),el('p','beagu-survey-limit',"본 수치는 익명·자발적 설문 응답을 바탕으로 산출된 인식조사 결과입니다. 응답자의 교원 신분과 실제 학교 소속이 확인되지 않았을 수 있으며, 해당 학교 전체의 교직문화를 대표하지 않습니다. 백분위와 순위는 해당 연도 산출 대상 학교 간 조사값의 상대적 위치이며, 개별 사실의 확인이나 학교·교직원의 우열을 판정한 결과가 아닙니다."));
   return {card,open,detail,experience};
  }
  window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,historicalMean,createCard,updateRecordedYears,formatHousingPrice,STATES});

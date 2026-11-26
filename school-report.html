@@ -257,6 +257,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
  body.beagu-page-report .year-card .metric-text{font-size:16px}
 }
 </style>
+<link rel="stylesheet" href="styles/beagu-survey-disclosure-v1.css?v=11122">
 </head>
 <body class="beagu-ui-page beagu-page-report">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -300,7 +301,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 <script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
 <link rel="stylesheet" href="styles/school-likes-v1.css?v=11119-court">
 <script src="js/school-likes-v1.js?v=11117"></script>
-<script src="js/school-search-card-v1.js?v=11117-mean1"></script>
+<script src="js/school-search-card-v1.js?v=11122-disclosure"></script>
 <script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
@@ -1873,6 +1874,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       const note=document.createElement('p');note.className='school-survey-snapshot__note';
       note.textContent=year===2025?'참여 응답으로 산출한 종합 백분위입니다. 응답 기록이 적은 학교도 포함되며, 학교 전체 교사의 의견을 대표하는 값은 아닙니다.':'학교별로 공개 승인된 종합지표입니다. 개별 문항의 평균이나 선택 결과와는 다릅니다.';
       host.append(note);
+      const metadata=document.createElement('p');metadata.className='beagu-survey-meta';metadata.textContent="유효 응답 건수: 공개 자료에서 확인되지 않음"+' · '+(year===2025?'백분위 비교 모집단: 1,458개교':'백분위 비교 모집단 수: 공개 자료에서 확인되지 않음');host.append(metadata);
     }else{
       const empty=document.createElement('p');empty.className='school-survey-snapshot__empty';
       empty.textContent=recorded?'조사 기록은 확인됐지만, 학교별 종합 백분위는 공개되지 않았습니다.'
@@ -1880,6 +1882,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         :'이 학교·연도의 공개 승인된 종합 백분위가 없습니다.';
       host.append(empty);
     }
+    const limitation=document.createElement('p');limitation.className='beagu-survey-limit';limitation.textContent="본 수치는 익명·자발적 설문 응답을 바탕으로 산출된 인식조사 결과입니다. 응답자의 교원 신분과 실제 학교 소속이 확인되지 않았을 수 있으며, 해당 학교 전체의 교직문화를 대표하지 않습니다. 백분위와 순위는 해당 연도 산출 대상 학교 간 조사값의 상대적 위치이며, 개별 사실의 확인이나 학교·교직원의 우열을 판정한 결과가 아닙니다.";host.append(limitation);
   }
   function renderYearBody(){
     const year=state.selected,entry=yearData(year),n=num(entry.n),catalog=state.catalog?.years?.[String(year)];
