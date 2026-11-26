@@ -145,12 +145,13 @@ function buildPost(post){
  paper.append(top);
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
-  topic.append(link("school-report.html?school_id="+encodeURIComponent(post.school.school_id),post.school.name));
+  topic.append(link("postit.html?school_id="+encodeURIComponent(post.school.school_id),"#"+post.school.name,"paper-chip"));
+  topic.append(link("school-report.html?school_id="+encodeURIComponent(post.school.school_id),"학교정보"));
   // School tag only; existing detailed school data remains in its own page.
  }else if(post.subject_type==="game"&&post.game){
   const suffix=post.game.slug==="teacher-class-diary-play"&&post.school?"?schoolId="+encodeURIComponent(post.school.school_id):"";
   topic.append(link(post.game.slug+".html"+suffix,post.game.name));
-  if(post.school)topic.append(link("school-report.html?school_id="+encodeURIComponent(post.school.school_id),post.school.name,"paper-chip"));
+  if(post.school)topic.append(link("postit.html?school_id="+encodeURIComponent(post.school.school_id),"#"+post.school.name,"paper-chip"));
  }else if(post.subject_type==="comparison"&&post.comparison){
   const comp=post.comparison;
   topic.append(link("statistics.html?compare="+encodeURIComponent(comp.selection),"학교비교 결과"));
@@ -327,6 +328,7 @@ async function findSchools(){
   }
  }catch{list.replaceChildren();}
 }
+let composeRequested=params.get("compose")==="1";
 const schoolId=params.get("school_id")||"";
 const game=params.get("game")||"";
 const compare=params.get("compare")||"";
@@ -343,6 +345,7 @@ window.addEventListener("beagu:postit-account-status",event=>{
  updateComposeAccess();
  void renderContext();
  void loadPosts();
+ if(composeRequested&&canWrite()&&state.subject==="school"){composeRequested=false;requestAnimationFrame(()=>{if(canWrite())$("postitBody").focus();});}
 });
 $("postitSort").addEventListener("change",()=>void loadPosts());
 $("postitReload").addEventListener("click",()=>void loadPosts());
