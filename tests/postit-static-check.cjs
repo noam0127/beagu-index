@@ -13,9 +13,9 @@ assert.ok(app.includes('encodeURIComponent(comp.selection)'),'compare route');
 assert.ok(app.includes('school-report.html?school_id='),'school report route');
 assert.ok(app.includes('LEVEL_REQUIRED'),'level gate feedback');
 assert.ok(app.includes('COMMENT_READ_LEVEL_REQUIRED'),'Lv0 comment feedback');
-assert.ok(app.includes('function canRead(){return state.level>=2}'),'Lv2 frontend reader gate');
+assert.ok(app.includes('function canRead(){return state.level>=2 && state.accountReadable===true && state.accountToken===token()}'),'Lv2 frontend reader gate');
 assert.match(page,/<section class="postit-account" id="postitAccount"[^>]*\bhidden\b/,'Unreleased Post-it sign-in UI is hidden');
-assert.ok(page.includes('글쓰기·댓글·공감은 준비 중입니다.'),'Lv2 reading and pending writing explained');
+assert.ok(page.includes('Lv.2 익명 계정 인증 후 이용할 수 있습니다.'),'Lv2 reading and pending writing explained');
 assert.ok(app.includes('"글쓰기 준비 중"'),'Unreleased writing flow has no login prompt');
 assert.ok(css.includes('postit-breeze-flutter')&&css.includes('postit-corner-flutter')&&css.includes('postit-bookmark-flick'),'scroll wind and folded-corner animation exist');
 assert.ok(app.includes('flutterOnScroll')&&app.includes('previousScrollY')&&app.includes('breezePreference.matches'),'down-scroll only and reduced-motion gating');
@@ -91,10 +91,10 @@ assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius:
  'Challenge retains rounded standard cards');
 
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
-assert.ok(edge.includes('const user=await verifiedMember(req,viewer)'), 'mutations require independent verified Auth account');
+assert.ok(edge.includes('const user=await verifiedMember(viewer)'), 'mutations require independent verified anonymous account');
 assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
-assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null,visitor:null}'),
- 'Lv1 can read without identity but no actor UUID is synthesized');
+assert.ok(edge.includes('if(accountError||account?.level!==2||account?.lv2_active!==true)return null'),
+ 'Anonymous account session verified independently of the level token');
 assert.ok(edge.includes('if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
  'Lv2 writes fail closed until trusted permanent identity is bound');
 assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
