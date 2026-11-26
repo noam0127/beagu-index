@@ -11,12 +11,10 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,postAttempt:null,pendingActions:new Set()};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:"",postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
- const bearer=await window.BeaguPostitAccount?.accessToken?.()||"";
- return {"Content-Type":"application/json","X-Beagu-Level-Session":token(),
-  ...(bearer?{"Authorization":"Bearer "+bearer}:{})};
+ return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
 }
 async function request(action,data,method="GET"){
  const url=new URL(api);
@@ -39,7 +37,7 @@ function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
  const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
  COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
- WRITER_IDENTITY_REQUIRED:"🔒 정식 계정과 원래 챌린지 기기의 연결을 완료해야 작성할 수 있습니다.",
+ WRITER_IDENTITY_REQUIRED:"🔒 익명 계정 인증 후 작성할 수 있습니다.",
  ORIGINAL_DEVICE_REQUIRED:"챌린지를 처음 진행한 기기에서 인증해 주세요.",
  DEVICE_OWNERSHIP_NOT_VERIFIED:"챌린지 기기 소유 확인에 실패했습니다.",
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
@@ -83,12 +81,12 @@ async function renderContext(){
   const a=link("statistics.html?compare="+encodeURIComponent(state.compare),"비교 결과 보기");a.style.fontSize="12px";box.append(a);
   picker.hidden=true;
  }else{
-  box.textContent="학교검색 · 게임 · 비교하기에서 포스트잇을 붙이거나, 학교를 직접 검색하세요.";
+  box.textContent="학교 태그 없이 자유롭게 이야기를 나눠보세요.";
   picker.hidden=!canWrite();
  }
  updateComposeAccess();
 }
-function canRead(){return state.level>=2}
+function canRead(){return state.level>=2 && state.accountReadable===true && state.accountToken===token()}
 function canWrite(){return canRead() && state.accountLinked===true}
 function updateComposeAccess(){
  const level=Number($("beaguLevelState")?.dataset.level);
@@ -99,9 +97,11 @@ function updateComposeAccess(){
  if(lockedText)lockedText.textContent=canRead()
   ?"글쓰기 준비 중"
   :"Lv2부터 포스트잇을 열람할 수 있습니다";
+ $("postitAccount").hidden=state.level<2||canRead();
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
- $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
+ $("postitSubjectPicker").hidden=state.subject!=="general"||!allowed;
+ $("lockerClearTag").hidden=!allowed||state.subject==="general";
  $("postitBoardContent").hidden=!canRead();
  $("postitBoardLocked").hidden=canRead();
 }
@@ -141,7 +141,7 @@ function buildPost(post){
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
   topic.append(link("school-report.html?school_id="+encodeURIComponent(post.school.school_id),post.school.name));
-  schoolChips(post,topic);
+  // School tag only; existing detailed school data remains in its own page.
  }else if(post.subject_type==="game"&&post.game){
   const suffix=post.game.slug==="teacher-class-diary-play"&&post.school?"?schoolId="+encodeURIComponent(post.school.school_id):"";
   topic.append(link(post.game.slug+".html"+suffix,post.game.name));
@@ -151,7 +151,7 @@ function buildPost(post){
   topic.append(link("statistics.html?compare="+encodeURIComponent(comp.selection),"학교비교 결과"));
   topic.append(node("span","paper-chip",comp.schools.length+"개 항목"));
   for(const s of comp.schools.slice(0,3))topic.append(node("span","paper-chip",s));
- }else topic.append(node("b","","연결된 주제"));
+ }else if(post.subject_type!=="general")topic.append(node("b","","연결된 주제"));
  if(post.comment_match)topic.append(node("span","paper-chip","댓글에서 검색됨"));
  paper.append(topic,node("p","paper-content",post.body));
  const actions=node("div","paper-actions");
@@ -184,7 +184,7 @@ function buildPost(post){
  return entry;
 }
 async function mutation(action,data){
- if(!canWrite()){showMessage("🔒 정식 Lv.2 계정 연결 후 이용할 수 있습니다.");return;}
+ if(!canWrite()){showMessage("🔒 Lv.2 익명 계정 연결 후 이용할 수 있습니다.");return;}
  const actionKey=action+":"+String(data.target_type||"")+":"+String(data.target_id||"");
  if(state.pendingActions.has(actionKey))return;
  state.pendingActions.add(actionKey);
@@ -213,7 +213,7 @@ async function fillComments(id,host){
    mark.append(row);host.append(mark);
   }
   const composer=node("form","bookmark-composer");
-  if(!canWrite())composer.append(node("span","locked-comment","🔒 정식 Lv.2 계정 생성 후 댓글을 작성할 수 있습니다."));
+  if(!canWrite())composer.append(node("span","locked-comment","🔒 Lv.2 익명 계정 생성 후 댓글을 작성할 수 있습니다."));
   else{
    const ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="책갈피처럼 댓글 남기기 (150자)";
    const btn=node("button","","댓글 붙이기");btn.type="submit";
@@ -294,7 +294,7 @@ async function loadPosts(newId=""){
 }
 function handleLevel(e){
  const level=e?.detail?.level;
- if(level!==2){state.accountLinked=false;state.pendingActions.clear();}
+ if(level!==2||state.accountToken!==token()){state.accountLinked=false;state.accountReadable=false;state.accountToken="";state.pendingActions.clear();}
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
  if(!canRead()){
@@ -326,15 +326,19 @@ const compare=params.get("compare")||"";
 if(validCompare(compare))setSubject("comparison",{compare});
 else if(gameNames[game])setSubject("game",{game,schoolId:validSchool(schoolId)?schoolId:""});
 else if(validSchool(schoolId))setSubject("school",{schoolId});
-else setSubject("");
+else setSubject("general");
 window.addEventListener("beagu:level-state-updated",handleLevel);
 window.addEventListener("beagu:postit-account-status",event=>{
  state.accountLinked=event?.detail?.linked===true;
+ state.accountReadable=event?.detail?.readable===true;
+ state.accountToken=event?.detail?.token||"";
+ if(!canRead()){state.expanded.clear();state.pendingActions.clear();}
  updateComposeAccess();
  void loadPosts();
 });
 $("postitSort").addEventListener("change",()=>void loadPosts());
 $("postitReload").addEventListener("click",()=>void loadPosts());
+$("lockerClearTag").addEventListener("click",()=>{state.queryTicket++;$("postitSchoolSearch").value="";$("postitSchoolResults").replaceChildren();setSubject("general");void loadPosts();});
 $("postitSchoolSearch").addEventListener("input",()=>{void findSchools()});
 let searchDebounce;
 $("postitSearchForm").addEventListener("submit",e=>{
@@ -344,10 +348,10 @@ $("postitSearch").addEventListener("input",()=>{
  clearTimeout(searchDebounce);
  searchDebounce=setTimeout(()=>void loadPosts(),320);
 });
-$("postitBody").addEventListener("input",()=>{$("postitCounter").textContent=[...$("postitBody").value].length+" / 200"});
+$("postitBody").addEventListener("input",()=>{const chars=[...$("postitBody").value];if(chars.length>300)$("postitBody").value=chars.slice(0,300).join("");$("postitCounter").textContent=Math.min(chars.length,300)+" / 300"});
 $("postitSubmit").addEventListener("click",async()=>{
  if(state.busy||!state.subject||!canWrite())return;
- const text=$("postitBody").value.trim();if(!text)return;
+ const text=$("postitBody").value.trim();if(!text||[...text].length>300)return;
  const btn=$("postitSubmit");btn.disabled=true;state.busy=true;
  try{
   const payload={subject_type:state.subject,text,
@@ -359,7 +363,7 @@ $("postitSubmit").addEventListener("click",async()=>{
    state.postAttempt={signature,requestId:crypto.randomUUID()};
   const {id}=await request("create_post",{...payload,request_id:state.postAttempt.requestId},"POST");
   state.postAttempt=null;
-  $("postitBody").value="";$("postitCounter").textContent="0 / 200";showMessage("포스트잇을 붙였습니다.");
+  $("postitBody").value="";$("postitCounter").textContent="0 / 300";showMessage("게시했습니다.");
   await loadPosts(id);
  }catch(e){showMessage(readableError(e))}
  finally{btn.disabled=false;state.busy=false}
