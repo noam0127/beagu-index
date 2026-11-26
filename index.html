@@ -340,6 +340,23 @@
 #beagu2026Ranking [data-ranking-list] a{overflow-wrap:anywhere;color:inherit;text-decoration:none;font-weight:600}
 #beagu2026Ranking [data-ranking-list] small{font-size:.75rem;opacity:.8}
 #beagu2026Ranking [data-ranking-status]{font-size:.82rem;margin:0 0 .5rem}
+#beagu2026Ranking [data-ranking-list] li:is([data-rank="1"],[data-rank="2"],[data-rank="3"]){grid-template-columns:3rem minmax(0,1fr);gap:.75rem;margin:0 0 .4rem;padding:.65rem .75rem;border:1px solid var(--podium-border);border-radius:12px;background:var(--podium-bg);color:var(--podium-ink);min-height:3.3rem}
+#beagu2026Ranking [data-ranking-list] li[data-rank="1"]{--podium-bg:#fff5d6;--podium-border:#d5ab45;--podium-ink:#62450b;--medal:#926300;min-height:4.25rem;padding:.85rem .75rem}
+#beagu2026Ranking [data-ranking-list] li[data-rank="2"]{--podium-bg:#f1f4f7;--podium-border:#a9b6c4;--podium-ink:#344557;--medal:#50647b}
+#beagu2026Ranking [data-ranking-list] li[data-rank="3"]{--podium-bg:#faeee4;--podium-border:#c69470;--podium-ink:#704025;--medal:#955530}
+#beagu2026Ranking [data-ranking-list] li:is([data-rank="1"],[data-rank="2"],[data-rank="3"])>strong{display:flex;flex-direction:column;align-items:center;justify-content:center;width:2.65rem;min-height:2.65rem;line-height:1;color:var(--medal);border:1px solid var(--podium-border);border-radius:50%;background:rgba(255,255,255,.6);font-size:1.05rem}
+#beagu2026Ranking [data-ranking-list] li[data-rank="1"]>strong::before{content:"♛";font-size:1.15rem;line-height:1;margin-bottom:.1rem}
+#beagu2026Ranking [data-ranking-list] li[data-rank="1"]>span{font-size:1.12rem}
+#beagu2026Ranking [data-ranking-list] li:is([data-rank="1"],[data-rank="2"],[data-rank="3"])>span{flex-direction:column;align-items:flex-start;gap:.12rem}
+#beagu2026Ranking [data-ranking-list] a:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:2px}
+#beagu2026Ranking [data-ranking-list] a:hover{text-decoration:underline}
+@media(prefers-color-scheme:dark){
+#beagu2026Ranking [data-ranking-list] li[data-rank="1"]{--podium-bg:#392b12;--podium-border:#a77a23;--podium-ink:#ffe5a0;--medal:#ffe5a0}
+#beagu2026Ranking [data-ranking-list] li[data-rank="2"]{--podium-bg:#29333e;--podium-border:#718397;--podium-ink:#e0e8ef;--medal:#e0e8ef}
+#beagu2026Ranking [data-ranking-list] li[data-rank="3"]{--podium-bg:#3e2a20;--podium-border:#996a4c;--podium-ink:#ffcfad;--medal:#ffcfad}
+#beagu2026Ranking [data-ranking-list] li:is([data-rank="1"],[data-rank="2"],[data-rank="3"])>strong{background:rgba(0,0,0,.16)}
+}
+
 </style>
 
 
@@ -368,7 +385,7 @@
 <script src="js/supabase-config.js"></script>
 <script defer src="js/beagu-home-notice-public-v1.js?v=11113-minimal"></script>
 <script defer src="js/beagu-home-schools-v1.js?v=11113-minimal"></script>
-<script defer src="js/beagu-home-ranking-v1.js?v=111211-ui"></script>
+<script defer src="js/beagu-home-ranking-v1.js?v=111211-podium"></script>
 <script defer src="js/beagu-court-tidy-v1110.js?v=1110"></script>
 
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
