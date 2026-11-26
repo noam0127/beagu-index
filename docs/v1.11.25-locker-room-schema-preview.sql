@@ -101,6 +101,7 @@ alter table public.beagu_locker_operator_v1 enable row level security;
 alter table public.beagu_locker_aliases_v1 enable row level security;
 revoke all on public.beagu_locker_operator_v1,public.beagu_locker_aliases_v1 from public,anon,authenticated;
 -- Binding is provisioned only in a separately authorized trusted admin procedure.
+revoke all on public.beagu_locker_operator_v1 from service_role;
 grant select on public.beagu_locker_operator_v1 to service_role;
 grant select,insert on public.beagu_locker_aliases_v1 to service_role;
 alter table public.beagu_postit_posts add column if not exists locker_nickname text;
@@ -112,16 +113,20 @@ create or replace function public.beagu_locker_allocate_alias_v1(p_post uuid,p_a
 returns table(nickname text,is_operator boolean)
 language plpgsql security invoker set search_path='' as $fn$
 declare
- v_name text; v_base text; v_operator boolean; v_n integer:=1;
+ v_name text; v_base text; v_operator boolean; v_current_owner boolean; v_n integer:=1;
  v_positions text[]:=array['아웃사이드 히터','아포짓 스파이커','미들 블로커','세터','리베로'];
 begin
  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(p_post::text),20261125);
- select a.nickname,a.is_operator into v_name,v_operator from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.author_uid=p_actor;
- if found then return query select v_name,v_operator;return;end if;
- -- No request-supplied role/name; only a pre-bound, enabled owner may use this identity.
+ -- Check the binding again for every insertion, including existing aliases.
  select exists(select 1 from public.beagu_locker_operator_v1 o
   join public.beagu_admin_accounts a on a.user_id=o.admin_user_id
-  where o.author_uid=p_actor and a.role='owner' and a.enabled=true) into v_operator;
+  where o.author_uid=p_actor and a.role='owner' and a.enabled=true) into v_current_owner;
+ select a.nickname,a.is_operator into v_name,v_operator from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.author_uid=p_actor;
+ if found then
+  if v_operator and not v_current_owner then raise exception 'OPERATOR_BINDING_REVOKED' using errcode='42501';end if;
+  return query select v_name,v_operator;return;
+ end if;
+ v_operator:=v_current_owner;
  if v_operator and not exists(select 1 from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.nickname='카리브해매너티') then
   v_name:='카리브해매너티';
  else
