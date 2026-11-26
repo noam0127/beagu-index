@@ -925,6 +925,28 @@
     },
     {
       "order": 37,
+      "version": "v1.11.20",
+      "name": "랭킹 통합",
+      "scope": "오늘의 랭킹·한국시간 자정 집계·급상승 지역 TOP10·험난한 교직생활 검증 기록 및 통합 랭킹 후보",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "feat/v11120-ranking-integration",
+      "pr": null,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml",
+        "v11120-ranking-offline.yml"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.19"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "9acfd246e3d32e34b15016c914ea97462460067c"
+    },
+    {
+      "order": 38,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -944,7 +966,7 @@
       "rollback_sha": null
     },
     {
-      "order": 38,
+      "order": 39,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -963,7 +985,7 @@
       "rollback_sha": null
     },
     {
-      "order": 39,
+      "order": 40,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -980,7 +1002,7 @@
       "rollback_sha": null
     },
     {
-      "order": 40,
+      "order": 41,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
