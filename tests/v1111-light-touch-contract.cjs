@@ -11,10 +11,10 @@ const home=read('index.html');assert.doesNotMatch(home,/<iframe\b|id="teacher-ga
 assert.match(home,/beagu-home-actions[\s\S]*id="beaguTodaySchools"[\s\S]*class="card light-touch-visit"[\s\S]*class="beagu-home-notice"/);assert.doesNotMatch(home,/class="light-touch-home-bottom"/);assert.match(home,/mailto:manatee09@kakao\.com/);
 for(const p of ['search.html','search-lv1.html']){
  const s=read(p);const ids=['lightTouchSurveyLink','searchInput','results','beaguInterest'];const ix=ids.map(id=>s.indexOf('id="'+id+'"'));assert.ok(ix.every((v,i)=>v>=0&&(!i||v>ix[i-1])),p+' section order '+ix);
- assert.doesNotMatch(s,/id="beaguTodaySchools"|2026 자료 공개 기준/);assert.match(s,/data-interest-locked="false" data-interest-top-five="true"/);assert.match(s,/survey\.html\?ref=/);
+ assert.doesNotMatch(s,/id="beaguTodaySchools"|2026 자료 공개 기준/);assert.match(s,/data-interest-locked="false" data-interest-top-ten="true"/);assert.match(s,/survey\.html\?ref=/);
 }
 const l=read('js/level-search.js');assert.match(l,/generation!==authGeneration\|\|requestToken!==session/);assert.match(l,/if\(mode!=='region'&&viewerTier>=2\)\{/);assert.match(l,/mode==='region'&&sortValue.startsWith\('housing_price_won_'\)/);assert.match(l,/api\('ranked_schools',\{searchText:q,region,office,sort,direction,page\}\)/);
-const interest=read('js/beagu-school-interest-v1.js');assert.match(interest,/slice\(0,topFive\?5:10\)/);assert.match(interest,/lastToken===getToken\(\)&&verifiedLevel\(\)>=1/);
+const interest=read('js/beagu-school-interest-v1.js');assert.match(interest,/slice\(0,10\)/);assert.match(interest,/topTen\|\|expanded\?schools/);const regionInterest=read("js/beagu-region-interest-v1.js");assert.match(regionInterest,/beagu_region_interest_top5_v1/);assert.doesNotMatch(regionInterest,/beagu_region_interest_top10_v1/);assert.match(regionInterest,/slice\(0,5\)/);assert.match(interest,/lastToken===getToken\(\)&&verifiedLevel\(\)>=1/);
 {const v=JSON.parse(read('release-info.json')).version;assert.equal(v,JSON.parse(read('release-candidate.json')).version);const order=JSON.parse(read('development-roadmap.json')).versions.map(x=>x.version);assert.ok(order.includes('v1.11.2')&&order.indexOf(v)>=order.indexOf('v1.11.2'));}assert.equal(JSON.parse(read('release-info.json')).environment,'candidate');assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);
 for(const p of ['js/level-search.js','js/beagu-home-schools-v1.js','js/beagu-school-interest-v1.js'])cp.execFileSync(process.execPath,['--check',p]);
 const old='5f19ddf28a2f24a98fb03900739147a04a547cbe';
@@ -77,7 +77,8 @@ for(const [start,end] of [['  async function startMatch() {',"  function stopFor
   // remaining server start, contact, ranking and school eligibility contract.
   assert.match(approved,/state.phase="starting";schoolPicker.setLocked\(true\);syncUI\(\)/);
   assert.match(approved,/deuceEnabled=ranking\?\.matchRule==="deuce_v1";matchBonusEnabled=ranking\?\.matchBonusRule==="fire_court_v1"/);
-  approved=approved.replace('bgm.setStage(0);if(soundOn)','if(soundOn)').replace('state.phase="starting";schoolPicker.setLocked(true);syncUI();','state.phase="starting";syncUI();').replace('    rallyHistory="";deuceEnabled=ranking?.matchRule==="deuce_v1";matchBonusEnabled=ranking?.matchBonusRule==="fire_court_v1";matchBonusPoints=0;\n','');
+  assert.match(approved,/bgm\.setStage\(0\);if\(soundOn\)\{unlockSound\(\);bgm\.sync\(true,true\);\}/);
+  approved=approved.replace('bgm.setStage(0);if(soundOn){unlockSound();bgm.sync(true,true);}','if(soundOn)bgm.sync(true);').replace('state.phase="starting";schoolPicker.setLocked(true);syncUI();','state.phase="starting";syncUI();').replace('    rallyHistory="";deuceEnabled=ranking?.matchRule==="deuce_v1";matchBonusEnabled=ranking?.matchBonusRule==="fire_court_v1";matchBonusPoints=0;\n','');
  }
  assert.equal(approved,publishedVolley.slice(a,b));}
 assert.match(fullVolley,/volley-touch-v1\.js\?v=11111/);assert.doesNotMatch(fullVolley,/volley-joystick|조이스틱/);

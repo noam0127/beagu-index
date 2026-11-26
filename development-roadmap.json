@@ -903,6 +903,28 @@
     },
     {
       "order": 36,
+      "version": "v1.11.19",
+      "name": "코트 다듬기",
+      "scope": "학교 TOP10·지역 TOP5·신고 간소화·기본정보 2×2·좋아요/조회수·오디오 개선; 오늘의 랭킹 숨김, 서버 연결 이월",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "feat/v11119-daily-ranking",
+      "pr": null,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml",
+        "v11119-daily-ranking-offline.yml"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.18.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "160f6fa6a419f4b4ab878200a25cb42dae35c467"
+    },
+    {
+      "order": 37,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -922,7 +944,7 @@
       "rollback_sha": null
     },
     {
-      "order": 37,
+      "order": 38,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -941,7 +963,7 @@
       "rollback_sha": null
     },
     {
-      "order": 38,
+      "order": 39,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -958,7 +980,7 @@
       "rollback_sha": null
     },
     {
-      "order": 39,
+      "order": 40,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

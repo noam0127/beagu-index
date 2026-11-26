@@ -34,7 +34,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    if(route.request().method()==='POST'&&a==='start'){const body=route.request().postDataJSON();startedSchool=body.school_id;assert.equal(body.game,'volleyball_25');data={session:'fixture-only-session',school:selectedSchool};}
    else if(u.searchParams.has('school_id')){const id=u.searchParams.get('school_id');data={school:selectedSchool?.school_id===id?selectedSchool:{school_id:id,school_name:'다른 검증 학교',region:'부산',eligible:false,difficulty:null}};}
    else data={top10:[],fastestTop10:[]};
- }else if(u.pathname.endsWith('/beagu-school-interest-v1'))data={rising:fixture.map(({housing_price_won,visitors,growth,...v})=>token?{...v,visitors,growth}:v)};
+ }else if(u.pathname.endsWith('/beagu-school-interest-v1'))data={rising:[...fixture,...Array.from({length:5},(_,i)=>({...fixture[i],school_id:String(7003922+i),school_name:'추가 검증학교 '+i}))].map(({housing_price_won,visitors,growth,...v})=>token?{...v,visitors,growth}:v)};
  if(u.pathname.endsWith('/beagu-notice-audience-v1'))data={level:token?tier:0,notices:[{audience:'all',body:'공통 검증 공지'},{audience:String(token?tier:0),body:'레벨 검증 공지'}]};
  return route.fulfill({status:200,headers:cors,body:JSON.stringify(data)});}
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).replace(/^\/+/, '');if(!p||p.includes('..'))return route.abort();
@@ -159,8 +159,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.waitForFunction(()=>document.querySelector('#volley-ready-title')?.textContent==='조사 참여 필요');
  assert.equal(await page.locator('#start').isDisabled(),true);
  await page.goto(origin+(tier?'/search-lv1.html':'/search.html'));
- await page.waitForFunction(()=>document.querySelectorAll('#beaguInterest li').length===5);
- assert.equal(await page.locator('#beaguInterest li').count(),5);
+ await page.waitForFunction(()=>document.querySelectorAll('#beaguInterest li').length===10);
+ assert.equal(await page.locator('#beaguInterest li').count(),10);assert.deepEqual(await page.locator('#beaguInterest .beagu-interest-rank').allTextContents(),Array.from({length:10},(_,i)=>String(i+1)));
  assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
  assert.equal(await page.locator('#beaguTodaySchools').count(),0);
  assert.equal(await page.getByText('2026 자료 공개 기준',{exact:true}).count(),0);
