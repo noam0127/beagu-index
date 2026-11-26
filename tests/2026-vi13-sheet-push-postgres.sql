@@ -23,5 +23,5 @@ begin
  raise notice 'PASS VI13 private grants, idempotency, stale and regression guards';
 end $$;
 set role service_role;
-do $ begin if jsonb_array_length(public.beagu_2026_vi13_sheet_read_v1()) is distinct from 606 then raise exception 'service role read failed'; end if; end $;
+do $check$ begin if jsonb_array_length(public.beagu_2026_vi13_sheet_read_v1()) is distinct from 606 then raise exception 'service role read failed'; end if; end $check$;
 reset role;
