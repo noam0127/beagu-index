@@ -6,7 +6,7 @@ for(const p of ['index.html','search.html','search-lv1.html','school-report.html
 assert.ok(read('js/school-search-card-v1.js').includes('simple_report'));
 assert.ok(read('js/statistics-compare.js').includes('1,458개교'));
 const releaseVersion=JSON.parse(read('release-info.json')).version;
-assert.ok(['v1.11.22','v1.11.23'].includes(releaseVersion),'Supported disclosure-preserving release');
+assert.ok(['v1.11.22','v1.11.23','v1.11.25'].includes(releaseVersion),'Supported disclosure-preserving release');
 console.log('survey disclosure static contract passed');
 const snapshot=JSON.parse(read('data/public-lv0-percentiles-v1.2.json'));
 assert.match(snapshot.percentile_methods['2025'],/1,458개교/);
