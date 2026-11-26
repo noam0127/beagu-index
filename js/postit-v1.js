@@ -5,13 +5,15 @@ const api="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-ap
 const key="beagu-level-session-v1";
 const gameNames={"teacher-volleyball":"선생님배구","teacher-run":"험난한 교직생활","teacher-class-diary-play":"나의 OO한 학급일지"};
 const params=new URLSearchParams(location.search);
+const validPostId=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(x||"");
+const focusPost=validPostId(params.get("post_id"))?params.get("post_id"):"";
 const validSchool=x=>/^[A-Z0-9]{7}$/.test(x||"");
 const validCompare=x=>{
  if(!x||x.length>120)return false;
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,contextTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:"",postAttempt:null,pendingActions:new Set()};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,contextTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:"",notificationTicket:0,postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
  return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
@@ -43,6 +45,7 @@ function readableError(e){
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
  COMMENT_RATE_LIMIT:"오늘의 댓글 횟수(12개) 또는 작성 간격 제한에 도달했습니다.",
  INVALID_POST:"글을 확인해주세요. 이메일, 전화번호, 링크는 넣지 말아주세요.",
+ INVALID_PARENT:"현재 공개 중인 원댓글에만 답글을 작성할 수 있습니다.",
  INVALID_COMMENT:"댓글은 150자 이내이며 이메일·전화번호·링크를 넣을 수 없습니다.",
  POST_UNAVAILABLE:"이 포스트잇은 더 이상 공개되지 않습니다.",
  TARGET_UNAVAILABLE:"이 글은 현재 공개되지 않습니다.",TEMPORARY_ERROR:"서버 연결 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요."};
@@ -205,38 +208,75 @@ async function mutation(action,data){
  }catch(e){showMessage(readableError(e))}
  finally{state.pendingActions.delete(actionKey)}
 }
+async function refreshNotifications(){
+ const ticket=++state.notificationTicket,box=$("lockerNotifications"),list=$("lockerNotificationList");
+ box.hidden=!canRead();list.replaceChildren();
+ $("lockerNotificationTitle").textContent="댓글 알림";
+ if(!canRead())return;
+ const current=token();
+ try{
+  const {notifications}=await request("notifications",{});
+  if(ticket!==state.notificationTicket||!canRead()||current!==token())return;
+  const items=Array.isArray(notifications)?notifications.filter(n=>validPostId(n.post_id)&&validPostId(n.comment_id)&&["comment","reply"].includes(n.kind)):[];
+  const unread=items.filter(n=>!n.is_read).length;
+  $("lockerNotificationTitle").textContent="댓글 알림"+(unread?" ("+unread+")":"");
+  for(const n of items){
+   const item=node("li","locker-notification"+(n.is_read?"":" unread"));
+   const url="postit.html?post_id="+encodeURIComponent(n.post_id);
+   const a=link(url,(n.kind==="reply"?"내 댓글에 답글이 달렸습니다":"내 글에 댓글이 달렸습니다")+" · "+timeSince(n.created_at));
+   a.addEventListener("click",async e=>{
+    if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button!==0||n.is_read)return;
+    e.preventDefault();
+    try{await request("notification_read",{comment_id:n.comment_id},"POST");}catch{}
+    if(canRead()&&current===token())location.href=url;
+   });
+   item.append(a);list.append(item);
+  }
+  if(!items.length)list.append(node("li","","새 댓글 알림이 없습니다."));
+ }catch{if(ticket===state.notificationTicket&&canRead())list.replaceChildren(node("li","","알림을 불러올 수 없습니다."));}
+}
 async function fillComments(id,host){
  if(!canRead()){host.replaceChildren();host.hidden=true;return;}
  host.replaceChildren(node("div","bookmark-comment","댓글을 불러오는 중…"));
  try{
+  const session=token();
   const {comments}=await request("comments",{post_id:id});
-  if(!host.isConnected||!canRead()){host.replaceChildren();host.hidden=true;return;}
+  if(!host.isConnected||!canRead()||session!==token()){host.replaceChildren();host.hidden=true;return;}
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
-  for(const c of comments){
-   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta"+(c.is_operator===true&&c.nickname==="카리브해매너티"?" locker-operator-verified":""),lockerName(c)+" · "+timeSince(c.created_at));
+  const roots=comments.filter(c=>!c.parent_id),rootIds=new Set(roots.map(c=>c.id));
+  const ordered=roots.flatMap(root=>[root,...comments.filter(c=>c.parent_id===root.id)]);
+  let replyTarget=null;
+  for(const c of ordered){
+   const mark=node("div","bookmark-comment"+(c.parent_id?" locker-reply":"")),meta=node("div","comment-meta"+(c.is_operator===true&&c.nickname==="카리브해매너티"?" locker-operator-verified":""),lockerName(c)+" · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
    row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));
    row.append(actionButton("⚑ 신고",async()=>{if(confirm("댓글을 신고하시겠습니까?"))await mutation("report",{target_type:"comment",target_id:c.id})},{disabled:!canWrite()||c.reported}));
    if(c.mine)row.append(actionButton("삭제",async()=>{if(confirm("이 댓글을 삭제할까요?"))await mutation("remove",{target_type:"comment",target_id:c.id})}));
+   if(!c.parent_id&&canWrite())row.append(actionButton("답글",()=>{replyTarget=c.id;label.textContent=lockerName(c)+"에게 답글";cancel.hidden=false;ta.focus();}));
    mark.append(row);host.append(mark);
   }
   const composer=node("form","bookmark-composer");
+  let label,ta,cancel;
   if(!canWrite())composer.append(node("span","locked-comment","🔒 Lv.2 익명 계정 생성 후 댓글을 작성할 수 있습니다."));
   else{
-   const ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="책갈피처럼 댓글 남기기 (150자)";
+   label=node("span","locker-reply-target","댓글 남기기");
+   cancel=node("button","","답글 취소");cancel.type="button";cancel.hidden=true;
+   cancel.addEventListener("click",()=>{replyTarget=null;label.textContent="댓글 남기기";cancel.hidden=true;});
+   ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="댓글 또는 답글 (150자)";
    const btn=node("button","","댓글 붙이기");btn.type="submit";
-   composer.append(ta,btn);
+   composer.append(label,cancel,ta,btn);
    let attempt=null;
    composer.addEventListener("submit",async e=>{
     e.preventDefault();
     if(btn.disabled||!canWrite())return;
     const text=ta.value.trim();if(!text)return;
-    if(!attempt||attempt.text!==text)attempt={text,requestId:crypto.randomUUID()};
+    if(replyTarget&&!rootIds.has(replyTarget))return;
+    if(!attempt||attempt.text!==text||attempt.parent!==replyTarget)attempt={text,parent:replyTarget,requestId:crypto.randomUUID()};
     btn.disabled=true;
     try{
-     await request("create_comment",{post_id:id,text,request_id:attempt.requestId},"POST");
+     await request("create_comment",{post_id:id,text,parent_id:attempt.parent,request_id:attempt.requestId},"POST");
      attempt=null;ta.value="";showMessage("");
      // Recreate only from the server-approved result, keeping this thread open.
      state.expanded.add(id);
@@ -268,6 +308,7 @@ async function loadPosts(newId=""){
   previous.set(el.dataset.postId,el.getBoundingClientRect().top);
  }
  const query={sort:$("postitSort").value};
+ if(focusPost){query.post_id=focusPost;state.expanded.add(focusPost);}
  if(term)query.q=term;
  if(state.subject==="school"&&state.schoolId)query.school_id=state.schoolId;
  if(state.subject==="game"&&state.game)query.game_slug=state.game;
@@ -316,6 +357,7 @@ function handleLevel(e){
   }
  }
  void loadPosts();
+ void refreshNotifications();
 }
 async function findSchools(){
  const q=$("postitSchoolSearch").value.trim();const list=$("postitSchoolResults");
@@ -349,10 +391,13 @@ window.addEventListener("beagu:postit-account-status",event=>{
  updateComposeAccess();
  void renderContext();
  void loadPosts();
+ void refreshNotifications();
  if(composeRequested&&canWrite()&&state.subject==="school"){composeRequested=false;requestAnimationFrame(()=>{if(canWrite())$("postitBody").focus();});}
 });
 $("postitSort").addEventListener("change",()=>void loadPosts());
-$("postitReload").addEventListener("click",()=>void loadPosts());
+$("postitReload").addEventListener("click",()=>{void loadPosts();void refreshNotifications();});
+$("lockerNotificationRefresh").addEventListener("click",()=>void refreshNotifications());
+$("lockerFocusClear").hidden=!focusPost;
 $("lockerClearTag").addEventListener("click",()=>{state.queryTicket++;$("postitSchoolSearch").value="";$("postitSchoolResults").replaceChildren();setSubject("general");void loadPosts();});
 $("postitSchoolSearch").addEventListener("input",()=>{void findSchools()});
 let searchDebounce;
@@ -421,5 +466,5 @@ $("postitThread").addEventListener("animationend",event=>{
  if(event.animationName==="paper-attach")entry?.classList.remove("is-new");
 });
 
-updateComposeAccess();void loadPosts();
+updateComposeAccess();void loadPosts();void refreshNotifications();
 })();
