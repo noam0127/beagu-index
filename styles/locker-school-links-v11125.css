@@ -1,0 +1,7 @@
+/* School story links are independent of the existing card layout. */
+.locker-school-links{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #d9e1e8}
+.locker-school-links[hidden],.locker-school-links [hidden]{display:none!important}
+.locker-school-links .locker-school-link{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 12px;border:1px solid #d4e0dd;border-radius:8px;color:#245b4b;background:#f5faf8;text-decoration:none;font-size:13px;line-height:1.4;box-sizing:border-box;white-space:normal}
+.locker-school-links [data-locker-compose]{background:#24664f;color:#fff;border-color:#24664f}
+.locker-school-links a:focus-visible{outline:2px solid #24664f;outline-offset:3px}
+@media(max-width:480px){.locker-school-links[data-locker-detail] .locker-school-link{width:100%}}
