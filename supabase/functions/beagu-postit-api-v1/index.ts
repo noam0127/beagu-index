@@ -123,7 +123,7 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
  }
  const commentCounts:Record<string,number>={};
  if(type==="post"){
-  const {data:comments}=await db.from("beagu_postit_comments").select("post_id")
+  const {data:comments}=await db.from("beagu_locker_visible_comments_v1").select("post_id")
    .in("post_id",ids).eq("status","published").limit(10000);
   for(const c of comments||[])commentCounts[c.post_id]=(commentCounts[c.post_id]||0)+1;
  }
@@ -141,7 +141,7 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
    comparison:x.comparison_selection?{selection:x.comparison_selection,
      schools:x.comparison_selection.split(",").map((part:string)=>schools[part.split(":")[0]]?.name).filter(Boolean)}:null,
    comments:commentCounts[x.id]||0
-  }:{}),
+  }:{parent_id:x.parent_id||null}),
   ...{likes:counts[x.id].likes,liked:counts[x.id].liked,reported:counts[x.id].reported,
    mine:Boolean(self&&self===x.author_uid)}
  }));
@@ -168,7 +168,7 @@ async function boundedJSON(req:Request){
 }
 async function target(type:string,id:string){
  if(!["post","comment"].includes(type)||!UUID.test(id))return null;
- const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
+ const table=type==="post"?"beagu_postit_posts":"beagu_locker_visible_comments_v1";
  const fields=type==="comment"?"id,author_uid,status,post_id":"id,author_uid,status";
  const {data}=await db.from(table).select(fields).eq("id",id).maybeSingle();
  if(!data||data.status!=="published")return null;
@@ -204,6 +204,14 @@ Deno.serve(async(req:Request)=>{
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    const member=await verifiedMember(viewer);
    if(action==="writer_status")return respond(req,{linked:Boolean(member),readable:true});
+   if(action==="notifications"){
+    const {data:actor,error:actorError}=await db.rpc("beagu_locker_notification_actor_v1",{p_token_sha:viewer.hash});
+    if(actorError||typeof actor!=="string"||!UUID.test(actor))return fail(req,"LEVEL_REQUIRED",403);
+    const {data,error}=await db.rpc("beagu_locker_notifications_list_v1",{p_actor:actor});
+    if(error)throw error;
+    // Explicit projection: no account/actor identifiers or hidden content.
+    return respond(req,{notifications:(data||[]).map((n:any)=>({comment_id:n.comment_id,post_id:n.post_id,kind:n.kind,created_at:n.created_at,is_read:n.is_read===true}))});
+   }
    if(action==="school_counts"){
     const ids=[...new Set((url.searchParams.get("school_ids")||"").split(","))];
     if(ids.length<1||ids.length>50||ids.some(id=>!SCHOOL_ID.test(id)))return fail(req,"INVALID_SCHOOLS");
@@ -244,12 +252,15 @@ Deno.serve(async(req:Request)=>{
     let matchedComments=new Set<string>();
     let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at,locker_nickname,locker_operator")
      .eq("status","published").order("created_at",{ascending:false}).limit(sort==="popular"?100:30);
+    const postId=url.searchParams.get("post_id")||"";
+    if(postId&&!UUID.test(postId))return fail(req,"INVALID_POST");
+    if(postId)query=query.eq("id",postId);
     if(schoolId)query=query.eq("school_id",schoolId);
     if(gameSlug)query=query.eq("game_slug",gameSlug);
     if(term){
       const [schoolMatches,commentMatches]=await Promise.all([
         db.from("schools").select("school_id").ilike("school_name",`%${term}%`).limit(25),
-        db.from("beagu_postit_comments").select("post_id").eq("status","published")
+        db.from("beagu_locker_visible_comments_v1").select("post_id").eq("status","published")
           .ilike("body",`%${term}%`).limit(100)
       ]);
       if(schoolMatches.error)throw schoolMatches.error;
@@ -279,7 +290,7 @@ Deno.serve(async(req:Request)=>{
     if(!UUID.test(id))return fail(req,"INVALID_POST");
     const exists=await target("post",id);
     if(!exists)return fail(req,"POST_UNAVAILABLE",404);
-    const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at,locker_nickname,locker_operator")
+    const {data,error}=await db.from("beagu_locker_visible_comments_v1").select("id,body,author_uid,created_at,locker_nickname,locker_operator,parent_id")
      .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).limit(80);
     if(error)throw error;
     const comments=await enrich(data||[],"comment",member?.id||null);
@@ -291,6 +302,15 @@ Deno.serve(async(req:Request)=>{
   const viewer=await identity(req,2);
   if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
   if(action==="link_member")return fail(req,"ANONYMOUS_ACCOUNT_REQUIRED",403);
+  if(action==="notification_read"){
+   const id=String(body?.comment_id||"");
+   if(!UUID.test(id))return fail(req,"INVALID_COMMENT");
+   const {data:actor,error:actorError}=await db.rpc("beagu_locker_notification_actor_v1",{p_token_sha:viewer.hash});
+   if(actorError||typeof actor!=="string"||!UUID.test(actor))return fail(req,"LEVEL_REQUIRED",403);
+   const {data,error}=await db.rpc("beagu_locker_notification_read_v1",{p_actor:actor,p_comment:id});
+   if(error)throw error;
+   return data===true?respond(req,{read:true}):fail(req,"TARGET_UNAVAILABLE",404);
+  }
   const user=await verifiedMember(viewer);
   if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
   const settings=await minimumLevel();
@@ -340,13 +360,16 @@ Deno.serve(async(req:Request)=>{
   if(action==="create_comment"){
    const postId=String(body?.post_id||"");
    const content=textCheck(body?.text,150);
+   const parentId=body?.parent_id==null?null:String(body.parent_id);
+   if(parentId!==null&&!UUID.test(parentId))return fail(req,"INVALID_PARENT");
    if(!UUID.test(postId)||!content)return fail(req,"INVALID_COMMENT");
    const suppliedId=typeof body?.request_id==="string"?body.request_id:"";
    if(suppliedId&&!UUID.test(suppliedId))return fail(req,"INVALID_REQUEST_ID");
-   const {data:created,error}=await db.rpc("beagu_postit_create_comment_v2",{
+   const {data:created,error}=await db.rpc("beagu_postit_create_comment_v3",{
      p_actor:user.id,p_request_id:suppliedId||crypto.randomUUID(),
-     p_post_id:postId,p_body:content
+     p_post_id:postId,p_body:content,p_parent_id:parentId
    });
+   if(error?.code==="23514"&&["INVALID_PARENT","POST_UNAVAILABLE"].includes(error.message))return fail(req,error.message,404);
    if(error)throw error;
    if(created?.error)return fail(req,String(created.error),
      created.error==="COMMENT_RATE_LIMIT"?429:created.error==="POST_UNAVAILABLE"?404:400);
