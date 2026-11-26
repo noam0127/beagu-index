@@ -83,4 +83,72 @@ language sql stable security invoker set search_path='' as $fn$
 $fn$;
 revoke all on function public.beagu_postit_school_counts_v1(text[]) from public,anon,authenticated;
 grant execute on function public.beagu_postit_school_counts_v1(text[]) to service_role;
+
+-- Thread-local aliases and private operator binding; legacy rows stay anonymous.
+create table if not exists public.beagu_locker_operator_v1(
+ singleton boolean primary key default true check(singleton),
+ author_uid uuid not null unique,
+ admin_user_id uuid not null
+);
+create table if not exists public.beagu_locker_aliases_v1(
+ post_id uuid not null references public.beagu_postit_posts(id) on delete cascade deferrable initially deferred,
+ author_uid uuid not null,
+ nickname text not null,
+ is_operator boolean not null default false,
+ primary key(post_id,author_uid), unique(post_id,nickname)
+);
+alter table public.beagu_locker_operator_v1 enable row level security;
+alter table public.beagu_locker_aliases_v1 enable row level security;
+revoke all on public.beagu_locker_operator_v1,public.beagu_locker_aliases_v1 from public,anon,authenticated;
+-- Binding is provisioned only in a separately authorized trusted admin procedure.
+grant select on public.beagu_locker_operator_v1 to service_role;
+grant select,insert on public.beagu_locker_aliases_v1 to service_role;
+alter table public.beagu_postit_posts add column if not exists locker_nickname text;
+alter table public.beagu_postit_posts add column if not exists locker_operator boolean not null default false;
+alter table public.beagu_postit_comments add column if not exists locker_nickname text;
+alter table public.beagu_postit_comments add column if not exists locker_operator boolean not null default false;
+
+create or replace function public.beagu_locker_allocate_alias_v1(p_post uuid,p_actor uuid)
+returns table(nickname text,is_operator boolean)
+language plpgsql security invoker set search_path='' as $fn$
+declare
+ v_name text; v_base text; v_operator boolean; v_n integer:=1;
+ v_positions text[]:=array['아웃사이드 히터','아포짓 스파이커','미들 블로커','세터','리베로'];
+begin
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(p_post::text),20261125);
+ select a.nickname,a.is_operator into v_name,v_operator from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.author_uid=p_actor;
+ if found then return query select v_name,v_operator;return;end if;
+ -- No request-supplied role/name; only a pre-bound, enabled owner may use this identity.
+ select exists(select 1 from public.beagu_locker_operator_v1 o
+  join public.beagu_admin_accounts a on a.user_id=o.admin_user_id
+  where o.author_uid=p_actor and a.role='owner' and a.enabled=true) into v_operator;
+ if v_operator and not exists(select 1 from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.nickname='카리브해매너티') then
+  v_name:='카리브해매너티';
+ else
+  v_operator:=false;
+  v_base:=v_positions[1+floor(random()*5)::integer];v_name:=v_base;
+  while exists(select 1 from public.beagu_locker_aliases_v1 a where a.post_id=p_post and a.nickname=v_name) loop
+   v_n:=v_n+1;v_name:=v_base||' '||v_n::text;
+  end loop;
+ end if;
+ insert into public.beagu_locker_aliases_v1(post_id,author_uid,nickname,is_operator) values(p_post,p_actor,v_name,v_operator);
+ return query select v_name,v_operator;
+end $fn$;
+revoke all on function public.beagu_locker_allocate_alias_v1(uuid,uuid) from public,anon,authenticated;
+grant execute on function public.beagu_locker_allocate_alias_v1(uuid,uuid) to service_role;
+create or replace function public.beagu_locker_alias_on_insert_v1()
+returns trigger language plpgsql security invoker set search_path='' as $fn$
+declare v_thread uuid;
+begin
+ if TG_TABLE_NAME='beagu_postit_posts' then v_thread:=new.id;else v_thread:=new.post_id;end if;
+ select a.nickname,a.is_operator into new.locker_nickname,new.locker_operator from public.beagu_locker_allocate_alias_v1(v_thread,new.author_uid) a;
+ return new;
+end $fn$;
+revoke all on function public.beagu_locker_alias_on_insert_v1() from public,anon,authenticated;
+grant execute on function public.beagu_locker_alias_on_insert_v1() to service_role;
+drop trigger if exists beagu_locker_alias_post_v1 on public.beagu_postit_posts;
+create trigger beagu_locker_alias_post_v1 before insert on public.beagu_postit_posts for each row execute function public.beagu_locker_alias_on_insert_v1();
+drop trigger if exists beagu_locker_alias_comment_v1 on public.beagu_postit_comments;
+create trigger beagu_locker_alias_comment_v1 before insert on public.beagu_postit_comments for each row execute function public.beagu_locker_alias_on_insert_v1();
+
 commit;
