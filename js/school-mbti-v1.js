@@ -60,8 +60,8 @@
   }
   function badgeText(result) {
     if (result.status === 'published') return result.type + ' · ' + result.name;
-    if (result.status === 'mixed') return '학교문화 유형 판정 보류';
-    return '2026 학교문화 유형 미공개';
+    if (result.status === 'mixed') return '교직문화 응답 유형 분류 보류';
+    return '2026 교직문화 응답 유형 미공개';
   }
   // Searches render 20 results per page. One authorized batch fetch fills all card badges.
   async function decorateCards(host, token) {
@@ -83,7 +83,7 @@
         else if (meta) meta.insertAdjacentElement('afterend',badge);
         else card.prepend(badge);
       }
-      badge.replaceChildren(e('span','beagu-mbti-label',card.classList.contains('school-glory-card')?'학교 MBTI':'2026 학교 MBTI'),e('strong','beagu-mbti-text','확인 중'));
+      badge.replaceChildren(e('span','beagu-mbti-label',card.classList.contains('school-glory-card')?'학교 MBTI(응답 유형)':'2026 학교 MBTI(응답 유형)'),e('strong','beagu-mbti-text','확인 중'));
       badge.classList.remove('is-ready');
     }
     try {
@@ -110,7 +110,7 @@
   function renderDetail(host,result) {
     const body=e('div','beagu-mbti-body');
     if (result.status==='not_published') {
-      body.append(e('p','beagu-mbti-message','이 학교의 2026년 학교문화 유형은 아직 공개 승인되지 않았습니다.'));
+      body.append(e('p','beagu-mbti-message','이 학교에 연결된 2026년 교직문화 응답 유형은 아직 공개 승인되지 않았습니다.'));
     } else {
       const hero=e('div','beagu-mbti-hero');
       hero.append(e('strong','beagu-mbti-type',result.status==='published'?result.type:'판정 보류'));
@@ -145,7 +145,7 @@
     content.append(e('p','beagu-mbti-message','공개 승인 결과를 확인 중입니다…'));
     card.append(content);
     card.append(e('p','beagu-mbti-disclaimer',
-      'Q14~Q17 관계·의사결정·변화도입·수업운영 응답에 근거한 학교문화 분류입니다. 개인 MBTI 검사와 동일한 척도가 아니며 학교의 우열을 뜻하지 않습니다.'));
+      'Q14~Q17 관계·의사결정·변화도입·수업운영에 관한 자발적 설문 응답의 분류입니다. 학교 전체 또는 교직원 개인을 대표하지 않으며, 개인 MBTI 검사나 학교의 우열 판정과는 무관합니다.'));
     if (!/^[A-Z0-9]{7}$/.test(String(schoolId)) || !token) return card;
     fetchValues([String(schoolId)],token).then(values=>{
       if (!card.isConnected || activeToken!==token) return;

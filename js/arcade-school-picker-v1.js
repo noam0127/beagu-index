@@ -40,7 +40,7 @@ class ArcadeSchoolPicker{
   this.surveyLink.href="https://forms.gle/TPyCakK6Sj2zchRy7";
   this.surveyLink.target="_blank";this.surveyLink.rel="noopener noreferrer";
   this.surveyLink.hidden=true;
-  this.mount.append(heading,this.input,this.guide,this.changeButton,this.results,this.status,this.surveyLink);
+  this.mount.append(heading,this.input,this.guide,this.changeButton,this.results,this.status,this.surveyLink,make("p","beagu-survey-limit","게임 속 상황과 난이도는 실제 학교의 근무환경이나 특정 교직원의 행동을 재현·평가한 결과가 아닙니다."));
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
   const target=new URLSearchParams(window.location?.search||"").get("school_id");
   if(/^[A-Z0-9]{7}$/.test(target||""))setTimeout(()=>{if(this.serial===0&&!this.locked)void this.select({school_id:target});},0);
@@ -115,7 +115,7 @@ class ArcadeSchoolPicker{
  async select(record){
   if(this.locked)return;
   const ticket=++this.serial;this.recommendBusy=false;this.syncRecommendControls();
-  this.status.textContent="학교의 게임 난이도 확인 중…";
+  this.status.textContent="선택 학교에 적용할 게임 난이도 확인 중…";
   const perfStarted=performance.now();let perfSucceeded=false;
   try{
    const data=await this.request("?school_id="+encodeURIComponent(record.school_id));
@@ -137,7 +137,7 @@ class ArcadeSchoolPicker{
   this.input.value=school.school_name+" · "+(school.region||"");
   this.results.replaceChildren();
   if(school.eligible){
-   this.status.textContent="✅ "+school.school_name+" · "+difficultyLabels[school.difficulty];
+   this.status.textContent="✅ "+school.school_name+" · 게임 난이도 "+difficultyLabels[school.difficulty];
   }else{
    this.status.textContent="🔒 조사 자료 없음 · 2026 조사 참여";
   }
@@ -152,8 +152,8 @@ class ArcadeSchoolPicker{
  }
  attachRecommendation(row){
   row.classList.add("arcade-school-action-row");
-  const select=make("select","arcade-school-recommend");select.setAttribute("aria-label","난이도별 학교 자동 추천");
-  const first=make("option","","🎲 학교 추천");first.value="";select.append(first);
+  const select=make("select","arcade-school-recommend");select.setAttribute("aria-label","게임 난이도별 학교 선택");
+  const first=make("option","","🎲 게임 난이도별 선택");first.value="";select.append(first);
   for(const [value,label] of Object.entries(difficultyLabels)){const option=make("option","",label);option.value=value;select.append(option);}
   const note=make("span","arcade-school-recommend-status","");note.setAttribute("role","status");note.hidden=true;
   row.append(select,note);this.recommendControls.add(select);select.disabled=this.locked||this.recommendBusy;
@@ -164,7 +164,7 @@ class ArcadeSchoolPicker{
   if(this.locked||this.recommendBusy||!Object.hasOwn(difficultyLabels,tier))return;
   clearTimeout(this.timer);const ticket=++this.serial;this.recommendBusy=true;this.syncRecommendControls();
   const status=value=>{if(note){note.textContent=value;note.hidden=!value;}this.status.textContent=value;};
-  status(difficultyLabels[tier]+" 학교 찾는 중…");
+  status("게임 난이도 "+difficultyLabels[tier]+" 적용 학교 찾는 중…");
   try{
    const response=await fetch(API+"?recommend="+encodeURIComponent(tier),{cache:"no-store",headers:{"Accept":"application/json"}});
    if(response.status===400||response.status===404)throw Error("recommend_endpoint_unavailable");

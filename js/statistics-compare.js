@@ -515,6 +515,8 @@
       const fill=make('span'); fill.style.width=d.value+'%';track.append(fill);wrap.append(track);
       return wrap;
     });
+    appendMetric(body,'유효 응답 건수',(s,y)=>percentile(s,y).value===null?'—':'공개 자료에서 확인되지 않음');
+    appendMetric(body,'백분위 비교 모집단',(s,y)=>percentile(s,y).value===null?'—':y===2025?'1,458개교':'공개 자료에서 확인되지 않음');
     appendGroup(body,'기본사항');
     for(const [key,label] of basicFactLabels)
       appendMetric(body,label,(school,year)=>basicFactCell(school,year,key));
