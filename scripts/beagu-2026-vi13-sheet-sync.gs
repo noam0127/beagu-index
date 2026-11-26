@@ -4,9 +4,12 @@ const BEAGU_VI13_SYNC_TAB='VI13_자동동기화';
 const BEAGU_VI13_BASELINE_TAB='수직성_백분위_검증';
 const BEAGU_VI13_METHOD='VERTICAL_EXACT_VI13_MIN9_A4_P2_R1_V1';
 function beagu26VI13Aliases(value,region,office){
- const name=normalize(value).replace(/(?:초등학교|초등|초교|초)$/,'');
+ const name=normalize(value).replace(/(?:초등학교|초등학|초등|초교|초)$/,'');
  const out=new Set([name]);
- for(const prefix of [region,office]){
+ const prefixes=[region,office];
+ // Verified combined office: both municipal prefixes are legitimate aliases.
+ if(region==='경기'&&office==='안양과천')prefixes.push('안양','과천');
+ for(const prefix of prefixes){
   if(prefix&&name.startsWith(prefix)&&name.length>prefix.length)out.add(name.slice(prefix.length));
  }
  return [...out].filter(Boolean);
