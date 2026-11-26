@@ -9,15 +9,16 @@ const start=html.indexOf('<section class="certificate"');
 const end=html.indexOf('<section class="together-save"',start);
 assert.ok(start>0&&end>start);
 const publicCertificate=html.slice(start,end);
-for(const forbidden of ['id="identityCode"','id="challengeReferralLink"','id="challengeIdentityPanel"','id="challengeReferralPanel"'])
+for(const forbidden of ['id="identityCode"','id="challengeReferralLink"','id="challengeIdentityPanel"','id="challengeReferralPanel"','id="challengeLoginCode"'])
  assert.ok(!publicCertificate.includes(forbidden),'Private value inside screenshot: '+forbidden);
 assert.ok(publicCertificate.includes('id="participantNo"'));
 assert.ok(publicCertificate.includes('data-beagu-xp'));
 assert.ok(publicCertificate.includes('id="certificateMedal"'));
 assert.ok(publicCertificate.includes('id="certificateLevelBanner"'));
 assert.ok(publicCertificate.includes('Lv.1 챌린지 달성'));
-assert.match(ref, /Lv\.2 챌린지 달성/);
-assert.match(ref, /copyIdentityCode\.hidden = !upgraded/);
+assert.match(ref, /certificateLevelBanner\.textContent\s*=\s*'Lv\.'\+visualTier\+' 챌린지 달성'/);
+assert.match(ref, /account3\?3:premiumVisual\?2:1/);
+assert.match(ref, /copyIdentityCode\.hidden = account3\|\|!upgraded/);
 assert.match(html, /id="copyIdentityCode"[^>]*disabled hidden/);
 assert.match(capture, /dataset\.referralState !== 'earned'/);
 assert.ok(publicCertificate.includes('id="certificateThanks"'));

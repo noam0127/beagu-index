@@ -178,7 +178,7 @@
   }catch(e){
    if(e.status===401||e.status===403){
     if(stored()!==token)return;
-    try{sessionStorage.removeItem(KEY)}catch(_){}
+    try{sessionStorage.removeItem(KEY);sessionStorage.removeItem('beagu-login-code-mask-v1')}catch(_){}
     verifiedToken='';verifiedLevel=0;
     window.dispatchEvent(new Event('beagu:level-state-change'));
    }
@@ -238,11 +238,12 @@
    }
    try{sessionStorage.setItem(KEY,result.token)}catch(_){throw Error('STORAGE_UNAVAILABLE')}
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
+   try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,mask:value.slice(0,2)+'*'.repeat(value.length-2)}))}catch(_){}
    expiresAt=checked.expires_at||'';verifiedToken=result.token;verifiedLevel=level;
    message.textContent='';paint(level);
    if(!modal.hidden)close();
    window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{
-    detail:{token:result.token,level,provisional:checked.provisional===true}
+    detail:{token:result.token,level,accountLevel:checked.accountLevel??level,provisional:checked.provisional===true}
    }));
    window.dispatchEvent(new Event('beagu:level-state-change'));
    if(document.body.classList.contains('beagu-page-search'))
@@ -257,7 +258,7 @@
  form.addEventListener('submit',e=>{e.preventDefault();return authenticate(code,submit,message);});
  logout.addEventListener('click',async()=>{
   const token=stored();
-  try{sessionStorage.removeItem(KEY)}catch(_){}
+  try{sessionStorage.removeItem(KEY);sessionStorage.removeItem('beagu-login-code-mask-v1')}catch(_){}
   expiresAt='';verifiedToken='';verifiedLevel=0;paint(0);close();
   window.dispatchEvent(new Event('beagu:participation-logged-out'));
   window.dispatchEvent(new Event('beagu:level-state-change'));

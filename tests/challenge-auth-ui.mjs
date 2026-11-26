@@ -35,14 +35,14 @@ const required=['challengeAccessPanel','challengeAccessForm','challengeAccessCod
 const elems=Object.fromEntries(required.map(id=>[id,{
   hidden:id==='challengeProtected'||id==='challengeAccessForm',
   value:'',type:id==='challengeAccessCode'?'password':'',disabled:false,textContent:'',
-  attrs:{},listeners:{},classes:new Set(),
+  attrs:{},dataset:{},listeners:{},classes:new Set(),
   classList:{toggle(name,on){if(on)this.owner.classes.add(name);else this.owner.classes.delete(name);}},
   addEventListener(event,handler){this.listeners[event]=handler;},
   setAttribute(name,value){this.attrs[name]=value;}
 }]));
 for(const el of Object.values(elems))el.classList.owner=el;
 let level=0;
-let token='';
+let token='';const storage=new Map();
 const eventNames=[];
 const calls=[];
 const win={addEventListener(){},dispatchEvent(event){eventNames.push(event.type);}};
@@ -57,9 +57,9 @@ runInNewContext(code,{
   document:{getElementById:id=>elems[id]},
   Event:class{constructor(type){this.type=type;}},
   sessionStorage:{
-    getItem(){return token;},
-    setItem(_key,value){token=value;},
-    removeItem(){token='';}
+    getItem(key){return key==='beagu-level-session-v1'?token:storage.get(key)||null;},
+    setItem(key,value){if(key==='beagu-level-session-v1')token=value;else storage.set(key,value);},
+    removeItem(key){if(key==='beagu-level-session-v1')token='';else storage.delete(key);}
   },
   fetch:fakeFetch
 });
@@ -81,6 +81,7 @@ level=1;
 elems.challengeAccessCode.value='testcode';
 await elems.challengeAccessForm.listeners.submit({preventDefault(){}});
 assert.equal(token,'b'.repeat(64));
+assert.deepEqual(JSON.parse(storage.get('beagu-login-code-mask-v1')),{token,mask:'te******'});
 assert.equal(elems.challengeProtected.hidden,false);
 assert.equal(elems.challengeAccessForm.hidden,true);
 assert.equal(elems.challengeAccessBadge.textContent,'Lv.1 인증 완료');
@@ -92,6 +93,7 @@ assert.equal(elems.challengeAccessCode.type,'password');
 assert.ok(eventNames.includes('beagu:challenge-access-granted'));
 await elems.challengeLogout.listeners.click();
 assert.equal(token,'');
+assert.equal(storage.has('beagu-login-code-mask-v1'),false);
 assert.equal(elems.challengeProtected.hidden,true);
 assert.equal(elems.challengeAccessForm.hidden,false);
 assert.equal(elems.challengeAccessBadge.textContent,'Lv.0 · 미인증');

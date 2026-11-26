@@ -11,7 +11,9 @@
  const valid=value=>/^[A-Za-z0-9]{10,128}$/.test(value)&&/[A-Za-z]/.test(value)&&/[0-9]/.test(value);
  function clear(){pw.value='';confirm.value='';ack.checked=false;}
  function paint(){
-   open.hidden=verified!==2||account===3||provisional;
+   open.hidden=verified!==2||account===3;
+   open.disabled=provisional;
+   q('level3UpgradeHint').hidden=open.hidden||!provisional;
    login.hidden=account===3;
    if(account===3){form.hidden=true;clear();mode='';status.textContent='Lv.3 나의 계정 이용 중';}
    else if(mode==='register'&&open.hidden){form.hidden=true;clear();mode='';status.textContent='';}
@@ -20,13 +22,17 @@
    if(busy||next==='register'&&(verified!==2||provisional||account===3))return;
    mode=next;clear();status.textContent='';extra.hidden=next!=='register';confirm.required=ack.required=next==='register';
    pw.autocomplete=next==='register'?'new-password':'current-password';
-   submit.textContent=next==='register'?'Lv.3 레벨업':'로그인';form.hidden=false;pw.focus();
+   submit.textContent=next==='register'?'Lv.3 레벨업 (계정 생성)':'로그인';form.hidden=false;pw.focus();
  }
  open.addEventListener('click',()=>show('register'));
  login.addEventListener('click',()=>show('login'));
  window.addEventListener('beagu:level-state-updated',e=>{
    verified=e.detail?.level??0;account=e.detail?.accountLevel??verified;provisional=e.detail?.provisional===true;paint();
  });
+ function syncAccess(){const panel=q('challengeAccessPanel');verified=Number(panel?.dataset.challengeVerifiedLevel||0);account=Number(panel?.dataset.accountLevel||verified);provisional=panel?.dataset.provisional==='true';paint();}
+ window.addEventListener('beagu:challenge-access-granted',syncAccess);
+ window.addEventListener('beagu:challenge-verified-level-changed',syncAccess);
+ window.addEventListener('beagu:challenge-access-revoked',syncAccess);
  window.addEventListener('beagu:participation-logged-out',()=>{verified=0;account=0;provisional=true;form.hidden=true;mode='';clear();status.textContent='';paint()});
  async function api(action,payload,token){
    const r=await fetch(endpoint,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':token},body:JSON.stringify({action,...payload})});
@@ -45,6 +51,8 @@
      const checked=await api('verify',{},data.token);
      if(checked.level!==2||checked.accountLevel!==3||session()!==start)throw Error('INVALID_SESSION');
      sessionStorage.setItem(key,data.token);
+     // Never carry a shared or stale code into a password-authenticated session.
+     try{const maskKey='beagu-login-code-mask-v1',saved=JSON.parse(sessionStorage.getItem(maskKey)||'null');sessionStorage.removeItem(maskKey);if(register&&saved?.token===start&&/^[A-Za-z0-9-]{2}\*{6,118}$/.test(saved.mask))sessionStorage.setItem(maskKey,JSON.stringify({token:data.token,mask:saved.mask}));}catch(_){}
      window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{detail:{token:data.token,level:2,accountLevel:3,provisional:false}}));
      window.dispatchEvent(new Event('beagu:level-state-change'));
      account=3;verified=2;provisional=false;paint();

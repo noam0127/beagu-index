@@ -1031,6 +1031,28 @@
       ]
     },
     {
+      "order": 42,
+      "version": "v1.11.23.1",
+      "name": "나의 계정",
+      "scope": "안내 접기·펼치기, 실제 입력 참여코드 마스킹, Lv.3 계정 및 골드 챌린지 UI 보완",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1.11.23-account-challenge-ui",
+      "pr": 324,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml",
+        "participation-code-browser.yml"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.23"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "1d6bb5b17168c3d7f578cc32eb864744adb29417"
+    },
+    {
       "pr": null,
       "commit": null,
       "changed_files": [],
@@ -1047,7 +1069,7 @@
         "v1.11.23"
       ],
       "rollback_sha": null,
-      "order": 42
+      "order": 43
     },
     {
       "pr": null,
@@ -1066,10 +1088,10 @@
         "v1.11.24"
       ],
       "rollback_sha": null,
-      "order": 43
+      "order": 44
     },
     {
-      "order": 44,
+      "order": 45,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -1089,7 +1111,7 @@
       "rollback_sha": null
     },
     {
-      "order": 45,
+      "order": 46,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -1108,7 +1130,7 @@
       "rollback_sha": null
     },
     {
-      "order": 46,
+      "order": 47,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -1125,7 +1147,7 @@
       "rollback_sha": null
     },
     {
-      "order": 47,
+      "order": 48,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

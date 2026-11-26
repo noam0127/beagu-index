@@ -7,7 +7,7 @@ const {chromium}=require('playwright');
 const origin='http://127.0.0.1:8124';
 const endpoint='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const LV1='LV1TESTCODE12',LV2='BG26-ABCD-ABCD-ABCD-ABCD-ABCD';
-const TOKEN1='a'.repeat(64),TOKEN2='b'.repeat(64);
+const TOKEN1='a'.repeat(64),TOKEN2='b'.repeat(64),TOKEN3='c'.repeat(64);
 const cors={
  'access-control-allow-origin':origin,
  'access-control-allow-methods':'POST, OPTIONS',
@@ -22,17 +22,22 @@ async function fixture(page,tracker){
   let body={};try{body=req.postDataJSON()}catch{}
   const tok=req.headers()['x-beagu-session']||'';
   if(body.action==='login'){
-   if(body.code===LV1){tracker.level=1;tracker.token=TOKEN1;return fulfill(route,200,{token:TOKEN1,level:1,provisional:false})}
-   if(body.code===LV2){tracker.level=2;tracker.token=TOKEN2;return fulfill(route,200,{token:TOKEN2,level:2,provisional:false})}
+   if(body.code===LV1){tracker.accountLevel=0;tracker.level=1;tracker.token=TOKEN1;return fulfill(route,200,{token:TOKEN1,level:1,provisional:false})}
+   if(body.code===LV2){tracker.accountLevel=0;tracker.level=2;tracker.token=TOKEN2;return fulfill(route,200,{token:TOKEN2,level:2,provisional:false})}
    return fulfill(route,401,{error:'INVALID_CODE'});
   }
   if(body.action==='verify'){
-   if(tok&&tok===tracker.token)return fulfill(route,200,{level:tracker.level,provisional:false,expires_at:'2026-11-21T20:00:00+09:00'});
+   if(tok&&tok===tracker.token)return fulfill(route,200,{level:tracker.level,accountLevel:tracker.accountLevel||tracker.level,provisional:false,expires_at:'2026-11-21T20:00:00+09:00'});
    return fulfill(route,401,{error:'AUTH_REQUIRED'});
   }
-  if(body.action==='logout'){tracker.token='';tracker.level=0;return fulfill(route,200,{ok:true})}
+  if(body.action==='level3_register'&&tok===TOKEN2&&body.password==='Example12345'&&body.confirmation===body.password&&body.acknowledged===true){tracker.accountLevel=3;tracker.token=TOKEN3;return fulfill(route,200,{token:TOKEN3,level:2,accountLevel:3});}
+  if(body.action==='logout'){tracker.token='';tracker.level=0;tracker.accountLevel=0;return fulfill(route,200,{ok:true})}
   return fulfill(route,403,{error:'ACCESS_DENIED'});
  });
+ const base=endpoint.replace('beagu-level-api','');
+ await page.route(base+'beagu-challenge-identity',route=>route.request().method()==='OPTIONS'?route.fulfill({status:204,headers:cors}):fulfill(route,200,{participantNo:17,identityCode:'K7M9Q2X4T8',visitorId:'01234567-89ab-cdef-0123-456789abcdef',lv2Access:true}));
+ await page.route(base+'beagu-referral-link-v1',route=>route.request().method()==='OPTIONS'?route.fulfill({status:204,headers:cors}):fulfill(route,200,{link:'https://baeguindex.com/survey.html?ref='+'f'.repeat(64),level:2,validReferrals:1,provisional:false}));
+ await page.route('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',route=>route.fulfill({path:require.resolve('html2canvas/dist/html2canvas.min.js'),contentType:'application/javascript'}));
 }
 async function view(page,path){
  await page.goto(origin+'/'+path,{waitUntil:'domcontentloaded',timeout:22000});
@@ -111,6 +116,8 @@ async function hiddenCards(page){
    const tracker={level:0,token:''};
    await fixture(page,tracker);
    await view(page,'index.html');await headerState(page,0);
+   const notice=page.locator('.beagu-survey-purpose details');await notice.waitFor();assert.equal(await notice.getAttribute('open'),null);await notice.locator('summary').click();assert.notEqual(await notice.getAttribute('open'),null);assert.equal(await notice.locator('p').first().isVisible(),true);await notice.locator('summary').click();assert.equal(await notice.getAttribute('open'),null);
+   const rankNotice=page.locator('#beagu2026Ranking .beagu-survey-fold');await rankNotice.waitFor({state:'attached'});assert.equal(await rankNotice.getAttribute('open'),null);
    await page.locator('.beagu-header-code input').fill('INVALIDCODE12');
    await page.locator('.beagu-header-code button').click();
    await page.waitForFunction(()=>document.querySelector('.beagu-header-code-feedback')?.textContent.includes('참여코드를 확인해'));
@@ -133,6 +140,30 @@ async function hiddenCards(page){
    assert.equal(await page.locator('#beaguParticipationDetail').isVisible(),true);
    assert.equal(await page.locator('#beaguParticipationForm').isHidden(),true);
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv2.png',fullPage:false});
+   await page.keyboard.press('Escape');
+   await page.locator('#togetherIdentityDetails summary').click();
+   assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   assert.match(await page.locator('#togetherBenefitsList').innerText(),/좋아요 누르기/);
+   await page.locator('#level3Upgrade').click();
+   await page.locator('#level3Password').fill('Example12345');await page.locator('#level3Confirm').fill('Example12345');await page.locator('#level3Ack').check();await page.locator('#level3Submit').click();
+   await page.waitForFunction(()=>document.querySelector('#certificate')?.dataset.level==='3');
+   await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.textContent==='Lv.3');
+   assert.equal(await page.locator('#certificateLevelBanner').innerText(),'Lv.3 챌린지 달성');
+   assert.equal(await page.locator('#togetherBenefitsTitle').innerText(),'Lv.3 전용 혜택');
+   assert.deepEqual(await page.locator('#togetherBenefitsList li').allTextContents(),['학교별 상세자료 열람','커뮤니티 참여권 획득','좋아요 누르기']);
+   for(const selector of ['#certificate','#level3-account','#challengeReferralPanel','.together-benefits','.challenge-account-details','.together-save'])assert.equal(await page.locator(selector).evaluate(n=>getComputedStyle(n).borderTopColor),'rgb(187, 139, 40)',selector+' gold border');
+   if(await page.locator('#togetherIdentityDetails').getAttribute('open')===null)await page.locator('#togetherIdentityDetails summary').click();
+   assert.equal(await page.locator('#togetherCurrentAuth').innerText(),'Lv.3');
+   assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   assert.equal(await page.locator('#challengeIdentityPanel').isHidden(),true);
+   assert(!((await page.locator('#certificate').innerText()).includes(LV2)));
+   await page.waitForFunction(()=>!document.querySelector('#capture')?.disabled,{},{timeout:45000});
+   const [certificateDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#capture').click()]);
+   assert.equal((await fs.readFile(await certificateDownload.path())).subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+   await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv3.png',fullPage:true});
+   await view(page,'challenge.html');await page.waitForFunction(()=>document.querySelector('#certificate')?.dataset.level==='3');
+   await page.locator('#togetherIdentityDetails summary').click();assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   await open(page);
    await page.locator('#beaguParticipationLogout').click();
    await headerState(page,0);await hiddenCards(page);
    for(const route of ['search.html','statistics.html','games.html','challenge.html']){
@@ -154,6 +185,6 @@ async function hiddenCards(page){
    assert.deepEqual(authErrors,[],'No shared UI exceptions');
    await ctx.close();
   }
-  console.log('PASS: desktop/mobile Lv0 rejection, Lv1 and Lv2 auth, cross-page persistence, detail and revoke');
+  console.log('PASS: desktop/mobile Lv0 rejection, Lv1/Lv2 auth, Lv3 registration, masked entered code, gold cards, PNG, notice toggle, persistence and revoke');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

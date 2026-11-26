@@ -76,7 +76,7 @@
       if(seq!==generation||getToken()!==token)return;
       if(response.status===401||response.status===403){
         lastValidatedToken='';
-        try{if(getToken()===token)sessionStorage.removeItem(KEY);}catch(_){}
+        try{if(getToken()===token)sessionStorage.removeItem(KEY);sessionStorage.removeItem('beagu-login-code-mask-v1');}catch(_){}
         setState('0','Lv.0','현재 Lv.0 · 인증 만료 · 레벨 안내 보기');
         return;
       }

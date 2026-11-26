@@ -98,7 +98,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   // A server-confirmed credit converts the original personal code card.
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
-  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드');
+  assert.equal(el.challengeIdentityTitle.textContent,'추천으로 발급된 개인 Lv.2 참여코드');
   assert.equal(el.copyIdentityCode.hidden,false);
   assert.equal(el.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
   assert.equal(el.certificate.dataset.level,'2');
