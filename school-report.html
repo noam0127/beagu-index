@@ -302,7 +302,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 <script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
 <link rel="stylesheet" href="styles/school-likes-v1.css?v=11119-court">
 <script src="js/school-likes-v1.js?v=11117"></script>
-<script src="js/school-search-card-v1.js?v=11122-disclosure"></script>
+<script src="js/school-search-card-v1.js?v=20261127-price"></script>
 <script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
@@ -1320,6 +1320,12 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const n=Number(match[1].replaceAll(',',''));
     return Number.isFinite(n)?{n,unit:match[2]||''}:null;
   }
+  function formatOfficialFact(x,v){
+    if(x.factKey!=='district_housing_price_mean')return v;
+    const parsed=numericCompare(v);
+    if(!parsed||!['원',''].includes(parsed.unit)||!Number.isFinite(parsed.n)||parsed.n<=0)return v;
+    return window.BeaguSchoolSearchCard?.formatHousingPrice(parsed.n)||v;
+  }
   function schoolBenchmark(x){
     if(x.comparisonKind!=='average')return '';
     const school=numericCompare(x.value),national=numericCompare(x.nationalAverage),region=numericCompare(x.regionalAverage);
@@ -1327,9 +1333,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const extent=Math.max(Math.abs(school.n-national.n),Math.abs(region.n-national.n),1e-9);
     // Same units; equal distances from the nationwide mean get equal horizontal spacing.
     const position=v=>(Math.max(15,Math.min(85,50+35*(v.n-national.n)/extent))).toFixed(1);
-    const safe=v=>escapeHTML(v);
-    const aria='전국 평균 '+x.nationalAverage+', 지역 평균 '+x.regionalAverage+', 우리 학교 '+x.value;
-    return '<figure class="benchmark-figure" role="img" aria-label="'+safe(aria)+'">'+
+    const safe=v=>escapeHTML(formatOfficialFact(x,v));
+    const aria='전국 평균 '+formatOfficialFact(x,x.nationalAverage)+', 지역 평균 '+formatOfficialFact(x,x.regionalAverage)+', 우리 학교 '+formatOfficialFact(x,x.value);
+    return '<figure class="benchmark-figure" role="img" aria-label="'+escapeHTML(aria)+'">'+
       '<div class="benchmark-directions" aria-hidden="true"><span>← 전국 평균보다 낮음</span><span>전국 평균보다 높음 →</span></div>'+
       '<div class="benchmark-plot" aria-hidden="true">'+
       '<span class="benchmark-dot school" style="left:'+position(school)+'%"></span>'+
@@ -1371,16 +1377,16 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
             const onlySchool=official&&singleSchoolFacts.has(normalizedOverviewLabel(x.label));
             const compared=official&&x.comparisonKind&&!onlySchool;
             const kind=x.comparisonKind==='mode'?'최다 선택 보기':'평균';
-            const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(v):'비교 자료 없음';
+            const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(formatOfficialFact(x,v)):'비교 자료 없음';
             const benchmark=compared?schoolBenchmark(x):'';
             return '<div class="summary-metric'+(benchmark?' compare-metric':(onlySchool?' school-only-metric':''))+'"><span class="'+(benchmark?'compare-label':'')+'">'+escapeHTML(x.label)+'</span>'+
               (benchmark|| (compared?
                 '<div class="school-compare-grid">'+
-                '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(x.value)+'</strong></div>'+
+                '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(formatOfficialFact(x,x.value))+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">전국 '+kind+'</span><strong>'+safe(x.nationalAverage)+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">지역 '+kind+'</span><strong>'+safe(x.regionalAverage)+'</strong></div>'+
                 '</div>':
-                '<strong>'+escapeHTML(x.value)+'</strong>'))+
+                '<strong>'+escapeHTML(formatOfficialFact(x,x.value))+'</strong>'))+
               ''+'</div>';
           }).join('')+'</div>':'';
       }).join('')+
@@ -1515,7 +1521,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
           }else if(typeof metric.label==='string'&&metric.label.length<=70&&
              (typeof metric.value==='string'||typeof metric.value==='number')&&String(metric.value).length<=90){
             if(!state.approvedSummary[String(year)])state.approvedSummary[String(year)]=[];
-            state.approvedSummary[String(year)].push({label:metric.label,value:String(metric.value),
+            state.approvedSummary[String(year)].push({label:metric.label,value:String(metric.value),factKey:typeof metric.factKey==='string'?metric.factKey:null,
               group:metric.group==='편집본 공식 학교정보'?'편집본 공식 학교정보':'승인된 설문 영역 요약',
               nationalAverage:typeof metric.nationalAverage==='string'?metric.nationalAverage:null,
               regionalAverage:typeof metric.regionalAverage==='string'?metric.regionalAverage:null,
