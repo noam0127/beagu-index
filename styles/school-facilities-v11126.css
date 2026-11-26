@@ -12,3 +12,10 @@
 .beagu-facilities-caption{font-size:.72rem;color:#64748b;margin:12px 0 0;line-height:1.5}
 .beagu-facilities-source{margin:8px 0;padding:8px;border:1px solid #e2e8f0;border-radius:8px;min-width:0}.beagu-facilities-source summary{font-size:.85rem;cursor:pointer;color:#475569;padding:4px}.beagu-facilities-source[hidden]{display:none!important}
 @media(max-width:420px){.beagu-facilities-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 4px}.beagu-facilities{padding:12px 8px}}
+
+.beagu-facts-year{border-top:1px solid #e2e8f0;padding-top:14px;margin-top:16px}
+.beagu-facts-year-title{font-size:.94rem;font-weight:800;color:#334155;margin:0 0 10px}
+.beagu-facts-group{margin:10px 0 14px;padding:10px 8px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+.beagu-facts-group-title{font-size:.82rem;font-weight:750;color:#334155;margin:0 0 8px}
+.beagu-facts-group .beagu-facilities-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,94px),1fr))}
+@media(max-width:420px){.beagu-facts-group .beagu-facilities-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

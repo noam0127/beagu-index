@@ -1186,6 +1186,36 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "ceffeacba51dce6130fdfa8344222421bba63b2d"
+    },
+    {
+      "order": 50,
+      "version": "v1.12.01.1",
+      "name": "분야별 학교정보",
+      "scope": "2025·2026년 공개 조사 O/X 판별 항목을 업무·복무, 학교 조직·지원, 교육활동, 교직원 행사·스포츠, 급식·복지, 2027 예정 변경 분야별 아이콘으로 표시 · 2025·2026년 연도 분리, 복수선택의 미선택·모름·충돌 응답 제외 · 기존 역대 시설 아이콘과 Lv.별 공개 권한, 게임 기록 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "production": "NOT_APPROVED",
+      "admin_registration": "NOT_REGISTERED",
+      "dependencies": [
+        "v1.12.01"
+      ]
+    },
+    {
+      "order": 51,
+      "version": "v1.12.02",
+      "name": "계정 다듬기"
+    },
+    {
+      "order": 52,
+      "version": "v1.12.02.1",
+      "name": "익명 계정",
+      "scope": "Lv.3 아이디·비밀번호 기반 익명 가입 및 로그인 · 아이디 중복 방지 및 비밀번호 확인 · 비밀번호 찾기·복구 불가 안내, 실명·이메일·전화번호 미수집 · 개인 Lv.2 자격 검증 및 기존 계정 UI·공개 권한·시설 기능 유지",
+      "status": "CANDIDATE_CI_PENDING",
+      "production": "NOT_APPROVED",
+      "admin_registration": "NOT_REGISTERED",
+      "backend_prerequisites": [
+        "계정 테이블 및 세션 컬럼·RPC 운영 적용 승인 필요",
+        "아이디 인증 API 운영 적용 및 비밀키 설정 필요"
+      ]
     }
   ],
   "source_manifest": {
