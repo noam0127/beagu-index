@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     try { body = JSON.parse(raw); } catch { return respond({ error: 'INVALID_JSON' }, 400, origin); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) return respond({ error: 'INVALID_BODY' }, 400, origin);
     const input = body as Record<string, unknown>;
-    if (input.action !== 'issue' || typeof input.visitor !== 'string' || !uuid.test(input.visitor)) {
+    if (input.action !== 'issue') {
       return respond({ error: 'INVALID_REQUEST' }, 400, origin);
     }
     // An authenticated personal session identifies the participant, never the device.
@@ -65,7 +65,9 @@ Deno.serve(async (req: Request) => {
       if (Number(session.access_level) !== 2 || earned !== true)
         return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
     }
-    const visitor = boundVisitor || input.visitor.toLowerCase();
+    if (!boundVisitor && (typeof input.visitor !== 'string' || !uuid.test(input.visitor)))
+      return respond({ error: 'INVALID_REQUEST' }, 400, origin);
+    const visitor = boundVisitor || String(input.visitor).toLowerCase();
     const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: visitor });
     if (error) {
       console.error('challenge code issuance error', error.code || 'UNKNOWN');

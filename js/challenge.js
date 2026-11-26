@@ -35,7 +35,6 @@
     retry.hidden = true;
     retry.disabled = true;
     try {
-      if (!window.beaguVisitor) throw new Error('STORAGE_UNAVAILABLE');
       if (participant === null || personalCode === null) {
         status.textContent = '참여 순번과 고유번호를 확인하고 있습니다.';
         identityCode.textContent = '고유번호 확인 중';
@@ -45,7 +44,7 @@
         const response = await deadline(fetch(identityEndpoint, {
           method: 'POST', cache: 'no-store',
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
-          body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
+          body: JSON.stringify({ action: 'issue', ...(window.beaguVisitor ? {visitor: window.beaguVisitor} : {}) })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
         if (!valid()) return;
         if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
@@ -106,6 +105,7 @@
         : error.message || '처리하지 못했습니다. 다시 시도해주세요.';
       retry.hidden = false;
     } finally {
+      if(mine!==epoch)return;
       busy = false;
       retry.disabled = false;
       if(certificateRefreshPending && accessGranted){
@@ -151,7 +151,7 @@
     if (!event.persisted && imageUrl) URL.revokeObjectURL(imageUrl);
   });
   window.addEventListener('beagu:challenge-access-revoked', () => {
-    accessGranted=false;activeSession="";epoch++;certificateRefreshPending=false;resetIdentity();
+    accessGranted=false;activeSession="";epoch++;busy=false;certificateRefreshPending=false;resetIdentity();
     status.textContent="";retry.hidden=true;
   });
   window.addEventListener('beagu:referral-status-changed', () => {
@@ -163,7 +163,7 @@
   window.addEventListener('beagu:challenge-access-granted', () => {
     const token=currentSession();
     if(!token)return;
-    if(token!==activeSession){epoch++;activeSession=token;resetIdentity();}
+    if(token!==activeSession){epoch++;busy=false;certificateRefreshPending=false;activeSession=token;resetIdentity();}
     accessGranted=true;
     if(busy){certificateRefreshPending=true;return;}
     void prepare();
