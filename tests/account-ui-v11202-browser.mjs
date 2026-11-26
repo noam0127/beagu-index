@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {chromium} from 'playwright';
 const read=p=>readFileSync(p,'utf8');
-const card=read('challenge.html').match(/<section id="level3-account"[\s\S]*?<\/section>/)?.[0];
+const sourceCard=read('challenge.html').match(/<section id="level3-account"[\s\S]*?<\/section>/)?.[0];
+assert.match(sourceCard,/hidden inert/);
+// Exercise dormant account logic only inside isolated fixture; public page remains hidden.
+const card=sourceCard.replace(' hidden inert aria-hidden="true"','');
 assert.ok(card);
 const browser=await chromium.launch({headless:true});
 try{
@@ -79,7 +82,8 @@ try{
  await page.evaluate(()=>{const b=document.getElementById('beaguLevelState');b.dataset.level='2';b.dataset.accountLevel='3';});
  await page.addScriptTag({content:read('js/beagu-level-guide-v1.js')});
  assert.equal(await page.locator('.beagu-level-guide-card[data-tier="3"]').count(),1);
- assert.equal(await page.locator('.beagu-level-guide-card[data-tier="3"]').evaluate(e=>e.classList.contains('is-current')),true);
+ assert.equal(await page.locator('.beagu-level-guide-card[data-tier="3"]').isHidden(),true);
+ assert.equal(await page.locator('.beagu-level-guide-card[data-tier="2"]').evaluate(e=>e.classList.contains('is-current')),true);
  for(const width of [320,375,768,1280]){await page.setViewportSize({width,height:800});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
  console.log('PASS: provisional code rebind, registration, login, password reveal, level guide, mobile and desktop fixture');
 }finally{await browser.close();}

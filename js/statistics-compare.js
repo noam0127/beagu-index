@@ -763,6 +763,7 @@
     }
   });
   elements.postit.addEventListener('click',async()=>{
+    if(elements.postit.hidden||elements.postit.inert)return;
     if(!state.selected.length)return;
     const comparison=encodeSelection();
     const shareUrl=new URL('statistics.html',window.location.href);
