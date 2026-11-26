@@ -109,9 +109,9 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.goto(origin+'/index.html');
  await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
  await page.waitForFunction(()=>document.querySelector('#beaguHomeNoticeBody').textContent==='공통 검증 공지');
- await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===2);
+ await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===10);
  assert.equal(await page.locator('#beagu2026Ranking').isVisible(),true);
- assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2']);
+ assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2','3','4','4','6','7','8','8','10']);
 
  const ids=()=>page.locator('#beaguTodaySchools .beagu-home-school-name').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).searchParams.get('school_id')));
  const today=await ids();assert.equal(new Set(today).size,2);
