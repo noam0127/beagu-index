@@ -1,6 +1,8 @@
 /* Source: 사용자 Google Docs '전국 학교 배구지수(교직문화지수) 2023-2025 문항 체계 종합 보고서'.
  * Only exact documented choices, never reconstructed respondent-level data.
- * 2024 Q03 phone-number item and unknown 2025 Q01-Q30 choices are NOT fabricated.
+ * 2024 Q03 uses documented numeric response codes only; exact verbal labels remain unverified.
+ * 2025 Q01-Q30: exact choices from two matching 2026-02-26 PDF exports of the final elementary survey, pp. 18–32. Other text inputs are excluded.
+ * 2023 Q11-Q14: contemporaneous 2023-11-12 announcement, independently checked against six numeric codes in the raw source. Announcement labels are not represented as an exact final form transcription.
  * 2024 numbering mapped by explicitly matching verified question topics.
  * 2025 Q31-Q50 original documented factual-choice response scale. */
 window.BeaguHistoricalQuestionnaire=Object.freeze({
@@ -84,6 +86,38 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "4점: 보통",
       "5점: 많이 있다",
       "6점: 많이 있는게 당연하다"
+    ],
+    "Q11": [
+      "1점: 여러 휴식장소들이 있음",
+      "2점: 학년연구실과 휴식장소가 있음",
+      "3점: 학년연구실 하나 있음",
+      "4점: 학년 연구실도 없음",
+      "5점: 교실에서만 쉴 수 있음",
+      "6점: 교실에서조차 쉴 수 없음"
+    ],
+    "Q12": [
+      "1점: 없는게 당연하다",
+      "2점: 매우 적게 있다.",
+      "3점: 있다.",
+      "4점: 보통",
+      "5점: 많다.",
+      "6점: 매우 많은 게 당연하다."
+    ],
+    "Q13": [
+      "1점: 1회미만",
+      "2점: 1~2회",
+      "3점: 3~4회",
+      "4점: 5~6회",
+      "5점: 7~8회",
+      "6점: 9회 이상"
+    ],
+    "Q14": [
+      "1점: 16미만",
+      "2점: 16~17",
+      "3점: 18~19",
+      "4점: 20~21",
+      "5점: 22~23",
+      "6점: 24이상"
     ]
   },
   "2024": {
@@ -106,6 +140,7 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
     "Q12": [
       "1점: 분리 장소가 여러 곳이며 실제 분리된다",
       "2점: 단 한 곳뿐이며 실제 분리된다",
+      "3점",
       "4점: 장소는 있으나 실제 분리되지 않는다",
       "5점: 분리 장소가 없다",
       "6점: 어떤 일이 있어도 담임이 홀로 담당한다"
@@ -189,6 +224,14 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "4점: 소수의 특정 구성원에 의해 업무분장이 정해진다",
       "5점: 업무분장에 대한 의논조차 하지 않는다",
       "6점: 학폭, 기피학년은 신규와 전입교사가 맡는 게 당연하다"
+    ],
+    "Q03": [
+      "1점",
+      "2점",
+      "3점",
+      "4점",
+      "5점",
+      "6점"
     ]
   },
   "2025": {
@@ -291,6 +334,265 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "있다",
       "없다",
       "모름"
+    ],
+    "Q01": [
+      "① 그런 일이 존재한다는 게 믿을 수 없다",
+      "② 나는 하지 않는데 가끔 누가 한다(자율)",
+      "③ 모두 하는 편이다(자율)",
+      "④ 안 하면 누가 하라고 시킨다(강요)",
+      "⑤ 구두보고 없이 조퇴할 수 없다(강요)"
+    ],
+    "Q02": [
+      "① 가지 않는다.",
+      "② 1회",
+      "③ 2회",
+      "④ 3회",
+      "⑤ 4회 이상"
+    ],
+    "Q05": [
+      "① 안 한다",
+      "② 나는 안 하지만 누군가 한다(자율)",
+      "③ 자율적으로 하루 정도 근무한다.",
+      "④ 구성원들이 자율적으로 방학 근무조를 꾸려 근무한다",
+      "⑤ 몇몇 교사 혹은 관리자들의 주도에 의해 근무조가 결정된다."
+    ],
+    "Q06": [
+      "① 모른다",
+      "② 없다",
+      "③ 곧 생길 것 같다",
+      "④ 1명 있다",
+      "⑤ 2명 있다",
+      "⑥ 3명 이상 있다"
+    ],
+    "Q07": [
+      "① 19시간 이하",
+      "② 20시간",
+      "③ 21시간",
+      "④ 22시간",
+      "⑤ 23시간 이상"
+    ],
+    "Q08": [
+      "① 없다",
+      "② 1번",
+      "③ 2번",
+      "④ 3번",
+      "⑤ 4번 이상"
+    ],
+    "Q09": [
+      "① 모른다",
+      "② 없다",
+      "③ 1회",
+      "④ 2회",
+      "⑤ 3회",
+      "⑥ 4회 이상"
+    ],
+    "Q10": [
+      "① 교사 지원을 아끼지 않는다",
+      "② 주어진 업무를 성실히 한다",
+      "③ 무슨 일을 하는지 모르겠다",
+      "④ 자신의 업무를 교사에게 부탁한다",
+      "⑤ 교사에게 업무를 시킨다"
+    ],
+    "Q11": [
+      "① 원칙이 분명하고 지켜진다",
+      "② 원칙은 있으나 지켜지지 않는다",
+      "③ 원칙이 없다",
+      "④ 원칙이 없이 소수에 의해 정해진다",
+      "⑤ 힘없는 신규·저연차가 기피 업무를 당연히 맡는다"
+    ],
+    "Q12": [
+      "① 2일 이하",
+      "② 3일",
+      "③ 4일",
+      "④ 5일",
+      "⑤ 6일 이상"
+    ],
+    "Q13": [
+      "① 안 한다",
+      "② 회비 없는 친목회(자율)",
+      "③ 매달 회비 걷는 친목회(자율)",
+      "④ 가입 안 하면 눈치 준다(강요)",
+      "⑤ 1박 2일 여행도 간다(강요)"
+    ],
+    "Q14": [
+      "① 수업중인 교사 외의 인력에 의해 여러 장소로 실제로 분리된다",
+      "② 실제로 분리된다",
+      "③장소는 있으나 실제 분리는 안 된다",
+      "④분리 장소가 없다",
+      "⑤어떤 일이 있어도 담임 또는 수업중인 교사가 교실에서 모든 것을 해결한다"
+    ],
+    "Q15": [
+      "① 1회미만",
+      "② 1회",
+      "③ 2~3회",
+      "④ 4~5회",
+      "⑤ 6회 이상"
+    ],
+    "Q16": [
+      "① 즉각",
+      "② 1시간 미만",
+      "③2~3시간",
+      "④3~4시간",
+      "⑤4시간 이상"
+    ],
+    "Q17": [
+      "① ★★★★★ (매우 만족)",
+      "② ★★★★☆",
+      "③ ★★★☆☆",
+      "④ ★★☆☆☆",
+      "⑤ ★☆☆☆☆(매우 불만족)"
+    ],
+    "Q18": [
+      "① 충분한 예산으로 호화로운 간식이 제공된다",
+      "② 예산이 책정·집행된다",
+      "③ 책정되어 있으나 나는 집행된 간식을 본 적 없다",
+      "④ 예산 자체가 없고 교사 돈으로 충당한다(자율)",
+      "⑤ 다과비를 강제적으로 부담한다(강제)"
+    ],
+    "Q19": [
+      "① 교사친화적으로 개선하여 적용한다",
+      "② 대부분 적용된다",
+      "③ 몇몇만 적용된다",
+      "④ 적용되지 않거나 개악되어 적용한다.",
+      "⑤ 협의회조차 안 한다"
+    ],
+    "Q20": [
+      "① 학년연구실 외 다양한 공간이 있다",
+      "② 모든 학년에 연구실이 있다",
+      "③ 일부 학년에만 연구실이 있다",
+      "④ 연구실이 있으나 창고 수준이다",
+      "⑤ 늘봄교실로 인해 교실에서도 쉴 수 없다"
+    ],
+    "Q21": [
+      "① 발언 자체가 없다(부조리 없음, 복지만족)",
+      "② 지원 발언이 이어진다",
+      "③ 아무런 반응이 없다",
+      "④ 뒷담·따돌림이 따른다",
+      "⑤ 발언 기회조차 없다"
+    ],
+    "Q22": [
+      "① 1회 이하",
+      "② 2회",
+      "③ 3회",
+      "④ 4회",
+      "⑤ 5회 이상"
+    ],
+    "Q23": [
+      "① 1회 이하",
+      "② 2회",
+      "③ 3회",
+      "④ 4회",
+      "⑤ 5회 이상"
+    ],
+    "Q24": [
+      "① 없다",
+      "② 있는데 자율적이다",
+      "③ 안 하면 눈치 준다",
+      "④ 안 하면 욕먹는다",
+      "⑤ 너무 당연해서 문제라 생각하지 않는다"
+    ],
+    "Q25": [
+      "① 스포츠활동이 없다",
+      "② 자율적이다",
+      "③ 가지 않으면 눈치 준다",
+      "④ 가지 않으면 뒷담한다",
+      "⑤ 가지 않으면 대놓고 욕한다"
+    ],
+    "Q26": [
+      "① 모든 교직원이 배려와 사랑이 넘친다",
+      "② 대부분의 교직원이 배려와 사랑이 넘친다",
+      "③ 유난히 특정 교직원으로 인해 갈등이 생긴다",
+      "④ 파벌 간의 갈등이 눈에 띄게 나타난다",
+      "⑤ ‘만인에 대한 만인의 투쟁’ 상태다"
+    ],
+    "Q27": [
+      "① 대부분 바르게 인사한다",
+      "② 몇몇만 바르게 인사한다",
+      "③ 대부분 무시한다",
+      "④ 몇몇은 서로 욕을 하며 지나간다",
+      "⑤ 교사에게 욕하며 지나간다"
+    ],
+    "Q28": [
+      "① 모두 환하게 웃으며 인사한다",
+      "② 대부분 환하게 웃으며 인사한다",
+      "③ 인사하면 인사를 받아준다",
+      "④ 몇몇은 인사를 받지 않는다",
+      "⑤ 몇몇은 인사하면 째려본다"
+    ],
+    "Q29": [
+      "① 당장 오늘 아파도 쉴 수 있다.",
+      "② 사전에 이야기한 경우만 쉴 수 있다.",
+      "③ 특별한 병이 있을 때만 쉴 수 있다.",
+      "④ 몸이 많이 아픈 게 아니면 참고 나와야 한다.",
+      "⑤ 무슨 일이 있어도 학교에 나와야한다."
+    ],
+    "Q03": [
+      "교과서 구입",
+      "학운위 운영",
+      "물품 구입(컴퓨터 부속품, 프린터 토너 등)",
+      "강사 채용 및 강사 급여 관리",
+      "방과후 자유수강권 관리",
+      "정보공시",
+      "평생교육",
+      "민방위훈련",
+      "유무선네트워크 및 전산실 관리",
+      "하드디스크 파기 작업",
+      "업무 메신저 및 학교 홈페이지 관리",
+      "CCTV 관리",
+      "예산 품의",
+      "기초생활수급자 통신비 지원",
+      "정보기기(태블릿, PC, TV) 관리(불용처리 포함)",
+      "안함"
+    ],
+    "Q04": [
+      "교장선생님 훈화말씀이 있는 전교생 아침조회(교실방송)",
+      "교장선생님 훈화말씀이 있는 전교생 아침조회(운동장 또는 강당/체육관)",
+      "운동회",
+      "학예회",
+      "수련회",
+      "바자회",
+      "학생회선거",
+      "그 밖의 학부모 초청 행사",
+      "안함"
+    ],
+    "Q30": [
+      "모른다",
+      "기피하는 학년이 없다.",
+      "1학년",
+      "2학년",
+      "3학년",
+      "4학년",
+      "5학년",
+      "6학년"
     ]
   }
 });
+
+(function(){// Only original documented choices; observed answer strings are NOT a source of allowed labels.
+const closedChoice=(catalog,year,id,value)=>{
+  if(typeof value!=='string'||typeof id!=='string'||!/^Q\d{2}$/.test(id))return null;
+  const options=catalog?.[String(year)]?.[id];
+  if(!Array.isArray(options))return null;
+  const v=value.trim();
+  if(options.includes(v))return v;
+  // Q12's third numeric source code is documented; its verbal label is unknown.
+  if(Number(year)===2024&&id==='Q12'&&(v==='3'||v==='3점: 원본 선택지 설명 미확인'))return '3점';
+  // The original 2025 source contains exact, unnumbered Q14 labels.
+  if(Number(year)===2025&&id==='Q14'){
+    const normalize=text=>text.replace(/\s+/g,'').replace(/\.$/,'');
+    const bareMatches=options.filter(o=>normalize(o.replace(/^[①②③④⑤]\s*/,''))===normalize(v));
+    if(bareMatches.length===1)return bareMatches[0];
+  }
+  // Explicit source-observed typo, independently matched to final form Q27 option 1.
+  if(Number(year)===2025&&id==='Q27'&&/^(?:①|1)\s*대부 바르게 인사한다$/.test(v))return options[0];
+  // These five questions have verified numeric source codes 1–6.
+  if(((Number(year)===2023&&['Q11','Q12','Q13','Q14'].includes(id))||(Number(year)===2024&&id==='Q03'))&&/^[1-6](?:점)?$/.test(v))return options[Number(v[0])-1]??null;
+  // Compare only equivalent numbered labels, never arbitrary text or an ordinal alone.
+  const ordinal=text=>{const m=text.match(/^([①②③④⑤⑥⑦⑧⑨⑩]|10|[1-9])(?:\s*점\s*[:.]?|\s*[.)、:]|\s+)?\s*(\S.*)$/);if(!m)return null;const n='①②③④⑤⑥⑦⑧⑨⑩'.includes(m[1])?'①②③④⑤⑥⑦⑧⑨⑩'.indexOf(m[1])+1:Number(m[1]);return n+':'+m[2].replace(/\s+/g,'').replace(/[.]$/,'');};
+  const key=ordinal(v);
+  if(!key)return null;
+  const matches=options.filter(o=>ordinal(o)===key);
+  return matches.length===1?matches[0]:null;
+};
+
+window.BeaguHistoricalClosedChoice=(year,id,value)=>closedChoice(window.BeaguHistoricalQuestionnaire,year,id,value);})();
