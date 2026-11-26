@@ -38,3 +38,18 @@ begin
  if public.beagu_postit_create_post_v2(a,gen_random_uuid(),'school','A123456',null,null,repeat('가',201))->>'error' is distinct from 'INVALID_POST' then raise exception 'legacy RPC changed'; end if;
  raise notice 'locker room schema checks passed';
 end $test$;
+
+-- Exact school count; hidden/removed/general rows never contribute.
+insert into public.beagu_postit_posts(school_id,author_uid,body,subject_type,status)
+values ('A123456',gen_random_uuid(),'hidden','school','hidden'),
+ ('A123456',gen_random_uuid(),'removed','school','removed');
+do $counts$
+begin
+ if (select post_count from public.beagu_postit_school_counts_v1(array['A123456'])) is distinct from 2::bigint
+ then raise exception 'school count mismatch'; end if;
+ if exists(select 1 from public.beagu_postit_school_counts_v1(array['Z999999'])) then raise exception 'unknown school count'; end if;
+ if has_function_privilege('anon','public.beagu_postit_school_counts_v1(text[])','execute')
+ or has_function_privilege('authenticated','public.beagu_postit_school_counts_v1(text[])','execute')
+ or not has_function_privilege('service_role','public.beagu_postit_school_counts_v1(text[])','execute')
+ then raise exception 'school count ACL'; end if;
+end $counts$;
