@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "version": "v1.11.21.1",
-  "name": "전국 TOP10 정돈",
+  "version": "v1.11.22",
+  "name": "자동 동기화",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "홈 2026 배구지수 전국 TOP10",
-    "백분위 숫자 미표시 · 순위 중심 간결한 목록",
-    "기존 순위·학교 링크·게임 기록 유지"
+    "VI13 Q01~Q13 전용 자동 집계",
+    "홈 전국 TOP10 및 Lv.2 백분위 연결 후보",
+    "기존 공개 권한 및 게임 기록 유지"
   ]
 }
