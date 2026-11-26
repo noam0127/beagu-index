@@ -20,7 +20,17 @@
    ids.add(r.school_id);prev=r;return true;
   });
  }
- if(typeof module==='object'&&module.exports){module.exports={koreaDay,nextMidnight,validPayload,detailHref};return;}
+ function validAuto(data){
+  if(!data||Object.keys(data).sort().join(',')!=='day,generatedAt,rows'||!Array.isArray(data.rows)||data.rows.length!==10||
+     typeof data.day!=='string'||data.day>koreaDay(Date.now())||!Number.isFinite(Date.parse(data.generatedAt))||
+     Date.parse(data.generatedAt)>Date.now()+60000||Date.now()-Date.parse(data.generatedAt)>48*3600000)return false;
+  const ids=new Set();let prev=0;
+  return data.rows.every((r,i)=>{
+   if(!r||Object.keys(r).sort().join(',')!=='rank,region,school_id,school_name'||typeof r.school_id!=='string'||!/^[A-Z0-9]{7}$/.test(r.school_id)||ids.has(r.school_id)||typeof r.school_name!=='string'||!r.school_name.trim()||r.school_name.length>120||typeof r.region!=='string'||r.region.length>100||!Number.isInteger(r.rank)||!(r.rank===i+1||(i>0&&r.rank===prev)))return false;
+   ids.add(r.school_id);prev=r.rank;return true;
+  });
+ }
+ if(typeof module==='object'&&module.exports){module.exports={koreaDay,nextMidnight,validPayload,validAuto,detailHref};return;}
  const root=document.getElementById('beagu2026Ranking');if(!root||root.hidden)return;
  const list=root.querySelector('[data-ranking-list]'),status=root.querySelector('[data-ranking-status]');
  const tier=()=>Number(document.getElementById('beaguLevelState')?.dataset.level);
@@ -99,7 +109,7 @@
     }
   ]
 };
- const rows=manualSnapshot.rows;
+ let rows=manualSnapshot.rows;
  function el(tag,value){const n=document.createElement(tag);if(value!==undefined)n.textContent=String(value);return n;}
  function paint(){
   list.replaceChildren();
@@ -117,4 +127,19 @@
  window.addEventListener('beagu:level-state-updated',paint);
  window.addEventListener('pageshow',paint);
  paint();
+ let pending=false;
+ async function refresh(){
+  if(pending)return;pending=true;
+  try{
+   const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'home_vi13_sheet_top10'}),cache:'no-store',credentials:'omit'});
+   if(!res.ok)throw Error('VI13_UNAVAILABLE');
+   const data=await res.json();if(!validAuto(data))throw Error('VI13_INVALID');
+   rows=data.rows;status.textContent=data.day+' 기준 · 자동 집계';
+   if(note)note.textContent='자동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
+  }catch{
+   rows=manualSnapshot.rows;status.textContent=manualSnapshot.day+' 기준 · 수동 집계';
+   if(note)note.textContent='수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
+  }finally{pending=false;paint();}
+ }
+ window.addEventListener('pageshow',refresh);refresh();
 })();

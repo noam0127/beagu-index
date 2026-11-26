@@ -1,0 +1,19 @@
+name: VI13 read v58 isolated validation
+on:
+  push:
+    branches: [fix/v11123-vi13-read-v58-only]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node docs/vi13-read-v58-candidate/verify.mjs
+      - run: node --check js/beagu-home-ranking-v1.js
