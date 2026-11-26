@@ -6,7 +6,7 @@ const list=v=>Array.isArray(v)?v:[];
 const norm=v=>typeof v==='string'?v.trim().replace(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*|^\d+점:\s*|^\d+\s+(?=\S)/,'').replace(/\s+/g,''):'';
 const yearOf=v=>Number(v);
 const defs=[
- ['rest','☕','교사 휴게실'],['grade','🏢','학년 연구실'],['subject','🗂️','전담 연구실'],
+ ['rest','☕','교사 휴게실'],['extraRest','🛋️','별도 휴식공간'],['grade','🏢','학년 연구실'],['subject','🗂️','전담 연구실'],
  ['toilet','🚻','교직원 화장실'],['pantry','🍵','탕비 공간'],['supplies','📦','학습준비물실'],
  ['shower','🚿','샤워 공간'],['nursing','🍼','수유 공간'],['gym','🏋️','체력단련실'],
  ['dining','🍽️','교직원 식당'],['parent','💬','학부모 상담실'],['student','🪑','학생 상담실'],
@@ -40,11 +40,21 @@ function collect(modes,results,tier){
    const id={Q36:'gradeWater',Q37:'toilet',Q43:'supplies'}[q];
    if(v==='있다')add(id,true,y);else if(v==='없다')add(id,false,y);
   }
+  // 2023 Q11 labels verified against the contemporaneous announcement in
+  // historical restoration candidate 8725ccc6; exact textual matches only.
+  // A bare numeric code or an unpublished row must never activate an icon.
+  if(y===2023&&q==='Q11'){
+   if(compare(v,['학년연구실과 휴식장소가 있음','학년연구실 하나 있음']))add('grade',true,y);
+   if(compare(v,['학년 연구실도 없음']))add('grade',false,y);
+   if(compare(v,['여러 휴식장소들이 있음','학년연구실과 휴식장소가 있음']))add('extraRest',true,y);
+   if(compare(v,['교실에서만 쉴 수 있음']))add('extraRest',false,y);
+  }
   if((y===2024&&q==='Q11')||(y===2025&&q==='Q20')){
    const opts=y===2024?window.BeaguHistoricalQuestionnaire?.['2024']?.Q11:window.Beagu2025ObservedChoices?.Q20;
    if(!Array.isArray(opts))continue;
    if(compare(v,opts.slice(0,4)))add('grade',true,y);
-   if(y===2024&&compare(v,opts.slice(4,5)))add('grade',false,y);
+   if(compare(v,opts.slice(0,1)))add('extraRest',true,y);
+   if(y===2024&&compare(v,opts.slice(4,5)))add('extraRest',false,y);
    // A general resting place is not necessarily a dedicated teacher lounge.
   }
   if((y===2024&&q==='Q12')||(y===2025&&q==='Q14')){
