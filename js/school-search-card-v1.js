@@ -154,7 +154,7 @@
  }
  function addFacts(card,school,level){
   const facts=el('div','glory-facts');
-  for(const [label,key,suffix] of [['학생 수','student_count','명'],['남교원 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
+  for(const [label,key,suffix] of [['학생 수','student_count','명'],['교원 수','teacher_total','명'],['남교사 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
    const item=el('div','glory-fact');
    const n=school[key];
    const allowed=level>=1&&n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n))&&Number(n)>=0&&(suffix!=='%'||Number(n)<=100);

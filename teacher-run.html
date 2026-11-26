@@ -221,7 +221,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
-<script src="js/arcade-fire-court-bgm-v1.js?v=11116-audio"></script>
+<script src="js/arcade-fire-court-bgm-v1.js?v=11119-audio"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
 <script src="js/teacher-run-4-rules.js?v=11115-qualification"></script>
@@ -425,8 +425,8 @@ function persist(){try{localStorage.setItem("teacherRun4PreviewBestV1",String(be
 function playTone(freq,duration=.1,type="sine",volume=.055){
  if(!soundOn)return;
  try{
-  audio=audio||new(window.AudioContext||window.webkitAudioContext)();
-  if(audio.state==="suspended")audio.resume();
+  audio=bgm.getContext();
+  if(!audio||audio.state!=="running"||document.hidden)return;
   const osc=audio.createOscillator(),gain=audio.createGain(),t=audio.currentTime;
   osc.type=type;osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(volume,t);
   gain.gain.exponentialRampToValueAtTime(.001,t+duration);
@@ -491,7 +491,7 @@ async function start(){
  if(!selected?.eligible){intro();schoolPicker.focus();return;}
  if(state==="starting")return;
  const ticket=++startTicket;
- bgm.setStage(0);if(soundOn)bgm.sync(true); // Start inside user interaction; keep playing when session is approved.
+ bgm.setStage(0);if(soundOn){bgm.unlock();bgm.sync(true,true);} // Start inside user interaction; keep playing when session is approved.
  state="starting";schoolPicker.setLocked(true);
  message("학교 확인 중","",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
@@ -1637,7 +1637,7 @@ canvas.addEventListener("lostpointercapture",e=>{if(pointerId===e.pointerId)tapG
 $("pause").addEventListener("click",pause);
 
 $("how").addEventListener("click",help);
-$("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊":"🔇";$("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}bgm.sync(soundOn&&(state==="playing"||state==="starting"));playTone(800,.12);});
+$("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊":"🔇";$("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}if(soundOn)bgm.unlock();bgm.sync(soundOn&&(state==="playing"||state==="starting"),true);playTone(800,.12);});
 let lastEmbeddedHeight = 0;
 function postHeight(){
  if(window.parent===window)return;

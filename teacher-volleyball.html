@@ -226,7 +226,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
-<script src="js/arcade-fire-court-bgm-v1.js?v=11116-audio"></script>
+<script src="js/arcade-fire-court-bgm-v1.js?v=11119-audio"></script>
 <script src="js/volley-touch-v1.js?v=11111"></script>
 <script src="js/arcade-result-share-v1.js?v=11115-deuce"></script>
 <script>
@@ -546,22 +546,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     soundButton.setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
   }
   syncSoundUI();
-  function unlockSound(){
-    if(!soundOn)return;
-    try{
-      const Ctx=window.AudioContext||window.webkitAudioContext;
-      if(!Ctx)return;
-      audioContext=audioContext||new Ctx();
-      if(audioContext.state==="suspended")audioContext.resume();
-    }catch(e){}
-  }
+  function unlockSound(){if(soundOn)audioContext=bgm.unlock();}
   function tone(freq,duration=.11,type="sine",volume=.055,delay=0,toFreq=null){
     if(!soundOn)return;
     try{
-      const Ctx=window.AudioContext||window.webkitAudioContext;
-      if(!Ctx)return;
-      audioContext=audioContext||new Ctx();
-      if(audioContext.state==="suspended")audioContext.resume();
+      audioContext=bgm.getContext();
+      if(!audioContext||audioContext.state!=='running'||document.hidden)return;
       const start=audioContext.currentTime+delay;
       const oscillator=audioContext.createOscillator(),gain=audioContext.createGain();
       oscillator.type=type;oscillator.frequency.setValueAtTime(freq,start);
@@ -581,7 +571,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     try{localStorage.setItem(SOUND_KEY,soundOn?"1":"0");}catch(e){}
     syncSoundUI();
     bgm.sync(soundOn&&["starting","playing","point"].includes(state.phase));
-    if(soundOn)tone(660,.09,"sine",.055);
+    if(soundOn){unlockSound();tone(660,.09,"sine",.055);}
   });
   function resetPower(){
     state.specialCooldownFrames=0;state.specialChargeFrames=0;
@@ -712,7 +702,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       schoolPicker.focus();syncUI();return;
     }
     if(state.phase==="starting")return;
-    bgm.setStage(0);if(soundOn)bgm.sync(true); // Start audio inside the initiating click (mobile gesture policy).
+    bgm.setStage(0);if(soundOn){unlockSound();bgm.sync(true,true);} // Start audio inside the initiating click (mobile gesture policy).
     const previousPhase=state.phase;
     const ticket=++startTicket;
     state.phase="starting";schoolPicker.setLocked(true);syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");

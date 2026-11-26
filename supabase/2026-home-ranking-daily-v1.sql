@@ -10,7 +10,7 @@ create table if not exists beagu_private.beagu_2026_home_rank_config_v1(
 create table if not exists beagu_private.beagu_2026_home_rank_daily_v1(
  day date not null, access_level integer not null check(access_level in(1,2)),
  source_version text not null, percentile_method text not null,
- rows jsonb not null check(jsonb_typeof(rows)='array' and jsonb_array_length(rows)<=20),
+ rows jsonb not null check(jsonb_typeof(rows)='array' and jsonb_array_length(rows)<=10),
  generated_at timestamptz not null default now(), primary key(day,access_level)
 );
 alter table beagu_private.beagu_2026_home_rank_config_v1 enable row level security;
@@ -46,7 +46,7 @@ begin
    from candidates c join approved a using(school_id,percentile) join public.schools s using(school_id)
   ), ranked as (
    select school_id,school_name,region,percentile,rank() over(order by percentile desc) as rank
-   from eligible order by percentile desc,school_id asc limit 20
+   from eligible order by percentile desc,school_id asc limit 10
   )
   select coalesce(jsonb_agg(jsonb_build_object('school_id',school_id,'school_name',school_name,'region',region,'percentile',percentile,'rank',rank) order by percentile desc,school_id),'[]'::jsonb) into result from ranked;
   insert into beagu_private.beagu_2026_home_rank_daily_v1(day,access_level,source_version,percentile_method,rows,generated_at)
@@ -78,7 +78,7 @@ returns jsonb language sql stable security invoker set search_path='' as $$
     else jsonb_build_object('day',null,'rows','[]'::jsonb) end
   from beagu_private.beagu_2026_home_rank_daily_v1 d
   join beagu_private.beagu_2026_home_rank_config_v1 c on c.singleton and d.source_version=c.source_version and d.percentile_method=c.percentile_method
-  where p_level in(1,2) and d.access_level=p_level and d.day<=(now() at time zone 'Asia/Seoul')::date
+  where jsonb_array_length(d.rows)<=10 and p_level in(1,2) and d.access_level=p_level and d.day<=(now() at time zone 'Asia/Seoul')::date
   order by d.day desc limit 1
  ),jsonb_build_object('day',null,'rows','[]'::jsonb))
 $$;

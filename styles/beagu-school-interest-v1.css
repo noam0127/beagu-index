@@ -40,3 +40,10 @@
 .beagu-interest-number{color:#087c66;font-weight:800}
 .beagu-interest-updated{margin:5px 0 0;color:#8a99ad;font-size:11px;text-align:right}
 @media(max-width:410px){.beagu-interest--standalone{margin-top:16px;padding:17px 14px}.beagu-interest-description{font-size:11px}}
+
+.beagu-interest--standalone{padding:14px 13px;margin:14px 0 18px}
+.beagu-interest .beagu-interest-link{display:flex;align-items:center;gap:8px;min-width:0;padding:5px 4px;color:inherit;text-decoration:none}
+.beagu-interest .beagu-interest-rank{flex:0 0 2ch;min-width:2ch;white-space:nowrap;word-break:keep-all;font-variant-numeric:tabular-nums;font-size:13px;color:#435a78}
+.beagu-interest .beagu-interest-school{gap:1px}.beagu-interest .beagu-interest-school strong{font-size:13px}
+.beagu-interest .beagu-interest-status{padding:7px 4px}.beagu-interest .beagu-interest-number{font-size:11px}
+@media(prefers-color-scheme:dark){.beagu-interest{background:#172334;border-color:#40516b;color:#e6eef9}.beagu-interest .beagu-interest-head h2,.beagu-interest .beagu-interest-rank,.beagu-interest .beagu-interest-school small{color:#d3e3fa}.beagu-interest .beagu-interest-number{color:#89e2cb}.beagu-interest .beagu-interest-item{border-color:#40516b}}

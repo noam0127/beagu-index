@@ -32,7 +32,7 @@ select public.beagu_2026_home_ranking_refresh_v1();
 select public.beagu_2026_home_ranking_refresh_v1();
 do $$ declare r jsonb; begin
  r:=public.beagu_2026_home_ranking_read_v1(1)->'rows';
- if jsonb_array_length(r)<>20 or (r->0->>'rank')::int<>1 or (r->1->>'rank')::int<>1 or (r->2->>'rank')::int<>3 then raise exception 'ranking/tie/limit'; end if;
+ if jsonb_array_length(r)<>10 or (r->0->>'rank')::int<>1 or (r->1->>'rank')::int<>1 or (r->2->>'rank')::int<>3 then raise exception 'ranking/tie/limit'; end if;
  if exists(select 1 from jsonb_array_elements(r) e where e->>'school_id'='0000003') then raise exception 'wrong source leak'; end if;
  if jsonb_array_length(public.beagu_2026_home_ranking_read_v1(2)->'rows')<>1 then raise exception 'tier leak'; end if;
  if public.beagu_2026_home_ranking_read_v1(0)->'rows'<>'[]'::jsonb then raise exception 'lv0 leak'; end if;

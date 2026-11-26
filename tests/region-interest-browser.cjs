@@ -1,11 +1,11 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
 (async()=>{const b=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const p=await b.newPage({viewport:{width:390,height:844}});
 await p.setContent('<section id="beaguInterest">학교</section><section id="regionPanel" hidden><select id="regionSelect"><option value="">선택</option><option>부산</option></select><select id="officeSelect"><option value="">선택</option><option value="부산광역시북부교육지원청">북부</option></select></section><section id="beaguRegionInterest" hidden><ol data-region-interest-list></ol><p data-region-interest-status></p></section>');
-await p.evaluate(()=>{window.beaguVisitor='11111111-1111-1111-1111-111111111111';window.calls=[];window.supabaseClient={rpc:(name,args)=>{calls.push({name,args});return {then(resolve){resolve({data:name.includes('top5')?[{region:'부산',office:'부산광역시북부교육지원청'},{region:'경기',office:'경기도광명교육지원청'}]:true,error:null});}}}}});
+await p.evaluate(()=>{window.beaguVisitor='11111111-1111-1111-1111-111111111111';window.calls=[];window.supabaseClient={rpc:(name,args)=>{calls.push({name,args});return {then(resolve){resolve({data:name.includes('top10')?[{region:'부산',office:'부산광역시북부교육지원청'},{region:'경기',office:'경기도광명교육지원청'}]:true,error:null});}}}}});
 await p.addScriptTag({content:fs.readFileSync('js/beagu-region-interest-v1.js','utf8')});
 assert.equal(await p.locator('#beaguRegionInterest').isVisible(),false);assert.equal(await p.locator('#beaguInterest').isVisible(),true);
 await p.evaluate(()=>document.getElementById('regionPanel').hidden=false);
-await p.getByText('부산 북부',{exact:true}).waitFor();assert.equal(await p.locator('#beaguInterest').isVisible(),false);
+await p.getByText('부산 북부',{exact:true}).waitFor();assert.equal(await p.locator('.beagu-interest-rank').first().textContent(),'1');assert.equal(await p.locator('#beaguInterest').isVisible(),false);
 await p.locator('#regionSelect').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');
 assert.equal(await p.evaluate(()=>calls.filter(x=>x.name.includes('record')).length),0);
 await p.locator('#officeSelect').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');

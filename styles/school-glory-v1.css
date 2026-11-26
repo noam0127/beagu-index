@@ -40,3 +40,8 @@ body:is(.beagu-page-search,.beagu-page-lv1) #results .school-glory-card .glory-a
 
 /* v1.11.17: compact four-year search card; missing data are not zero. */
 .glory-four-year{display:grid;gap:6px}.glory-year-row{display:grid;grid-template-columns:34px minmax(24px,1fr) minmax(48px,auto);align-items:center;gap:8px;min-width:0;font-size:11px}.glory-year-row .glory-track{min-width:0;height:7px}.glory-year-row .glory-track-missing{background:transparent;border-bottom:1px dashed #94a3b84d;border-radius:0}.glory-year-label{font-variant-numeric:tabular-nums}.glory-year-row .glory-year-value{font-size:11px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.glory-year-row[data-year="2026"] .glory-fill{background:#9333ea}
+
+/* Four facts in stable order; protected price stays separate. */
+.glory-facts,.school-glory-card>.glory-facts,.public-official-basics .glory-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding:2px 0 8px}
+.glory-facts [data-fact-key="student_count"]{order:1}.glory-facts [data-fact-key="teacher_total"]{order:2}.glory-facts [data-fact-key="male_teacher_ratio"]{order:3}.glory-facts [data-fact-key="junior_teacher_ratio"],.glory-facts [data-fact-key="second_grade_teacher_ratio"]{order:4}.glory-facts [data-fact-key="housing_price_won"]{order:5;grid-column:1/-1}
+.glory-fact-year{color:inherit;opacity:.75}

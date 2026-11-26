@@ -27,7 +27,7 @@ function create(kind){
  const tracks=playlists[kind],Context=root.AudioContext||root.webkitAudioContext;
  if(!Context){
   const legacy=root.BeaguArcadeBgm.create(kind);
-  return Object.freeze({sync:legacy.sync,setStage(){},setBoss(){},dispose:legacy.dispose});
+  return Object.freeze({sync:legacy.sync,setStage(){},setBoss(){},unlock(){return null;},getContext(){return null;},dispose:legacy.dispose});
  }
  let ctx=null,master=null,bus=null,timer=null,phase=0,boss=null,step=0,wanted=false,disposed=false,opening=false;
  const voices=new Set(),buses=new Set();
@@ -65,11 +65,19 @@ function create(kind){
   if(!bus)newBus();beat();
   timer=setInterval(beat,Math.round(30000/track().tempo));
  }
+ function ensureContext(){
+  if(!ctx){ctx=new Context();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);ctx.addEventListener?.("statechange",contextState);}
+  return ctx;
+ }
+ function unlock(){
+  if(disposed||document.hidden)return null;
+  try{ensureContext();if(ctx.state!=='running')Promise.resolve(ctx.resume()).then(play,()=>{});return ctx;}catch(_){return null;}
+ }
  function sync(on,gesture=false){
   wanted=Boolean(on);if(disposed)return;
   if(!wanted||document.hidden){silence();return;}
   try{
-   if(!ctx){ctx=new Context();master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);ctx.addEventListener?.("statechange",contextState);}
+   ensureContext();
    if(ctx.state==='running'){play();return;}
    if(opening&&!gesture)return;opening=true;
    Promise.resolve(ctx.resume()).then(()=>{opening=false;play();},()=>{opening=false;});
@@ -90,7 +98,7 @@ function create(kind){
  document.addEventListener('pointerup',gesture,true);
  document.addEventListener('touchend',gesture,true);
  document.addEventListener('keydown',gesture,true);
- return Object.freeze({sync,setStage,setBoss,get boss(){return boss;},get stage(){return phase;},dispose(){
+ return Object.freeze({sync,setStage,setBoss,unlock,getContext:()=>ctx,get boss(){return boss;},get stage(){return phase;},dispose(){
   disposed=true;wanted=false;silence();document.removeEventListener('visibilitychange',visibility);
   document.removeEventListener('pointerup',gesture,true);document.removeEventListener('touchend',gesture,true);document.removeEventListener('keydown',gesture,true);ctx?.removeEventListener?.('statechange',contextState);
   if(ctx)void ctx.close().catch(()=>{});

@@ -6,3 +6,13 @@
 .school-count-pair>.school-like-button,.school-count-pair>.school-view-count,.school-count-pair>.school-report-actions{flex:0 0 auto;white-space:nowrap;min-width:0;margin:0}
 .school-count-pair>.school-report-actions{flex-wrap:nowrap}.school-card .school-name>.school-name-text{min-width:0;overflow-wrap:anywhere}
 @media(max-width:420px){.school-count-pair,.glory-header-meta.school-count-pair{gap:5px}}
+
+.school-count-pair,.glory-header-meta.school-count-pair{gap:8px;align-self:flex-start;align-items:center;justify-content:flex-end}
+.school-count-pair .school-like-button,.school-count-pair .school-view-count{display:inline-flex;align-items:center;gap:3px;padding:0;min-height:26px;font-size:12px;line-height:1.2;font-variant-numeric:tabular-nums;color:inherit}
+.school-count-pair .school-like-count,.school-count-pair .school-view-number{font-size:12px;color:inherit;font-weight:650}
+.school-count-pair .school-like-glyph{font-size:17px;width:17px;line-height:1;text-align:center;color:#d65079}
+.school-count-pair .school-view-eye{width:17px;height:17px;flex-basis:17px;opacity:1}
+body.beagu-page-report .school-hero .hero-top>.court-hero-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.court-hero-right .access-tag{align-self:flex-end}
+@media(max-width:420px){.school-count-pair,.glory-header-meta.school-count-pair{gap:5px}}
+@media(prefers-color-scheme:dark){.school-count-pair .school-like-glyph{color:#f58dad}}

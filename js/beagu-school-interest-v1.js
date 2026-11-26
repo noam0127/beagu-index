@@ -5,12 +5,12 @@
   const root=document.getElementById('beaguInterest');
   if(!root)return;
   const carousel=root.dataset.interestCarousel==='true';
-  const topFive=root.dataset.interestTopFive==='true';
+  const topTen=root.dataset.interestTopTen==='true'||root.dataset.interestTopFive==='true';
   const list=root.querySelector('[data-interest-list]');
   const message=root.querySelector('[data-interest-status]');
   const more=root.querySelector('[data-interest-more]');
   const updated=root.querySelector('[data-interest-updated]');
-  if(!list||!message||(!carousel&&!topFive&&!more))return;
+  if(!list||!message||(!carousel&&!topTen&&!more))return;
   const endpoint='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-school-interest-v1';
   const key='beagu-level-session-v1';
   const idPattern=/^[0-9]{7}$/;
@@ -34,7 +34,7 @@
   function render(){
     list.replaceChildren();
     const visible=carousel?(schools.length?[schools[activeIndex%schools.length]]:[]):
-      (expanded?schools:schools.slice(0,5));
+      (topTen||expanded?schools:schools.slice(0,5));
     for(const school of visible){
       const item=el('li','beagu-interest-item');
       const link=el('a','beagu-interest-link');
@@ -61,7 +61,7 @@
     if(!schools.length)message.textContent='최근 72시간 급상승 학교가 없습니다.';
     if(more){
       more.hidden=schools.length<=5;
-      more.textContent=expanded?'접기':'10위까지 보기';
+      more.textContent=expanded?'접기':'TOP 10 전체보기';
     }
   }
   if(more)more.addEventListener('click',()=>{expanded=!expanded;render()});
@@ -86,7 +86,7 @@
       if(!response.ok)throw Error('RANKING_UNAVAILABLE');
       const result=await response.json();
       if(seq!==requestId||getToken()!==token)return;
-      schools=(Array.isArray(result.rising)?result.rising:[]).filter(valid).slice(0,topFive?5:10);
+      schools=(Array.isArray(result.rising)?result.rising:[]).filter(valid).slice(0,10);
       activeIndex=activeIndex%Math.max(1,schools.length);
       lastToken=token;lastLoadedAt=Date.now();
       render();

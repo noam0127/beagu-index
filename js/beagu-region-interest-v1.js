@@ -1,4 +1,4 @@
-/* Count only a genuine dropdown pair selection. Public top five contain labels only. */
+/* Count only a genuine dropdown pair selection. Public top ten contain labels only. */
 (()=>{
 'use strict';
 const root=document.getElementById('beaguRegionInterest'),schoolRank=document.getElementById('beaguInterest'),panel=document.getElementById('regionPanel'),region=document.getElementById('regionSelect'),office=document.getElementById('officeSelect');
@@ -20,12 +20,13 @@ async function load(force=false){
  if(!visible()||(!force&&Date.now()-loadedAt<900000))return;
  const seq=++request;
  try{
-  const {data,error}=await client.rpc('beagu_region_interest_top5_v1');
+  let {data,error}=await client.rpc('beagu_region_interest_top10_v1');
+  if(error&&(error.code==='PGRST202'||error.code==='42883'))({data,error}=await client.rpc('beagu_region_interest_top5_v1'));
   if(seq!==request||!visible())return;
   if(error||!Array.isArray(data))throw Error('unavailable');
-  const rows=data.filter(r=>r&&typeof r.region==='string'&&r.region.length>0&&r.region.length<=24&&typeof r.office==='string'&&r.office.length>0&&r.office.length<=120).slice(0,5);
+  const rows=data.filter(r=>r&&typeof r.region==='string'&&r.region.length>0&&r.region.length<=24&&typeof r.office==='string'&&r.office.length>0&&r.office.length<=120).slice(0,10);
   list.replaceChildren();
-  rows.forEach((r,i)=>{const item=el('li','beagu-interest-item');const body=el('div','beagu-interest-link');body.append(el('span','beagu-interest-rank',String(i+1)+'위'),el('strong','beagu-interest-school',r.region+' '+short(r.region,r.office)));item.append(body);list.append(item);});
+  rows.forEach((r,i)=>{const item=el('li','beagu-interest-item');const body=el('div','beagu-interest-link');body.append(el('span','beagu-interest-rank',String(i+1)),el('strong','beagu-interest-school',r.region+' '+short(r.region,r.office)));item.append(body);list.append(item);});
   status.hidden=rows.length>0;status.textContent=rows.length?'':'아직 집계된 지역 선택 기록이 없습니다.';loadedAt=Date.now();
  }catch(_){if(seq===request){list.replaceChildren();status.hidden=false;status.textContent='급상승 지역을 불러오지 못했습니다.';}}
 }

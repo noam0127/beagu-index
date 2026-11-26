@@ -27,8 +27,9 @@ for(const guard of [
  /claims\.aal!=="aal2"/,/beagu_admin_active_mfa_session/
 ])assert.match(api,guard);
 assert.doesNotMatch(api,/from\("survey_answers"\)|update\(\{.*answer_value/);
-assert.match(publicUI,/Lv\.2 답변 정정 요청/);
-assert.match(publicUI,/원본 응답/);
+assert.match(publicUI,/의심 데이터 신고/);
+assert.match(publicUI,/action:"simple_report"/);
+assert.doesNotMatch(publicUI,/civicCorrect|civicForm|action:"status"/);
 assert.match(adminUI,/window\.BeaguCivicAdmin/);
 assert.match(adminUI,/textContent=text/);
 assert.match(adminLogin,/window\.BeaguCivicAdmin\?\.mount/);
