@@ -87,6 +87,8 @@ end $nick$;
 -- The real admin migration grants SELECT to service_role; reproduce that ACL.
 grant select on public.beagu_admin_accounts to service_role;
 update public.beagu_admin_accounts set enabled=true where user_id='90000000-0000-4000-8000-000000000001';
+-- The earlier synthetic operator comment must not trip the real 30s cooldown.
+update public.beagu_postit_comments set created_at=now()-interval '2 days' where author_uid='90000000-0000-4000-8000-000000000002';
 set role service_role;
 do $service$
 declare p uuid; name1 text; name2 text; flag boolean; r jsonb;
@@ -99,6 +101,7 @@ begin
  select locker_nickname into name2 from public.beagu_postit_comments where id=(r->>'id')::uuid;
  if name2 is distinct from name1 then raise exception 'service writer thread alias mismatch';end if;
  r:=public.beagu_postit_create_comment_v2('90000000-0000-4000-8000-000000000002',gen_random_uuid(),p,'operator comment');
+ if r->>'id' is null then raise exception 'operator comment RPC failed: %',r; end if;
  select locker_nickname,locker_operator into name2,flag from public.beagu_postit_comments where id=(r->>'id')::uuid;
  if name2 is distinct from '카리브해매너티' or flag is distinct from true then raise exception 'operator service role mismatch';end if;
  begin
