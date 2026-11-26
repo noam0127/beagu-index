@@ -1164,6 +1164,28 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": null
+    },
+    {
+      "order": 49,
+      "version": "v1.12.01",
+      "name": "한 눈에 보는 학교",
+      "scope": "학교 상세 시설 아이콘 45종 · 공개 가능한 역대 시설 자료 통합 · 중복 문항 접기 · 모바일 UI · 기존 공개 권한 유지",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.12.01-facilities-production-base",
+      "pr": 329,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml",
+        "school-facilities-v11126.yml"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.23.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "ceffeacba51dce6130fdfa8344222421bba63b2d"
     }
   ],
   "source_manifest": {
