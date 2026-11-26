@@ -12,6 +12,7 @@ export function parseVI13Sheet(values,now=Date.now()){
  if(!Array.isArray(meta)||meta[0]!=='VI13_SYNC_V1'||meta[4]!==METHOD||meta[6]!=='PRIVATE'||
   !integer(meta[2],572,10000)||meta[2]!==data.length||!integer(meta[3],1,50000)||
   !integer(meta[5],meta[3],50000)||!HEADER.every((h,i)=>header?.[i]===h))throw Error('VI13_SHEET_SCHEMA');
+ const verification=parseSourceRecheck(meta[7],meta);
  const stamp=Date.parse(meta[1]);
  if(!Number.isFinite(stamp)||stamp>now+60000||now-stamp>MAX_AGE_MS)throw Error('VI13_SHEET_STALE');
  let total=0,prev=null;const seen=new Set(),rows=[];
@@ -36,7 +37,8 @@ export function parseVI13Sheet(values,now=Date.now()){
   const exact=Math.round(1000*(rows.length-j)/(rows.length-1))/10;
   for(let k=i;k<j;k++)if(rows[k].percentile!==exact)throw Error('VI13_SHEET_PERCENTILE');i=j;
  }
- return {day:new Date(stamp+9*3600000).toISOString().slice(0,10),generatedAt:meta[1],rows};
+ if(verification&&verification.extremeIds.some(id=>!seen.has(id)))throw Error('VI13_RECHECK_IDS');
+ return {day:new Date(stamp+9*3600000).toISOString().slice(0,10),generatedAt:meta[1],rows,verification};
 }
 // Existing owner-approved values remain the permission gate. Changed/unapproved values
 // are not substituted; both search and detail see the exact same sheet number.
@@ -66,5 +68,18 @@ export function validateVI13Push(payload,now=Date.now()){
  // Canonicalize IDs and reject extra cell data before persistence.
  const [m,h,...r]=payload.values;
  if(m.length>8||h.length!==8||r.some(row=>row.length!==8))throw Error('VI13_PUSH_SCHEMA');
- return [[m[0],m[1],m[2],m[3],m[4],m[5],m[6],'' ],HEADER,...snapshot.rows.map(x=>[x.school_id,x.school_name,x.region,x.percentile,x.rank,x.observations,x.sum_units,x.flags])];
+ return [[m[0],m[1],m[2],m[3],m[4],m[5],m[6],snapshot.verification?JSON.stringify(snapshot.verification):'' ],HEADER,...snapshot.rows.map(x=>[x.school_id,x.school_name,x.region,x.percentile,x.rank,x.observations,x.sum_units,x.flags])];
+}
+
+// Metadata is emitted only by the authenticated source-side second pass; never by browsers.
+// It is stored atomically with the existing snapshot and contains no raw response values.
+export function parseSourceRecheck(raw,meta){
+ if(raw===undefined||raw===null||raw==='')return null;
+ if(typeof raw!=='string'||raw.length>120000)throw Error('VI13_RECHECK_FORMAT');
+ const v=JSON.parse(raw);
+ if(!v||Array.isArray(v)||Object.keys(v).sort().join(',')!=='extremeIds,observations,schools,source,sourceRows,version'||
+ v.version!=='VI13_SOURCE_RECHECK_V1'||v.source!=='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4'||
+ v.sourceRows!==meta[5]||v.schools!==meta[2]||v.observations!==meta[3]||!Array.isArray(v.extremeIds)||
+ v.extremeIds.length>meta[2]||new Set(v.extremeIds).size!==v.extremeIds.length||v.extremeIds.some(id=>typeof id!=='string'||!ID.test(id)))throw Error('VI13_RECHECK_SCHEMA');
+ return v;
 }

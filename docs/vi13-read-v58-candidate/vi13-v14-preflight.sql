@@ -7,6 +7,8 @@ create or replace function public.beagu_2026_vi13_v14_checks(p_ids text[],p_gene
 returns jsonb language sql stable security invoker set search_path='' as $v14$
 with snapshot as (
  select values_json,
+ -- Empty metadata is the legacy snapshot; only trusted ingest may store a validated second pass.
+ case when coalesce(values_json->0->>7,'')='' then null::jsonb else (values_json->0->>7)::jsonb end as verification,
  -- A single immutable snapshot independently reproduced from the original 797 rows.
  -- This is a technical checksum, not a school review or a publication approval.
  (values_json->0->>1='2026-11-26T09:24:51.340Z' and
@@ -17,7 +19,7 @@ with snapshot as (
  and p_level=2 and cardinality(p_ids) between 1 and 20
  and not exists(select 1 from unnest(p_ids) u(id) where id is null or id !~ '^[A-Z0-9]{7}$')
 ), source_rows as (
- select j,exact_reproduced from snapshot cross join lateral jsonb_array_elements(values_json) with ordinality t(j,i)
+ select j,exact_reproduced,verification from snapshot cross join lateral jsonb_array_elements(values_json) with ordinality t(j,i)
  where i>2 and j->>0=any(p_ids)
 ), core as (
  select j,r.school_response_rows n,r.source_snapshot_at,q->>'id' id,
@@ -69,7 +71,10 @@ with snapshot as (
   'identity',coalesce(s.school_id is not null and s.school_name=j->>1 and s.status='운영',false),
   'scoreAgreement',v.score_agreement,
   -- Old data can prove an equal score, not current underlying source rows.
-  'sourceAgreement',case when exact_reproduced then true else null::boolean end,
+  'sourceAgreement',case when exact_reproduced then true
+   when verification->>'version'='VI13_SOURCE_RECHECK_V1'
+    and verification->>'source'='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4'
+    then true else null::boolean end,
   'notice',null::boolean, -- current survey notice compatibility not verified
   'smallSample',case when k.teacher_total=1 and k.n=1 then false when k.teacher_total<k.n then false else null::boolean end,
   'reidentification',case when k.teacher_total=1 and k.n=1 then false when k.n=1 and k.current_surface then false else null::boolean end,
@@ -78,13 +83,24 @@ with snapshot as (
     'teacherCountUnknown',k.teacher_total is null or k.teacher_total<=0,
     'observationsExceedStaff',coalesce(k.n>k.teacher_total,false),
     'priorSurfaceOverlap',k.prior_surface,'currentSurfaceOverlap',k.current_surface),
-  'manipulation',case when (j->>7)::int>0 or v.extreme_pattern then false else null::boolean end,
+  'manipulation',case when (j->>7)::int>0 or v.extreme_pattern
+   or coalesce(verification->'extremeIds' ? (j->>0),false) then false
+   when verification->>'version'='VI13_SOURCE_RECHECK_V1' then true else null::boolean end,
   'blocked',(
    exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=j->>0 and h.active)
    or exists(select 1 from beagu_private.beagu_2026_civic_feedback f where f.school_id=j->>0 and f.status in ('PENDING','REVIEWING'))
    or exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=j->>0 and d.access_level=2 and d.decision is distinct from 'APPROVE')
    or exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=2 and l.approved is false)
-   or exists(select 1 from beagu_private.beagu_2026_auto_review_status a where a.school_id=j->>0 and a.survey_year=2026 and a.technical_status is distinct from 'TECHNICAL_CHECK_PASSED')
+   -- The old all-13 coverage requirement is not VI13 MIN9 A4 P2 R1.
+   -- Preserve old actual unknown-option and identity review reasons until reconciled;
+   -- do not treat generic missing consent/distinct/privacy paperwork as a technical block.
+   or exists(select 1 from beagu_private.beagu_2026_auto_review_status a
+     where a.school_id=j->>0 and a.survey_year=2026
+       and (a.technical_status='PRELAUNCH_EXCLUDED'
+       or a.reasons && array['UNRECOGNIZED_MANDATORY_ANSWER','SCHOOL_MATCH_NEEDS_REVIEW']::text[]))
+   or (not exact_reproduced and verification is null and exists(
+     select 1 from beagu_private.beagu_2026_auto_review_status a where a.school_id=j->>0 and a.survey_year=2026
+      and a.technical_status is distinct from 'TECHNICAL_CHECK_PASSED'))
   )
  ) as checks
  from source_rows left join public.schools s on s.school_id=j->>0

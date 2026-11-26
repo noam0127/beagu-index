@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {reconstructVI13,normalizeSourceTime,assessRevalidation} from './revalidate-source-v14.mjs';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {METHOD,parseVI13Sheet} from './_shared/vi13-sheet-sync.mjs';
+import {METHOD,parseVI13Sheet,validateVI13Push} from './_shared/vi13-sheet-sync.mjs';
 import {automaticVI13Values,autoSheetValues,autoSheetSelection,mergeVI13Selection,autoSheetTop10} from './_shared/vi13-read-projection.mjs';
 import {normalizeTimeMinutes,sanitizeEditedQuestions} from './_shared/publication-v14-sanitize.mjs';
 import {publicQuestionResults} from './_shared/results-2026.mjs';
@@ -74,3 +74,17 @@ assert.ok(source.includes('mergeVI13Selection(out,sheetSelection)'));
 assert.ok(preflight.includes('exact_reproduced then true'));
 assert.ok(preflight.includes('priorSurfaceOverlap'));
 console.log('PASS cohort-specific fail-closed shared read path; historical legacy outside cohort preserved');
+
+// Old snapshot remains valid; future source metadata is bounded and atomically retained.
+const future=structuredClone(values),recheck={version:'VI13_SOURCE_RECHECK_V1',source:'1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4',sourceRows:797,schools:604,observations:724,extremeIds:['7000001']};
+future[0][7]=JSON.stringify(recheck);
+assert.deepEqual(parseVI13Sheet(future).verification,recheck);
+assert.deepEqual(JSON.parse(validateVI13Push({kind:'VI13_SHEET_PUSH_V1',values:future})[0][7]),recheck);
+for(const v of [{...recheck,observations:725},{...recheck,extremeIds:['9999999']},{...recheck,approval:true}]){
+ const bad=structuredClone(future);bad[0][7]=JSON.stringify(v);assert.throws(()=>parseVI13Sheet(bad));
+}
+assert.equal(parseVI13Sheet(values).verification,null);
+assert.ok(preflight.includes('UNRECOGNIZED_MANDATORY_ANSWER'));
+assert.ok(preflight.includes('not exact_reproduced and verification is null'));
+assert.ok(preflight.includes("verification->'extremeIds'"));
+console.log('PASS source metadata schema, stale legacy and reason-specific blocker');
