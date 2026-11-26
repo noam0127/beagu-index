@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {historicalChoice,filterEdited2026Results} from '../supabase/functions/_shared/closed-choice-privacy.mjs';
+import {historicalChoice,filterEdited2026Results,storySignalChoice} from '../supabase/functions/_shared/closed-choice-privacy.mjs';
 import {catalog} from '../supabase/functions/_shared/questionnaire-2026.mjs';
 const canary='SYNTHETIC_PRIVATE_OTHER_TEXT';
 const context=vm.createContext({window:{}});
@@ -57,3 +57,38 @@ assert.equal(historicalChoice(2025,'Q27','1 대부 바르게 인사한다'),fina
 const mixedOther=[{questionId:'Q12',row:-1,values:[catalog.Q12.options[0],'기타',canary]}];
 assert.deepEqual(filterEdited2026Results(mixedOther),[{questionId:'Q12',row:-1,values:[catalog.Q12.options[0]]}]);
 assert.equal(context.window.Beagu2026ApprovedResults.summary(mixedOther).Q12,catalog.Q12.options[0]);
+
+// Story signal path must never return raw unregistered labels.
+for(const year of [2023,2024,2025]){
+ for(const [id,choices] of Object.entries(context.window.BeaguHistoricalQuestionnaire[year])){
+  for(const v of choices)assert.equal(storySignalChoice(year,id,v),historicalChoice(year,id,v));
+  assert.equal(storySignalChoice(year,id,canary),null);
+ }
+}
+for(const [id,m] of Object.entries(catalog)){
+ const opts=m.kind==='grid'?m.columns:m.options;
+ for(const v of opts)assert.equal(storySignalChoice(2026,id,v),id==='Q31'||id==='Q51'||v==='기타'?null:v);
+ assert.equal(storySignalChoice(2026,id,canary),null);
+}
+assert.equal(storySignalChoice(2026,'Q19','08:30'),'08:30');
+assert.equal(storySignalChoice(2026,'Q19','08:30 '+canary),null);
+assert.equal(storySignalChoice(2026,'Q51',canary),null);
+assert.equal(storySignalChoice(2024,'Q11',canary),null);
+const storyApi=fs.readFileSync('supabase/functions/class-diary-story-signals-v1/index.ts','utf8');
+assert.match(storyApi,/const modeOption=storySignalChoice\(year,questionId,row\.mode_option\)/);
+assert.doesNotMatch(storyApi,/modeOption=safeString\(row\.mode_option/);
+// In the current source form every literal Other option belongs to a single-choice item.
+// A flattened comma string is not evidence of independent selections.
+const sourceCore=fs.readFileSync('scripts/beagu-2026-results-core.js','utf8');
+const sourceVM=vm.createContext({});
+vm.runInContext(sourceCore,sourceVM);
+for(const [id,m] of Object.entries(catalog)){
+ if(!m.options.includes('기타'))continue;
+ assert.equal(m.kind,'choice',id);
+ const fixed=m.options.find(v=>v!=='기타');
+ assert.equal(sourceVM.beagu26Selections(fixed+', '+canary,m.options,false),null);
+ assert.equal(sourceVM.beagu26Selections(fixed+', 기타',m.options,false),null);
+ assert.ok(sourceVM.beagu26Selections(fixed,m.options,false)!==null);
+}
+assert.equal(sourceVM.beagu26Selections('A, '+canary+', B',['A','B'],true),null);
+assert.deepEqual(Array.from(sourceVM.beagu26Selections('A, B',['A','B'],true)),[0,1]);
