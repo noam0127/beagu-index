@@ -1,7 +1,7 @@
 name: Account and Q50 isolated regression
 on:
   push:
-    branches: ['fix/account-home-qa-20261127','fix/defer-level3-community-20261127']
+    branches: ['fix/account-home-qa-20261127','fix/defer-level3-community-20261127','fix/defer-level3-release-20261127']
 permissions:
   contents: read
 jobs:
