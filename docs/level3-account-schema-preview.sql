@@ -1,4 +1,6 @@
 -- PREVIEW ONLY. Review and convert into an official migration before deployment.
+-- v1.12.02.1: lookup is a server-keyed HMAC of the normalized username, not plaintext.
+-- The existing atomic registration RPC accepts the opaque lookup; no new column or grant is necessary.
 begin;
 create table if not exists public.beagu_lv3_accounts (
   account_id uuid primary key default gen_random_uuid(),

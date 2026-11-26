@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { validPassword, passwordLookup, createCredential, verifyCredential } from "../supabase/functions/_shared/level3-credential-v1.mjs";
+import { validPassword, passwordLookup, createCredential, verifyCredential, normalizeUsername, usernameLookup, createUsernameCredential } from "../supabase/functions/_shared/level3-credential-v1.mjs";
 const secret = "ab".repeat(32); // Synthetic test key, not a live credential.
 const other = "cd".repeat(32);
 for (const bad of ["Abc123456", "abcdefghij", "1234567890", "Abc123456!", "Abc12345 6", "한글12345678", "Aa1".repeat(43), null]) {
@@ -25,3 +25,18 @@ assert.equal(await verifyCredential(pw, secret, {...a, salt: "broken"}), false);
 assert.equal(await verifyCredential(pw, secret, {...a, verifier: "broken"}), false);
 assert.equal(JSON.stringify(a).includes(pw), false);
 console.log("Lv.3 credential tests passed");
+
+for(const bad of [null,"abc","a bcd","홍길동1","name@example.com","x".repeat(21)]) assert.equal(normalizeUsername(bad),null);
+assert.equal(normalizeUsername("Teacher_123"),"teacher_123");
+assert.equal(await usernameLookup("Teacher_123",secret),await usernameLookup("teacher_123",secret));
+assert.notEqual(await usernameLookup("TestOnly2026",secret),await passwordLookup("TestOnly2026",secret));
+const u=await createUsernameCredential("teacher_123",pw,pw,secret);
+const v=await createUsernameCredential("teacher_456",pw,pw,secret);
+assert.notEqual(u.lookup,v.lookup);
+assert.notEqual(u.salt,v.salt);
+assert.equal(await verifyCredential(pw,secret,u),true);
+assert.equal(await verifyCredential(pw,secret,v),true);
+assert.equal(await verifyCredential(pw+"x",secret,u),false);
+assert.equal(JSON.stringify(u).includes("teacher_123"),false);
+await assert.rejects(createUsernameCredential("bad!",pw,pw,secret),/INVALID_USERNAME/);
+console.log("PASS username normalization, namespace separation, independent same-password accounts and salted verification");

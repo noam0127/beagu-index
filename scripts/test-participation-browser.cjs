@@ -30,7 +30,7 @@ async function fixture(page,tracker){
    if(tok&&tok===tracker.token)return fulfill(route,200,{level:tracker.level,accountLevel:tracker.accountLevel||tracker.level,provisional:false,expires_at:'2026-11-21T20:00:00+09:00'});
    return fulfill(route,401,{error:'AUTH_REQUIRED'});
   }
-  if(body.action==='level3_register'&&tok===TOKEN2&&body.password==='Example12345'&&body.confirmation===body.password&&body.acknowledged===true){tracker.accountLevel=3;tracker.token=TOKEN3;return fulfill(route,200,{token:TOKEN3,level:2,accountLevel:3});}
+  if(body.action==='level3_register'&&tok===TOKEN2&&body.username==='ExampleUser'&&body.password==='Example12345'&&body.confirmation===body.password&&body.acknowledged===true){tracker.accountLevel=3;tracker.token=TOKEN3;return fulfill(route,200,{token:TOKEN3,level:2,accountLevel:3});}
   if(body.action==='logout'){tracker.token='';tracker.level=0;tracker.accountLevel=0;return fulfill(route,200,{ok:true})}
   return fulfill(route,403,{error:'ACCESS_DENIED'});
  });
@@ -145,6 +145,7 @@ async function hiddenCards(page){
    assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
    assert.match(await page.locator('#togetherBenefitsList').innerText(),/좋아요 누르기/);
    await page.locator('#level3Upgrade').click();
+   await page.locator('#level3Username').fill('ExampleUser');
    await page.locator('#level3Password').fill('Example12345');await page.locator('#level3Confirm').fill('Example12345');await page.locator('#level3Ack').check();await page.locator('#level3Submit').click();
    await page.waitForFunction(()=>document.querySelector('#certificate')?.dataset.level==='3');
    await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.textContent==='Lv.3');

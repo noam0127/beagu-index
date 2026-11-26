@@ -9,9 +9,10 @@
  let mode='',busy=false,verified=null,account=0,provisional=null,verifiedToken='',pendingCreate=location.hash==='#level3-create';
  const session=()=>{try{return sessionStorage.getItem(key)||''}catch{return ''}};
  const valid=value=>/^[A-Za-z0-9]{10,128}$/.test(value)&&/[A-Za-z]/.test(value)&&/[0-9]/.test(value);
- const reveal=q('level3Reveal');
+ const reveal=q('level3Reveal'),username=q('level3Username');
+ const validUsername=value=>/^[A-Za-z0-9_]{4,20}$/.test(value);
  const eligible=()=>verified===2&&account!==3&&provisional===false&&!!verifiedToken&&session()===verifiedToken;
- function clear(){pw.value='';confirm.value='';ack.checked=false;pw.type='password';confirm.type='password';reveal.textContent='표시';reveal.setAttribute('aria-pressed','false');}
+ function clear(){username.value='';pw.value='';confirm.value='';ack.checked=false;pw.type='password';confirm.type='password';reveal.textContent='표시';reveal.setAttribute('aria-pressed','false');}
  reveal.addEventListener('click',()=>{const shown=pw.type==='password';pw.type=confirm.type=shown?'text':'password';reveal.textContent=shown?'숨기기':'표시';reveal.setAttribute('aria-pressed',String(shown));});
  function paint(){
    const signed=account===3&&verified===2&&verifiedToken===session();
@@ -33,8 +34,8 @@
    }
    pendingCreate=false;mode=next;clear();status.textContent='';extra.hidden=next!=='register';confirm.required=ack.required=next==='register';
    pw.autocomplete=next==='register'?'new-password':'current-password';
-   submit.textContent=next==='register'?'Lv.3 계정 생성':'비밀번호 로그인';form.hidden=false;
-   open.setAttribute('aria-pressed',String(next==='register'));login.setAttribute('aria-pressed',String(next==='login'));pw.focus();
+   submit.textContent=next==='register'?'Lv.3 계정 생성':'로그인';form.hidden=false;
+   open.setAttribute('aria-pressed',String(next==='register'));login.setAttribute('aria-pressed',String(next==='login'));username.focus();
  }
  open.addEventListener('click',()=>show('register'));
  login.addEventListener('click',()=>show('login'));
@@ -61,11 +62,12 @@
    e.preventDefault();if(busy||!mode)return;
    const register=mode==='register',start=session();
    if(register&&!eligible()){status.textContent='개인 Lv.2 인증을 확인해 주세요.';return;}
+   if(!validUsername(username.value)){status.textContent='아이디는 영문·숫자·밑줄 4~20자리로 입력해 주세요.';return;}
    if(!valid(pw.value)){status.textContent='영문과 숫자를 포함하여 10자리 이상 입력해 주세요.';return;}
    if(register&&(pw.value!==confirm.value||!ack.checked)){status.textContent='비밀번호 확인과 안내 동의를 확인해 주세요.';return;}
    busy=true;submit.disabled=true;open.disabled=true;login.disabled=true;status.textContent='확인 중…';
    try{
-     const data=await api(register?'level3_register':'level3_login',register?{password:pw.value,confirmation:confirm.value,acknowledged:ack.checked}:{password:pw.value},start);
+     const data=await api(register?'level3_register':'level3_login',register?{username:username.value,password:pw.value,confirmation:confirm.value,acknowledged:ack.checked}:{username:username.value,password:pw.value},start);
      if(!/^[a-f0-9]{64}$/.test(data.token||'')||data.accountLevel!==3)throw Error('INVALID_SESSION');
      const checked=await api('verify',{},data.token);
      if(checked.level!==2||checked.accountLevel!==3||session()!==start)throw Error('INVALID_SESSION');
@@ -77,7 +79,7 @@
      account=3;verified=2;provisional=false;verifiedToken=data.token;pendingCreate=false;paint();
      status.textContent=register?'Lv.3 레벨업 완료':'Lv.3 로그인 완료';
    }catch(err){
-     status.textContent=err.status===429?'인증 요청이 많습니다. 잠시 후 다시 시도해 주세요.':err.status===409?'계정을 만들 수 없습니다. 이미 만든 계정은 비밀번호로 로그인하고, 새 비밀번호는 다른 조합을 사용해 주세요.':err.status===401?'비밀번호를 확인해 주세요.':err.status===403?'개인 Lv.2 참여코드로 다시 인증해 주세요.':'계정 기능을 이용할 수 없습니다. 연결을 확인해 주세요.';
+     status.textContent=err.status===429?'인증 요청이 많습니다. 잠시 후 다시 시도해 주세요.':err.status===409?'계정을 만들 수 없습니다. 다른 아이디를 사용하거나 이미 만든 계정으로 로그인해 주세요.':err.status===401?'아이디 또는 비밀번호를 확인해 주세요.':err.status===403?'개인 Lv.2 참여코드로 다시 인증해 주세요.':'계정 기능을 이용할 수 없습니다. 연결을 확인해 주세요.';
    }finally{clear();busy=false;submit.disabled=false;open.disabled=false;login.disabled=false;}
  });
  function handleHash(){if(location.hash==='#level3-create'){pendingCreate=true;card.scrollIntoView?.({block:'start'});if(eligible())show('register');}else if(location.hash==='#level3-account'&&account!==3){pendingCreate=false;show('login');}}

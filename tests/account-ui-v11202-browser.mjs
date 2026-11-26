@@ -19,8 +19,8 @@ try{
    const send=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
    if(body.action==='login')return send({token:body.code==='PERSONAL1234'?personal:rejected});
    if(body.action==='verify')return send({level:2,accountLevel:token===account?3:2,provisional:token===shared||token===rejected});
-   if(body.action==='level3_register'){if(token!==personal||body.password!==body.confirmation||!body.acknowledged)return send({},403);return send({token:account,accountLevel:3});}
-   if(body.action==='level3_login')return body.password==='FixturePass123'?send({token:account,accountLevel:3}):send({},401);
+   if(body.action==='level3_register'){if(token!==personal||body.username!=='FixtureUser'||body.password!==body.confirmation||!body.acknowledged)return send({},403);return send({token:account,accountLevel:3});}
+   if(body.action==='level3_login')return body.username==='FixtureUser'&&body.password==='FixturePass123'?send({token:account,accountLevel:3}):send({},401);
    return send({},400);
   };
   window.addEventListener('beagu:participation-authenticated',e=>{
@@ -47,6 +47,7 @@ try{
  await page.locator('#beaguParticipationSubmit').click();
  await page.locator('#level3Form').waitFor({state:'visible'});
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),personal);
+ await page.locator('#level3Username').fill('FixtureUser');
  await page.locator('#level3Password').fill('FixturePass123');
  await page.locator('#level3Reveal').click();
  assert.equal(await page.locator('#level3Password').getAttribute('type'),'text');
@@ -61,6 +62,8 @@ try{
  await page.evaluate(()=>{sessionStorage.removeItem('beagu-level-session-v1');window.dispatchEvent(new Event('beagu:participation-logged-out'));});
  await page.locator('#level3Login').click();
  assert.equal(await page.locator('#level3RegisterFields').isVisible(),false);
+ assert.match(await page.locator('.beagu-account-warning').innerText(),/비밀번호 찾기 및 복구는 불가능합니다/);
+ await page.locator('#level3Username').fill('FixtureUser');
  await page.locator('#level3Password').fill('FixturePass123');
  await page.locator('#level3Submit').click();
  await page.waitForFunction(()=>document.getElementById('level3Current').textContent.includes('계정 이용 중'));

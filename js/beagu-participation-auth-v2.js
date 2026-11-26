@@ -43,7 +43,7 @@
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
    <a href="${survey}" target="_blank" rel="noopener noreferrer">Lv.1 참여코드 받기</a>
    <a href="challenge.html">Lv.2 참여코드 받기</a>
-   <a href="challenge.html#level3-account" id="beaguAccountEntry">Lv.3 비밀번호 로그인</a>
+   <a href="challenge.html#level3-account" id="beaguAccountEntry">Lv.3 로그인</a>
    <a href="levels.html" class="beagu-level-guide-link">레벨별 안내 →</a>
   </nav>
  </section>`;

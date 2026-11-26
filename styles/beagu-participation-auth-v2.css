@@ -196,7 +196,7 @@ body.beagu-header-auth-only>.beagu-unified-header{position:sticky;top:0;z-index:
 #level3-account #level3RegisterFields{display:grid;gap:8px}
 #level3-account #level3Form label{font-size:13px;font-weight:750;color:#354d68}
 #level3-account .beagu-account-password{display:flex;position:relative;min-width:0}
-#level3-account #level3Password,#level3-account #level3Confirm{width:100%;min-width:0;box-sizing:border-box;min-height:48px;padding:11px;border:1px solid #cbd8e8;border-radius:10px;background:#fff;color:#20364f;font-size:16px}
+#level3-account #level3Username,#level3-account #level3Password,#level3-account #level3Confirm{width:100%;min-width:0;box-sizing:border-box;min-height:48px;padding:11px;border:1px solid #cbd8e8;border-radius:10px;background:#fff;color:#20364f;font-size:16px}
 #level3-account #level3Password{padding-right:69px}
 #level3-account #level3Reveal{position:absolute;right:5px;top:5px;bottom:5px;width:58px!important;margin:0;padding:4px;border:0;border-radius:8px;background:#edf3fa;color:#355579;font-size:12px;cursor:pointer}
 #level3-account .beagu-account-warning{margin:4px 0;background:#fff5e6;color:#78511d;padding:10px;border-radius:9px;font-size:12px;line-height:1.65}
