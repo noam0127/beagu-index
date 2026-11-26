@@ -9,3 +9,8 @@
 - User explicitly rejected removing ordinary objective responses. 125 observed 2025 labels now independently match the corresponding question's development draft (ignoring formatting only); they are restored in the candidate catalogue. The original final form is still required for the remaining changed and checkbox labels. This is partial candidate coverage, NOT approval to publish a restrictive candidate. No operational change.
 - Original numbered labels support deterministic exact-text equivalence across Arabic/circled numbering, returning canonical catalogue text, not the raw response. No matching by ordinal alone.
 - Do not register or deploy this candidate until existing valid objective responses are confirmed preserved. Remaining unknown choices must not be treated as proof of free text.
+
+## Checkbox source corroboration (2026-11-26)
+- Original calculation workbook 2025배구지수0004, 계산결과 rows 2 and 21, independently defines 16 Q03 and 9 Q04 labels, also present in the prior observed catalogue. Restore these 25 labels in the candidate, preserving exact documented strings. The workbook's calculation headers are corroboration, not proof of complete final-form coverage.
+- Remaining 25 prior observed labels and any original options never observed remain unresolved. Do not mark them as free text by default. Do not register/deploy this incomplete candidate. The existing production UI and DB remain unchanged.
+- Prior candidate 069a49479cb9198c9926ba4b8860c3593f626912: all 17 PR workflow runs succeeded (clean release 45750106686).

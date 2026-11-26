@@ -26,3 +26,10 @@ console.log('PASS closed-choice allowlist, synthetic other, Q31/Q51, server/brow
 assert.equal(historicalChoice(2025,'Q01','1 그런 일이 존재한다는 게 믿을 수 없다'),'① 그런 일이 존재한다는 게 믿을 수 없다');
 assert.equal(historicalChoice(2025,'Q01','① SYNTHETIC_PRIVATE_OTHER_TEXT'),null);
 assert.equal(historicalChoice(2025,'Q01','①'),null);
+
+// Independently documented checkbox calculations (2025 source workbook, rows 2 and 21).
+assert.equal(context.window.BeaguHistoricalQuestionnaire['2025'].Q03.length,16);
+assert.equal(context.window.BeaguHistoricalQuestionnaire['2025'].Q04.length,9);
+assert.equal(historicalChoice(2025,'Q03','교과서 구입'),'교과서 구입');
+assert.equal(historicalChoice(2025,'Q04','운동회'),'운동회');
+assert.equal(historicalChoice(2025,'Q04','운동회, SYNTHETIC_PRIVATE_OTHER_TEXT'),null);
