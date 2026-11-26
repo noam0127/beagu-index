@@ -132,6 +132,8 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
  const schools=type==="post"?await schoolInfo([...items.map(x=>x.school_id).filter(Boolean),...compareIds]):{};
  return items.map(x=>({
   id:x.id,body:x.body,created_at:x.created_at,
+  nickname:x.locker_operator===true&&x.locker_nickname==="카리브해매너티"?"카리브해매너티":/^(아웃사이드 히터|아포짓 스파이커|미들 블로커|세터|리베로)( [2-9]| [1-9][0-9]+)?$/.test(x.locker_nickname||"")?x.locker_nickname:"익명",
+  is_operator:x.locker_operator===true&&x.locker_nickname==="카리브해매너티",
   ...(type==="post"?{
    subject_type:x.subject_type||"school",
    school:schools[x.school_id]||null,
@@ -240,7 +242,7 @@ Deno.serve(async(req:Request)=>{
     const term=rawTerm.normalize("NFC").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
     if(rawTerm&&term.length<2)return respond(req,{posts:[]});
     let matchedComments=new Set<string>();
-    let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at")
+    let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at,locker_nickname,locker_operator")
      .eq("status","published").order("created_at",{ascending:false}).limit(sort==="popular"?100:30);
     if(schoolId)query=query.eq("school_id",schoolId);
     if(gameSlug)query=query.eq("game_slug",gameSlug);
@@ -277,7 +279,7 @@ Deno.serve(async(req:Request)=>{
     if(!UUID.test(id))return fail(req,"INVALID_POST");
     const exists=await target("post",id);
     if(!exists)return fail(req,"POST_UNAVAILABLE",404);
-    const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at")
+    const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at,locker_nickname,locker_operator")
      .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).limit(80);
     if(error)throw error;
     const comments=await enrich(data||[],"comment",member?.id||null);
