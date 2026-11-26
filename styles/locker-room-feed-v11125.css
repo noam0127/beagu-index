@@ -18,3 +18,9 @@
 /* The text label is part of the trusted server projection; color is supplementary. */
 .locker-feed-v11125 .locker-operator-verified{color:#185a9d;font-weight:700}
 .locker-feed-v11125 .locker-operator-verified::before{content:'✓';display:inline-block;margin-inline-end:5px;border:1px solid currentColor;border-radius:50%;width:1.2em;height:1.2em;line-height:1.15em;text-align:center;font-size:.8em}
+
+.locker-feed-v11125 .locker-reply{margin-inline-start:24px;border-inline-start:2px solid #d7e3ef;padding-inline-start:12px}
+.locker-feed-v11125 .locker-notifications{background:white;border:1px solid #e1e6ec;border-radius:12px;padding:12px 16px;margin-block:12px}
+.locker-feed-v11125 .locker-notification{padding:8px 0;overflow-wrap:anywhere}
+.locker-feed-v11125 .locker-notification.unread{font-weight:700}
+.locker-feed-v11125 .locker-reply-target{font-size:13px;color:#486581}
