@@ -17,7 +17,10 @@ assert.ok(publicCertificate.includes('id="certificateMedal"'));
 assert.ok(publicCertificate.includes('id="certificateLevelBanner"'));
 assert.ok(publicCertificate.includes('Lv.1 챌린지 달성'));
 assert.match(ref, /certificateLevelBanner\.textContent\s*=\s*'Lv\.'\+visualTier\+' 챌린지 달성'/);
-assert.match(ref, /account3\?3:premiumVisual\?2:1/);
+// Lv.3 is deliberately deferred; legacy account sessions display only the authorized Lv.2 tier.
+assert.match(ref, /const visualTier=premiumVisual\?2:1/);
+assert.doesNotMatch(ref, /account3\?3:premiumVisual/);
+assert.match(html, /id="level3-account" hidden inert/);
 assert.match(ref, /copyIdentityCode\.hidden = account3\|\|!upgraded/);
 assert.match(html, /id="copyIdentityCode"[^>]*disabled hidden/);
 assert.match(capture, /dataset\.referralState !== 'earned'/);
