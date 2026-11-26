@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "version": "v1.11.21",
-  "name": "랭킹 개통",
+  "version": "v1.11.21.1",
+  "name": "전국 TOP10 정돈",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "홈 방문자 수 바로 위 2026 배구지수 학교 TOP10",
-    "2026-11-26 수직성 백분위 수동 집계 · 잠정 순위",
-    "기존 게임 기록·공개 상세 권한 유지 · 신규 서버 없음"
+    "홈 2026 배구지수 전국 TOP10",
+    "백분위 숫자 미표시 · 순위 중심 간결한 목록",
+    "기존 순위·학교 링크·게임 기록 유지"
   ]
 }
