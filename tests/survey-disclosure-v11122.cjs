@@ -14,3 +14,8 @@ for(const p of ['js/school-search-card-v1.js','js/statistics-compare.js','js/bea
 
 assert.ok(read('index.html').includes('개별 사실의 확인이나 학교·교직원의 우열을 판정한 결과가 아닙니다.'));
 assert.equal(JSON.parse(read('release-candidate.json')).version,'v1.11.22');
+
+for(const p of ['games.html','js/arcade-school-picker-v1.js','js/arcade-result-share-v1.js'])assert.ok(read(p).includes("게임 속 상황과 난이도는 실제 학교의 근무환경이나 특정 교직원의 행동을 재현·평가한 결과가 아닙니다."),p);
+assert.ok(read('js/arcade-result-share-v1.js').includes('가상 게임 기록 · 실제 학교의 근무환경 및 교직원 행동 평가가 아님'));
+for(const p of ['search.html','search-lv1.html'])assert.ok(read(p).includes('관심도 집계이며 학교의 교직문화 평가나 우열을 뜻하지 않습니다.'),p);
+assert.doesNotMatch(read('index.html'),/aria-label="(?:상위권|하위권) 학교"/);

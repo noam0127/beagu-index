@@ -19,7 +19,7 @@
   const aspect=canvas.width>0&&canvas.height>0?canvas.height/canvas.width:5/9;
   const h=Math.min(800,Math.round(inner*aspect)),imgW=Math.min(inner,Math.round(h/aspect));
   const metrics=data.metrics.slice(0,6),rows=Math.ceil(metrics.length/2),top=210,gridY=top+h+32;
-  image.width=w;image.height=gridY+rows*84+90;const c=image.getContext("2d");
+  image.width=w;image.height=gridY+rows*84+120;const c=image.getContext("2d");
   if(!c)throw Error("canvas_unavailable");
   const bg=c.createLinearGradient(0,0,w,image.height);bg.addColorStop(0,"#102c48");bg.addColorStop(1,"#283357");c.fillStyle=bg;c.fillRect(0,0,w,image.height);
   c.strokeStyle="#d4b77a";c.lineWidth=3;c.strokeRect(20,20,w-40,image.height-40);
@@ -28,7 +28,8 @@
   c.fillStyle="#e4eff9";c.font="500 25px sans-serif";c.fillText(data.detail||"",40,172,920);
   c.fillStyle="#071b2e";c.fillRect(40,top,920,h);c.drawImage(canvas,(w-imgW)/2,top,imgW,h);
   metrics.forEach((value,i)=>{const x=40+(i%2)*466,y=gridY+Math.floor(i/2)*84;c.fillStyle="#ffffff18";c.fillRect(x,y,454,70);c.fillStyle="#fff";c.font="800 28px sans-serif";c.fillText(value,x+18,y+45,418);});
-  c.fillStyle="#bcd2e7";c.font="600 19px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,image.height-54,920);
+  c.fillStyle="#bcd2e7";c.font="600 19px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,image.height-84,920);
+  c.fillText("가상 게임 기록 · 실제 학교의 근무환경 및 교직원 행동 평가가 아님",40,image.height-54,920);
   c.fillStyle="#e4c990";c.fillText("baeguindex.com  |  플레이",40,image.height-29,920);
   return image;
  }
@@ -53,7 +54,7 @@
    const save=text("button","arcade-result-save","💾 게임결과 저장");save.type="button";save.disabled=true;
    const brag=text("a","arcade-result-brag","자랑하기 ↗");brag.href=LOUNGE;brag.target="_blank";brag.rel="noopener noreferrer";
    const msg=text("p","arcade-result-status","");msg.setAttribute("role","status");msg.setAttribute("aria-live","polite");
-   buttons.append(save,brag);section.append(buttons,msg);
+   buttons.append(save,brag);section.append(text("p","beagu-survey-limit","게임 속 상황과 난이도는 실제 학교의 근무환경이나 특정 교직원의 행동을 재현·평가한 결과가 아닙니다."),buttons,msg);
    section.hidden=false;section.scrollTop=0;
    const prepared=()=>{if(ticket!==serial)return;save.disabled=!blob;msg.textContent=blob?"":"이미지를 만들 수 없습니다.";};
    try{snapshot=makeSnapshot(canvas,data);snapshot.toBlob(b=>{if(ticket!==serial)return;blob=b;prepared();},"image/png");}catch(_){prepared();}

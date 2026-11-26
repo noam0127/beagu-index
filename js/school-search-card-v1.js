@@ -221,7 +221,7 @@
   const actions=el('div','school-actions glory-actions');
   const mbti=el('div','glory-mbti-slot');
   const badge=el('div','beagu-mbti-badge');
-  badge.append(el('span','beagu-mbti-label','학교 MBTI'),el('strong','beagu-mbti-text',level===0?'Lv.1+':'확인 중'));
+  badge.append(el('span','beagu-mbti-label','학교 MBTI(응답 유형)'),el('strong','beagu-mbti-text',level===0?'Lv.1+':'확인 중'));
   mbti.append(badge);
   const open=el(level===0?'a':'button','view-button','상세조회');
   let detail=null;
