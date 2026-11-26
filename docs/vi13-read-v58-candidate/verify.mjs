@@ -52,3 +52,9 @@ assert.equal(assessRevalidation({...row,flags:1},one,'2026-11-26T10:00:00Z','202
 assert.equal(reconstructVI13(coreFixture(1,0),1).extremePattern,true);
 assert.equal(normalizeSourceTime('오후 8:30:00','Q19'),510);assert.equal(normalizeSourceTime('오전 4:30:00','Q20'),990);assert.equal(normalizeSourceTime('','Q19'),null);assert.equal(normalizeSourceTime('25:10','Q20'),null);
 console.log('PASS read-only reconstruction and old-snapshot denial; source time normalization');
+
+const preflight=readFileSync(new URL('./vi13-v14-preflight.sql',import.meta.url),'utf8');
+assert.equal((preflight.match(/create or replace function/g)||[]).length,1);
+assert.equal((preflight.match(/\$v14\$/g)||[]).length,2);
+assert.ok(preflight.includes("'^Q(0[1-9]|1[0-3])$' and q->>'row'='-1'"));
+assert.ok(preflight.includes("left join score_check v"));
