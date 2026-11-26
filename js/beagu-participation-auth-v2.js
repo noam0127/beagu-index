@@ -9,7 +9,7 @@
  const survey='https://forms.gle/TPyCakK6Sj2zchRy7';
  const badge=document.getElementById('beaguLevelState');
  if(!badge)return;
- let busy=false,expiresAt='',lastFocus=null,lastLevel=0,verifiedToken='',verifiedLevel=null,verifiedProvisional=null,verifiedAccount=0;
+ let rebindRequested=false,busy=false,expiresAt='',lastFocus=null,lastLevel=0,verifiedToken='',verifiedLevel=null,verifiedProvisional=null,verifiedAccount=0;
  const el=(tag,cls,text)=>{
   const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x;
  };
@@ -43,7 +43,7 @@
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
    <a href="${survey}" target="_blank" rel="noopener noreferrer">Lv.1 참여코드 받기</a>
    <a href="challenge.html">Lv.2 참여코드 받기</a>
-   <a href="challenge.html#level3-account" id="beaguAccountEntry">Lv.3 로그인</a>
+   <a href="challenge.html#level3-account" id="beaguAccountEntry" hidden inert aria-hidden="true">Lv.3 로그인</a>
    <a href="levels.html" class="beagu-level-guide-link">레벨별 안내 →</a>
   </nav>
  </section>`;
@@ -82,8 +82,8 @@
   lastLevel=level;
   const text=labelFor(level);
   const accountLevel=level===2&&verifiedAccount===3?3:level;
-  const canRebind=level===2&&verifiedProvisional===true&&accountLevel!==3&&verifiedToken===stored();
-  badge.dataset.level=String(level);badge.textContent='Lv.'+accountLevel;
+  const canRebind=rebindRequested&&level===2&&verifiedProvisional===true&&accountLevel!==3&&verifiedToken===stored();
+  badge.dataset.level=String(level);badge.textContent='Lv.'+level;
   badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · Lv.2 참여코드 입력':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
   badge.title=level===1?'Lv.2 참여코드 입력 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);
@@ -103,25 +103,27 @@
   form.hidden=level>=2&&!canRebind;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
   description.hidden=level<2;
-  description.textContent=accountLevel===3?'Lv.3 나의 계정으로 로그인했습니다.':canRebind?'계정을 생성하려면 개인 Lv.2 참여코드로 다시 인증해 주세요.':level>=2?'Lv.2 인증이 완료되었습니다.':'';
+  description.textContent=canRebind?'개인 Lv.2 참여코드로 다시 인증해 주세요.':level>=2?'Lv.2 인증이 완료되었습니다.':'';
   modal.querySelector('[role="dialog"]').dataset.level=String(level);
   label.textContent=canRebind?'개인 Lv.2 참여코드':level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=canRebind?'개인 Lv.2 참여코드를 입력하세요':level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
   submit.textContent=canRebind?'개인 코드 재인증':level===1?'Lv.2 인증하기':'레벨1 인증';
   if(level>=1){
-   tierText.textContent=accountLevel===3?'Lv.3 · 나의 계정':text;
+   tierText.textContent=text;
    expiryText.textContent=expiresAt?
      '인증 만료: '+new Date(expiresAt).toLocaleString('ko-KR'):'현재 세션의 인증 정보';
   }
  }
  function close(){
+  rebindRequested=false;
   modal.hidden=true;
   document.body.classList.remove('beagu-participation-open');
   message.textContent='';
   code.value='';code.type='password';toggle.textContent='표시';toggle.setAttribute('aria-pressed','false');
   lastFocus?.focus?.();
  }
- function open(){
+ function open(event){
+  rebindRequested=event?.detail?.rebind===true;
   lastFocus=document.activeElement;
   paint(verifiedLevel??lastLevel);
   modal.hidden=false;
@@ -218,10 +220,14 @@
  async function authenticate(code,submit,message){
   if(busy)return;
   const startToken=stored();
-  if(startToken&&(verifiedToken!==startToken||verifiedLevel===null)){message.textContent='인증 확인 후 다시 시도하세요.';window.dispatchEvent(new Event('beagu:level-state-change'));return;}
+  if(startToken&&(verifiedToken!==startToken||verifiedLevel===null)){
+   busy=true;submit.disabled=true;message.textContent='인증 상태 확인 중…';
+   try{await verifyCurrent();}finally{busy=false;submit.disabled=false;}
+   if(stored()!==startToken||verifiedToken!==startToken||verifiedLevel===null){message.textContent='인증 상태를 확인할 수 없습니다. 다시 시도하세요.';return;}
+  }
   const minimum=verifiedLevel??0;
   const rebinding=minimum===2&&verifiedProvisional===true&&verifiedAccount!==3&&verifiedToken===startToken;
-  if(minimum>=2&&!rebinding)return;
+  if(minimum>=2&&!rebinding){message.textContent='이미 Lv.2 이상으로 인증되었습니다.';return;}
   const value=code.value.trim();
   if(!/^[A-Za-z0-9-]{8,120}$/.test(value)){
    message.textContent='참여코드 형식을 확인해 주세요.';return;
@@ -273,7 +279,7 @@
  let challengeEntryHandled=false;
  function handleChallengeEntry(level){
   if(challengeEntryHandled||!document.body.classList.contains('beagu-page-challenge'))return;
-  if(['#level3-account','#level3-create'].includes(window.location?.hash)){challengeEntryHandled=true;return;}
+  // Deferred account deep links use normal challenge entry authentication.
   if(level===0&&!stored()){
    challengeEntryHandled=true;
    if(modal.hidden)open();

@@ -150,7 +150,9 @@
   const raw=typeof value==='number'?value:Number(String(value).replace(/[,\s]/g,'').replace(/원$/,''));
   if(!Number.isFinite(raw)||raw<=0)return '자료 없음';
   const rounded=Math.round(raw/1000000),eok=Math.floor(rounded/100),million=rounded%100;
-  return eok?(million?eok+'억'+million+'백만원':eok+'억원'):million+'백만원';
+  const thousand=Math.floor(million/10),hundred=million%10;
+  const parts=[eok?eok+'억':'',thousand?thousand+'천'+(hundred?'':'만'):'',hundred?hundred+'백만':''].filter(Boolean);
+  return parts.length?parts.join(' ')+' 원':'0원';
  }
  function addFacts(card,school,level){
   const facts=el('div','glory-facts');

@@ -1,0 +1,39 @@
+name: Account and Q50 isolated regression
+on:
+  push:
+    branches: ['fix/account-home-qa-20261127','fix/defer-level3-community-20261127','fix/defer-level3-release-20261127','fix/v11205-court-integrated']
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static checks and referral regression
+        run: |
+          node --check js/beagu-participation-auth-v2.js
+          node --check js/challenge-level3-v1.js
+          node --check js/challenge-referral-v1.js
+          node --check js/school-search-card-v1.js
+          node tests/level3-credential-v1.mjs
+          node tests/level3-account-contract.mjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+          node scripts/test-challenge-referral-premium.cjs
+      - name: Install isolated Chromium
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Offline browser regressions
+        run: |
+          python3 -m http.server 8124 --bind 127.0.0.1 >/tmp/beagu-qa.log 2>&1 &
+          BEAGU_TEST_WIDTH=375 node tests/account-ui-v11202-browser.mjs
+          BEAGU_TEST_WIDTH=1280 node tests/account-ui-v11202-browser.mjs
+          node tests/account-home-q50-regression.mjs
+          node tests/deferred-account-community-browser.mjs

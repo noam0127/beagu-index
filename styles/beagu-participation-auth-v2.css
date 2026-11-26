@@ -208,3 +208,6 @@ body.beagu-header-auth-only>.beagu-unified-header{position:sticky;top:0;z-index:
 #level3-account .beagu-account-guide{display:inline-block;padding:8px 0;color:#285b9d;font-weight:750;font-size:13px}
 #level3-account :is(button,input,a):focus-visible{outline:3px solid #8fb4ec;outline-offset:2px}
 @media(max-width:480px){#level3-account.beagu-account-card-v11202{padding:17px;border-radius:15px}#level3-account #level3Form{padding:12px}#level3-account .beagu-account-actions button{font-size:13px}}
+
+/* Community and account UI deferred; keep code and existing sessions intact. */
+#level3-account[hidden],#beaguAccountEntry[hidden],.postit-lv2-link,.postit-arcade-link,[data-postit-game],#comparePostit{display:none!important}

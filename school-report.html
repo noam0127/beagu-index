@@ -211,10 +211,10 @@
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/school-view-counts-v1.css?v=20261120-mono2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
-<script defer src="js/beagu-level-state-v1.js?v=11113-header2"></script>
+<script defer src="js/beagu-level-state-v1.js?v=20261127-deferred"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=1110-court">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=112021-account">
-<script defer src="js/beagu-participation-auth-v2.js?v=112021-account"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261127-deferred">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261127-deferred"></script>
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-experience">
 <link rel="stylesheet" href="styles/beagu-fullset-school-v11111.css?v=11111-1">
 <style id="court-renewal-compact">
@@ -269,7 +269,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   <section class="page-heading"><div><h1>학교별 조사 기록</h1></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
   <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite"></div></section>
   <div class="main-content" id="mainContent" hidden>
-    <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><div class="court-hero-right"><span class="school-count-pair"><span id="reportSchoolLikes" class="school-report-actions"></span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="검색 및 상세조회 합계 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span></span><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a id="reportPostitLink" href="postit.html" class="postit-quick-link postit-lv2-link">▤ 포스트잇</a><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
+    <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><div class="court-hero-right"><span class="school-count-pair"><span id="reportSchoolLikes" class="school-report-actions"></span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="검색 및 상세조회 합계 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span></span><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a hidden inert aria-hidden="true" id="reportPostitLink" href="postit.html" class="postit-quick-link postit-lv2-link">▤ 포스트잇</a><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
     <section class="tier-panel court-compact-access" id="tierPanel" aria-label="등급별 열람"><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자</strong></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">레벨1 인증</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div></section>
     <section id="reportPublicBasics2026" class="approved-summary" aria-live="polite"></section>
     <section id="reportFacilities" class="beagu-facilities" hidden></section>
@@ -302,7 +302,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 <script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
 <link rel="stylesheet" href="styles/school-likes-v1.css?v=11119-court">
 <script src="js/school-likes-v1.js?v=11117"></script>
-<script src="js/school-search-card-v1.js?v=11122-disclosure"></script>
+<script src="js/school-search-card-v1.js?v=20261127-price"></script>
 <script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
@@ -1320,6 +1320,12 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const n=Number(match[1].replaceAll(',',''));
     return Number.isFinite(n)?{n,unit:match[2]||''}:null;
   }
+  function formatOfficialFact(x,v){
+    if(x.factKey!=='district_housing_price_mean')return v;
+    const parsed=numericCompare(v);
+    if(!parsed||!['원',''].includes(parsed.unit)||!Number.isFinite(parsed.n)||parsed.n<=0)return v;
+    return window.BeaguSchoolSearchCard?.formatHousingPrice(parsed.n)||v;
+  }
   function schoolBenchmark(x){
     if(x.comparisonKind!=='average')return '';
     const school=numericCompare(x.value),national=numericCompare(x.nationalAverage),region=numericCompare(x.regionalAverage);
@@ -1327,9 +1333,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     const extent=Math.max(Math.abs(school.n-national.n),Math.abs(region.n-national.n),1e-9);
     // Same units; equal distances from the nationwide mean get equal horizontal spacing.
     const position=v=>(Math.max(15,Math.min(85,50+35*(v.n-national.n)/extent))).toFixed(1);
-    const safe=v=>escapeHTML(v);
-    const aria='전국 평균 '+x.nationalAverage+', 지역 평균 '+x.regionalAverage+', 우리 학교 '+x.value;
-    return '<figure class="benchmark-figure" role="img" aria-label="'+safe(aria)+'">'+
+    const safe=v=>escapeHTML(formatOfficialFact(x,v));
+    const aria='전국 평균 '+formatOfficialFact(x,x.nationalAverage)+', 지역 평균 '+formatOfficialFact(x,x.regionalAverage)+', 우리 학교 '+formatOfficialFact(x,x.value);
+    return '<figure class="benchmark-figure" role="img" aria-label="'+escapeHTML(aria)+'">'+
       '<div class="benchmark-directions" aria-hidden="true"><span>← 전국 평균보다 낮음</span><span>전국 평균보다 높음 →</span></div>'+
       '<div class="benchmark-plot" aria-hidden="true">'+
       '<span class="benchmark-dot school" style="left:'+position(school)+'%"></span>'+
@@ -1371,16 +1377,16 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
             const onlySchool=official&&singleSchoolFacts.has(normalizedOverviewLabel(x.label));
             const compared=official&&x.comparisonKind&&!onlySchool;
             const kind=x.comparisonKind==='mode'?'최다 선택 보기':'평균';
-            const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(v):'비교 자료 없음';
+            const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(formatOfficialFact(x,v)):'비교 자료 없음';
             const benchmark=compared?schoolBenchmark(x):'';
             return '<div class="summary-metric'+(benchmark?' compare-metric':(onlySchool?' school-only-metric':''))+'"><span class="'+(benchmark?'compare-label':'')+'">'+escapeHTML(x.label)+'</span>'+
               (benchmark|| (compared?
                 '<div class="school-compare-grid">'+
-                '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(x.value)+'</strong></div>'+
+                '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(formatOfficialFact(x,x.value))+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">전국 '+kind+'</span><strong>'+safe(x.nationalAverage)+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">지역 '+kind+'</span><strong>'+safe(x.regionalAverage)+'</strong></div>'+
                 '</div>':
-                '<strong>'+escapeHTML(x.value)+'</strong>'))+
+                '<strong>'+escapeHTML(formatOfficialFact(x,x.value))+'</strong>'))+
               ''+'</div>';
           }).join('')+'</div>':'';
       }).join('')+
@@ -1515,7 +1521,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
           }else if(typeof metric.label==='string'&&metric.label.length<=70&&
              (typeof metric.value==='string'||typeof metric.value==='number')&&String(metric.value).length<=90){
             if(!state.approvedSummary[String(year)])state.approvedSummary[String(year)]=[];
-            state.approvedSummary[String(year)].push({label:metric.label,value:String(metric.value),
+            state.approvedSummary[String(year)].push({label:metric.label,value:String(metric.value),factKey:typeof metric.factKey==='string'?metric.factKey:null,
               group:metric.group==='편집본 공식 학교정보'?'편집본 공식 학교정보':'승인된 설문 영역 요약',
               nationalAverage:typeof metric.nationalAverage==='string'?metric.nationalAverage:null,
               regionalAverage:typeof metric.regionalAverage==='string'?metric.regionalAverage:null,
@@ -2124,7 +2130,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 })();
 
 </script>
-<script defer src="js/postit-entry-links-v1.js?v=20261120-2"></script>
+<script defer src="js/postit-entry-links-v1.js?v=20261127-deferred"></script>
 <link rel="stylesheet" href="styles/beagu-2026-civic-v1.css?v=11119-court">
 <script defer src="js/beagu-2026-civic-v1.js?v=11119-court"></script>
 </body>

@@ -62,7 +62,7 @@ body.beagu-page-levels [hidden] {display:none!important}
 
 /* Four level cards, two on medium/desktop, one on narrow screens. */
 @media(min-width:701px){.beagu-level-guide-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(min-width:1050px){.beagu-level-guide-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.beagu-level-guide-card{padding:20px 16px}}
+@media(min-width:1050px){.beagu-level-guide-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.beagu-level-guide-card{padding:20px 16px}}
 .beagu-level-guide-card[data-tier="3"]{border-color:#d9c293;background:linear-gradient(160deg,#fffaf0,#fff 65%)}
 .beagu-level-guide-card[data-tier="3"] .beagu-level-guide-tier,.beagu-level-guide-card[data-tier="3"] .beagu-level-guide-list li::before{color:#936c20}
 .beagu-level-guide-card[data-tier="3"] .beagu-level-guide-action{background:#f9ecd0;border-color:#d7bc88;color:#68480c!important}

@@ -31,8 +31,8 @@
     toggle.setAttribute('aria-label','참여코드 표시');
   }
   function authState(level,accountLevel=level,provisional=false){
-    const display=Number(level)===2&&Number(accountLevel)===3?3:level;
-    panel.dataset.accountLevel=String(Number(display)||0);
+    const display=level;
+    panel.dataset.accountLevel=String(Number(level)===2&&Number(accountLevel)===3?3:Number(level)||0);
     panel.dataset.provisional=String(provisional===true);
     const verified=Number(level)>=1;
     badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+display+' 인증 완료':'Lv.0 · 미인증';

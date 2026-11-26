@@ -109,10 +109,23 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.goto(origin+'/index.html');
  await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
  await page.waitForFunction(()=>document.querySelector('#beaguHomeNoticeBody').textContent==='공통 검증 공지');
- await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===10);
- assert.equal(await page.locator('#beagu2026Ranking').isVisible(),true);
- assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2','3','4','4','6','7','8','8','10']);
- const podium=page.locator('#beagu2026Ranking [data-ranking-list] li');
+  // Public homepage must not render the deferred TOP10. Preserve the original
+  // podium regression in a separate, offline fixture page only.
+  assert.equal(await page.locator('#beagu2026Ranking').isHidden(),true);
+  assert.equal(await page.locator('#beagu2026Ranking [data-ranking-list] li').count(),0);
+  const rankPage=await context.newPage();
+  try{
+   await rankPage.route(origin+'/index.html?ranking_fixture=1',async route=>{
+    const html=await fs.readFile('index.html','utf8');
+    assert.ok(html.includes('id="beagu2026Ranking" hidden'));
+    return route.fulfill({contentType:'text/html',body:html.replace('id="beagu2026Ranking" hidden','id="beagu2026Ranking"')});
+   });
+   await rankPage.clock.setFixedTime(new Date('2026-11-26T14:59:00Z'));
+   await rankPage.goto(origin+'/index.html?ranking_fixture=1');
+ await rankPage.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===10);
+ assert.equal(await rankPage.locator('#beagu2026Ranking').isVisible(),true);
+ assert.deepEqual(await rankPage.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2','3','4','4','6','7','8','8','10']);
+ const podium=rankPage.locator('#beagu2026Ranking [data-ranking-list] li');
  const podiumRows=await podium.evaluateAll(nodes=>nodes.map(n=>({rank:n.dataset.rank,height:n.getBoundingClientRect().height,top:n.getBoundingClientRect().top,bg:getComputedStyle(n).backgroundColor,strong:n.querySelectorAll('strong').length,href:n.querySelector('a')?.getAttribute('href')})));
  assert.deepEqual(podiumRows.map(x=>x.rank),['1','2','3','4','4','6','7','8','8','10']);
  assert.ok(podiumRows.slice(0,3).every(x=>x.height>0));
@@ -120,6 +133,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  assert.equal(new Set(podiumRows.slice(0,3).map(x=>x.bg)).size,3);
  assert.ok(podiumRows.every(x=>x.strong===1&&x.href?.includes('school_id=')));
  assert.equal(await podium.nth(0).locator('strong').evaluate(n=>getComputedStyle(n,'::before').content),'"♛"');
+  }finally{await rankPage.close();}
+  assert.equal(await page.locator('#beagu2026Ranking').isHidden(),true);
 
 
  const ids=()=>page.locator('#beaguTodaySchools .beagu-home-school-name').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).searchParams.get('school_id')));
@@ -201,7 +216,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),tier<2);
  assert.equal(await page.locator('#regionSort option[value="game_points"]').isDisabled(),false);
  assert.equal(await page.locator('#results .glory-fact[data-fact-key="housing_price_won"]').count(),tier===2?7:0);
- if(tier===2)assert.equal(await page.locator('#results .glory-fact[data-fact-key="housing_price_won"] .glory-fact-value').first().innerText(),'1억23백만원');
+ if(tier===2)assert.equal(await page.locator('#results .glory-fact[data-fact-key="housing_price_won"] .glory-fact-value').first().innerText(),'1억 2천 3백만 원');
  await page.locator('#officeSelect').selectOption('동래교육지원청');await page.waitForTimeout(350);assert.equal(await page.locator('#searchPanel').isVisible(),true);
  if(tier===2){await page.locator('#regionSort').selectOption('housing_price_won');await page.waitForTimeout(600);assert.equal(sorted,true);assert.equal(await page.locator('#results [data-sort-key="housing_price_won"]').count(),0);}
  }

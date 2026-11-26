@@ -88,7 +88,7 @@
         const tier=result.level>=2?2:1;
         const provisional=tier===2&&result.provisional===true;
         const accountLevel=tier===2&&result.accountLevel===3?3:tier;
-        const label='Lv.'+accountLevel;
+        const label='Lv.'+tier;
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional,accountLevel);
       }else{
         lastValidatedToken='';

@@ -1237,6 +1237,28 @@
           "result": "PENDING"
         }
       ]
+    },
+    {
+      "order": 54,
+      "version": "v1.12.05",
+      "name": "코트 정돈",
+      "scope": "v1.12.04 개인정보 보호 유지 및 검증된 v1.12.02.2 코트 정돈 통합",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v11205-court-integrated",
+      "baseline_sha": "5d41af9bfc8d6036ec2ef6fc783f677473b85b10",
+      "integrated_sha": "91ddefadbfd71f1428f7f4144328feb69d2b1edf",
+      "dependencies": [
+        "v1.12.04",
+        "v1.12.02.2"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        "clean-release-validation.yml",
+        "account-home-q50-isolated-20261127.yml",
+        "v11205-admin-registration.yml",
+        "lv3-anonymous-db-fixture.yml"
+      ]
     }
   ],
   "source_manifest": {

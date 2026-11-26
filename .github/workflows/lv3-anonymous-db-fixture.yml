@@ -1,5 +1,7 @@
 name: v1.12.02.1 anonymous account database fixture
 on:
+  push:
+    branches: ['fix/v11205-court-integrated']
   pull_request:
     branches: ['release/base-pages-v112021-current-production','release/base-pages-v11204-current-production']
 permissions:
@@ -11,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Disposable database only
         run: |
