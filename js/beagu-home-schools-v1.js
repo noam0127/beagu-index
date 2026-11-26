@@ -65,8 +65,8 @@
   }
   function render(){
     if(!selectedHigh||!selectedLow)return;
-    paint(high,selectedHigh,'상위 10%');
-    paint(low,selectedLow,'하위 10%');
+    paint(high,selectedHigh,'백분위 90 이상');
+    paint(low,selectedLow,'백분위 10 이하');
     status.hidden=true;
   }
   async function init(){
