@@ -105,6 +105,20 @@ begin
   update public.beagu_locker_operator_v1 set author_uid='91000000-0000-4000-8000-000000000001';
   raise exception 'service role changed operator binding';
  exception when insufficient_privilege then null; end;
+ begin
+  update public.beagu_postit_posts set locker_nickname='카리브해매너티',locker_operator=true where id=p;
+  raise exception 'post operator spoof on update';
+ exception when insufficient_privilege then null; end;
+ begin
+  update public.beagu_postit_posts set author_uid='90000000-0000-4000-8000-000000000002' where id=p;
+  raise exception 'ownership reassigned';
+ exception when insufficient_privilege then null; end;
+ begin
+  update public.beagu_postit_comments set locker_nickname='리베로 99' where id=(r->>'id')::uuid;
+  raise exception 'comment nickname rewritten';
+ exception when insufficient_privilege then null; end;
+ update public.beagu_postit_posts set status='hidden' where id=p;
+ if not exists(select 1 from public.beagu_postit_posts where id=p and status='hidden' and locker_nickname=name1) then raise exception 'moderation regressed';end if;
 end $service$;
 reset role;
 do $privacy$
