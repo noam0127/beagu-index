@@ -91,12 +91,11 @@ Deno.serve(async (req) => {
     if (!body || typeof body !== 'object' || Array.isArray(body) ||
         body.action !== 'issue' || typeof body.visitor !== 'string' ||
         !uuidPattern.test(body.visitor) || typeof body.identityCode !== 'string' ||
-        !codePattern.test(body.identityCode) || typeof body.deviceSecret !== 'string' ||
-        !/^[0-9a-f]{64}$/.test(body.deviceSecret))
+        !codePattern.test(body.identityCode))
       return json(origin, 400, { error: 'INVALID_REQUEST' });
     const visitor = body.visitor.toLowerCase();
     const identityCode = body.identityCode;
-    if (session.identity_visitor_id && session.identity_visitor_id !== visitor)
+    if (session.identity_visitor_id && String(session.identity_visitor_id).toLowerCase() !== visitor)
       return json(origin, 403, { error: 'VISITOR_MISMATCH' });
 
     // Personal Lv2 sessions are already authenticated to the participant.
@@ -125,6 +124,8 @@ Deno.serve(async (req) => {
 
     // A verified challenge code + a local, per-device random secret is required.
     // Bound claims reject attempts from another device that knows the UUID alone.
+    if (typeof body.deviceSecret !== 'string' || !/^[0-9a-f]{64}$/.test(body.deviceSecret))
+      return json(origin, 400, { error: 'INVALID_REQUEST' });
     const { data: bound, error: bindingError } = await db.rpc(
       'beagu_issue_challenge_identity_bound', {
         p_visitor: visitor,
