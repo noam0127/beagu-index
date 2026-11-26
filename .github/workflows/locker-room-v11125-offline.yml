@@ -2,6 +2,8 @@ name: Locker room v1.11.25 isolated PostgreSQL validation
 on:
   push:
     branches: [feature/v1.11.25-locker-room]
+  pull_request:
+    branches: [feature/v1.11.24-my-account]
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,6 +27,7 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/locker-room-policy-v11125.mjs
+      - run: node tests/locker-room-auth-v11125.mjs
       - name: Run isolated PostgreSQL fixtures
         env:
           PGPASSWORD: fixture-only
