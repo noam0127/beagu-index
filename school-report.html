@@ -272,6 +272,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><div class="court-hero-right"><span class="school-count-pair"><span id="reportSchoolLikes" class="school-report-actions"></span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="검색 및 상세조회 합계 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span></span><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
     <section class="tier-panel court-compact-access" id="tierPanel" aria-label="등급별 열람"><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자</strong></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">레벨1 인증</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div></section>
     <section id="reportPublicBasics2026" class="approved-summary" aria-live="polite"></section>
+    <section id="reportFacilities" class="beagu-facilities" hidden></section>
     <section id="reportBasicCard" class="school-survey-snapshot" aria-live="polite" aria-label="기본 배구지수"></section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><div id="beaguYearGraph" style="width:100%;max-width:480px;margin:0 auto"></div></section>
     <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
@@ -1221,6 +1222,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261124-q45-wording1"></script>
 <script src="js/2026-approved-question-results.js?v=20261121-lv2-approved-instant"></script>
+<link rel="stylesheet" href="styles/school-facilities-v11126.css?v=11126">
+<script src="js/school-facilities-v11126.js?v=11126"></script>
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
@@ -1387,6 +1390,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       '';
   }
   function clearTierItems(){
+    state.facilityModes=[];state.facilityResults=[];
     if(!state.school||state.demo)return;
     const year=state.selected;
     state.years=buildYears(String(state.school.school_id));
@@ -1537,6 +1541,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
           display:d.modeOption,modeOption:d.modeOption,serverApproved:true
         };
       }
+      if(!latestOnly)state.facilityModes=Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[];
+      state.facilityResults=requested===2&&Array.isArray(r.schoolQuestionResults2026)?r.schoolQuestionResults2026:[];
       const releasedQuestions=window.Beagu2026ApprovedResults?.summary(r.schoolQuestionResults2026)||{};
       // Replace the previous 2026 answer snapshot, including when withdrawn.
       for(const [qid,display] of Object.entries(releasedQuestions)){
@@ -1590,6 +1596,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         state.tier=0;clearTierItems();tierUI();render();$('tierCodePanel').hidden=false;
         $('tierError').textContent='인증 유효기간이 끝났습니다. 코드를 다시 입력해 주세요.';
       }else{
+        state.facilityResults=[];
         // Fail closed: the old school-level answers might have been revoked
         // since they were first displayed. Leave older verified years intact.
         state.years['2026'].items={};
@@ -1785,6 +1792,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     if(!state.demo){const stories=window.BeaguLockerSchoolLinks?.create(String(school.school_id),true);if(stories)locker.append(stories);window.BeaguLockerSchoolLinks?.refresh();}
     const experience=document.getElementById('reportExperienceLink');
     if(experience){const id=String(school.school_id);experience.hidden=!!state.demo||!/^[A-Z0-9]{7}$/.test(id);experience.href=experience.hidden?'teacher-volleyball.html':'teacher-volleyball.html?school_id='+encodeURIComponent(id);}
+    state.facilityModes=[];state.facilityResults=[];
     state.school=school;state.years=years;state.yearLookupError=false;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.participationYears=[];state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=[2026,2025,2024,2023].find(y=>years[String(y)]?.approved||num(years[String(y)]?.percentile)!==null)||2026;state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render();const badge=$('reportSchoolViews');if(badge){badge.hidden=!!state.demo;if(!state.demo){badge.dataset.schoolId=String(school.school_id);badge.querySelector('strong').textContent='—';void window.BeaguSchoolViewCounts?.refreshOne(badge,String(school.school_id));}}if(!state.demo){window.BeaguSearchTelemetry?.selectedFromReport(String(school.school_id));window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),0,'school-report')}}
   function render(){if(!state.school)return;
     const s=state.school;
@@ -1799,6 +1807,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     tierUI();
     const anonymous=state.tier===0;
     if(anonymous)state.selected=2025;
+    window.BeaguSchoolFacilities?.render($('reportFacilities'),state.facilityModes,state.facilityResults,state.tier);
     const overview=$('yearGrid').closest('.year-overview'),latest=$('latestYearMessage').closest('.latest-year-status'),body=$('reportHeading').closest('.report-body');
     overview.hidden=anonymous;latest.hidden=anonymous;body.hidden=anonymous;
     // hidden must win against legacy page display rules.
