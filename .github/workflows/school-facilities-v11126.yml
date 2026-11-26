@@ -1,5 +1,7 @@
 name: School facilities v1.11.26 isolated validation
 on:
+  push:
+    branches: [feature/v1.11.26-school-facilities]
   pull_request:
     paths:
       - 'js/school-facilities-v11126.js'
