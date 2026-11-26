@@ -33,3 +33,14 @@ assert.equal(context.window.BeaguHistoricalQuestionnaire['2025'].Q04.length,9);
 assert.equal(historicalChoice(2025,'Q03','교과서 구입'),'교과서 구입');
 assert.equal(historicalChoice(2025,'Q04','운동회'),'운동회');
 assert.equal(historicalChoice(2025,'Q04','운동회, SYNTHETIC_PRIVATE_OTHER_TEXT'),null);
+
+// Final 2025 questionnaire PDF, not the response-derived catalogue.
+const final25=context.window.BeaguHistoricalQuestionnaire['2025'];
+assert.equal(Object.keys(final25).length,50);
+assert.equal(Object.entries(final25).filter(([id])=>Number(id.slice(1))<=30).flatMap(([,v])=>v).length,170);
+for(const v of ['1학년','2학년','3학년','4학년','5학년','6학년','모른다','기피하는 학년이 없다.']) assert.equal(historicalChoice(2025,'Q30',v),v);
+assert.equal(historicalChoice(2025,"Q03","잘 모름"),null);
+assert.equal(historicalChoice(2025,"Q03","잘모름"),null);
+assert.equal(historicalChoice(2025,"Q04","수학여행"),null);
+assert.equal(historicalChoice(2025,"Q04","축제"),null);
+assert.equal(historicalChoice(2025,"Q04","학부모 공개수업"),null);

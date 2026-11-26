@@ -1,7 +1,7 @@
 /* Source: 사용자 Google Docs '전국 학교 배구지수(교직문화지수) 2023-2025 문항 체계 종합 보고서'.
  * Only exact documented choices, never reconstructed respondent-level data.
  * 2024 Q03 phone-number item and unknown 2025 Q01-Q30 choices are NOT fabricated.
- * 2025 Q01-Q29 additions: 125 labels independently matched by question and text to the questionnaire development document and the prior observed-choice catalogue; draft evidence is not a full final-form verification. Candidate only.
+ * 2025 Q01-Q30: exact choices from two matching 2026-02-26 PDF exports of the final elementary survey, pp. 18–32. Other text inputs are excluded.
  * 2024 numbering mapped by explicitly matching verified question topics.
  * 2025 Q31-Q50 original documented factual-choice response scale. */
 window.BeaguHistoricalQuestionnaire=Object.freeze({
@@ -311,9 +311,11 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "① 안 한다",
       "② 나는 안 하지만 누군가 한다(자율)",
       "③ 자율적으로 하루 정도 근무한다.",
-      "④ 구성원들이 자율적으로 방학 근무조를 꾸려 근무한다"
+      "④ 구성원들이 자율적으로 방학 근무조를 꾸려 근무한다",
+      "⑤ 몇몇 교사 혹은 관리자들의 주도에 의해 근무조가 결정된다."
     ],
     "Q06": [
+      "① 모른다",
       "② 없다",
       "③ 곧 생길 것 같다",
       "④ 1명 있다",
@@ -335,6 +337,7 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "⑤ 4번 이상"
     ],
     "Q09": [
+      "① 모른다",
       "② 없다",
       "③ 1회",
       "④ 2회",
@@ -370,9 +373,11 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "⑤ 1박 2일 여행도 간다(강요)"
     ],
     "Q14": [
+      "① 수업중인 교사 외의 인력에 의해 여러 장소로 실제로 분리된다",
       "② 실제로 분리된다",
       "③장소는 있으나 실제 분리는 안 된다",
-      "④분리 장소가 없다"
+      "④분리 장소가 없다",
+      "⑤어떤 일이 있어도 담임 또는 수업중인 교사가 교실에서 모든 것을 해결한다"
     ],
     "Q15": [
       "① 1회미만",
@@ -385,6 +390,7 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "① 즉각",
       "② 1시간 미만",
       "③2~3시간",
+      "④3~4시간",
       "⑤4시간 이상"
     ],
     "Q17": [
@@ -402,8 +408,10 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "⑤ 다과비를 강제적으로 부담한다(강제)"
     ],
     "Q19": [
+      "① 교사친화적으로 개선하여 적용한다",
       "② 대부분 적용된다",
       "③ 몇몇만 적용된다",
+      "④ 적용되지 않거나 개악되어 적용한다.",
       "⑤ 협의회조차 안 한다"
     ],
     "Q20": [
@@ -456,6 +464,7 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "⑤ ‘만인에 대한 만인의 투쟁’ 상태다"
     ],
     "Q27": [
+      "① 대부분 바르게 인사한다",
       "② 몇몇만 바르게 인사한다",
       "③ 대부분 무시한다",
       "④ 몇몇은 서로 욕을 하며 지나간다",
@@ -464,11 +473,14 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
     "Q28": [
       "① 모두 환하게 웃으며 인사한다",
       "② 대부분 환하게 웃으며 인사한다",
-      "④ 몇몇은 인사를 받지 않는다"
+      "③ 인사하면 인사를 받아준다",
+      "④ 몇몇은 인사를 받지 않는다",
+      "⑤ 몇몇은 인사하면 째려본다"
     ],
     "Q29": [
       "① 당장 오늘 아파도 쉴 수 있다.",
       "② 사전에 이야기한 경우만 쉴 수 있다.",
+      "③ 특별한 병이 있을 때만 쉴 수 있다.",
       "④ 몸이 많이 아픈 게 아니면 참고 나와야 한다.",
       "⑤ 무슨 일이 있어도 학교에 나와야한다."
     ],
@@ -500,6 +512,16 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
       "학생회선거",
       "그 밖의 학부모 초청 행사",
       "안함"
+    ],
+    "Q30": [
+      "모른다",
+      "기피하는 학년이 없다.",
+      "1학년",
+      "2학년",
+      "3학년",
+      "4학년",
+      "5학년",
+      "6학년"
     ]
   }
 });
