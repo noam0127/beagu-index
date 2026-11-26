@@ -27,8 +27,9 @@ const cards=read('js/school-search-card-v1.js');
 assert.ok(cards.includes('school-report.html?school_id='),'search cards retain school detail route for contextual Post-it');
 // v1.11.10: the locker room is intentionally absent from navigation.
 // Contextual links and the server-side Lv.2 gate remain intact.
-assert.match(read('school-report.html'),/id="reportPostitLink" href="postit.html"/);
-assert.match(read('school-report.html'),/postit\.href='postit\.html\?school_id='/);
+assert.match(read("school-report.html"),/id="reportLockerLinks"/);
+assert.ok(read("js/locker-school-links-v11125.js").includes("postit.html?school_id="));
+assert.ok(read("school-report.html").includes("BeaguLockerSchoolLinks?.create(String(school.school_id),true)"));
 assert.ok(read('teacher-class-diary-play.html').includes('data-postit-game'),'retained diary shortcut');
 for(const file of ['teacher-run.html','teacher-volleyball.html'])
  assert.ok(!read(file).includes('data-postit-game'),'v1.11.9 approved removal of arcade shortcut '+file);
