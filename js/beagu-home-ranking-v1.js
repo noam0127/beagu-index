@@ -112,7 +112,7 @@
  }
  document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 전국 TOP10';
  const note=root.querySelector('.beagu-home-school-note');
- if(note)note.textContent='수동 집계 · 수직성 백분위 기준 · 잠정 순위';
+ if(note)note.textContent='수동 집계 · 수직성 인식조사 백분위 기준 · 산출 대상 학교 간 잠정 순위';
  status.textContent=manualSnapshot.day+' 기준 · 수동 집계';
  window.addEventListener('beagu:level-state-updated',paint);
  window.addEventListener('pageshow',paint);
