@@ -140,3 +140,6 @@ body.beagu-levelup-open{overflow:hidden}
   .beagu-unified-header .beagu-unified-brand{gap:8px;font-size:15px;}
   .beagu-unified-header .beagu-level-state-container > .beagu-level-state{min-width:65px;padding:7px 8px;}
 }
+
+.beagu-level-state[data-account-level="3"]{background:#fff2ce!important;border-color:#bb8b28!important;color:#68480c!important}
+.beagu-level-state[data-account-level="3"]::before{background:#bb8b28!important}

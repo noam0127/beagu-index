@@ -18,7 +18,7 @@
     try{return sessionStorage.getItem(SESSION_KEY)||'';}catch(_){return '';}
   };
   const clearSaved=()=>{
-    try{sessionStorage.removeItem(SESSION_KEY);}catch(_){}
+    try{sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem('beagu-login-code-mask-v1');}catch(_){}
   };
   const save=(token)=>{
     try{sessionStorage.setItem(SESSION_KEY,token);}catch(_){}
@@ -30,11 +30,14 @@
     toggle.setAttribute('aria-pressed','false');
     toggle.setAttribute('aria-label','참여코드 표시');
   }
-  function authState(level){
+  function authState(level,accountLevel=level,provisional=false){
+    const display=Number(level)===2&&Number(accountLevel)===3?3:level;
+    panel.dataset.accountLevel=String(Number(display)||0);
+    panel.dataset.provisional=String(provisional===true);
     const verified=Number(level)>=1;
-    badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+level+' 인증 완료':'Lv.0 · 미인증';
+    badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+display+' 인증 완료':'Lv.0 · 미인증';
     const accountStatus=document.getElementById('togetherCurrentAuth');
-    if(accountStatus)accountStatus.textContent=level==='checking'?'확인 중':verified?'Lv.'+level:'Lv.0';
+    if(accountStatus)accountStatus.textContent=level==='checking'?'확인 중':verified?'Lv.'+display:'Lv.0';
     badge.classList.toggle('is-authenticated',verified);
     panel.setAttribute('data-auth-level',verified?String(level):'0');
     panel.setAttribute('data-challenge-verified-level',verified?String(level):'0');
@@ -59,7 +62,7 @@
     message(text);
     window.dispatchEvent(new Event('beagu:challenge-access-revoked'));
   }
-  function unlock(token,level=1){
+  function unlock(token,level=1,accountLevel=level,provisional=false){
     if(!token)return;
     activeToken=token;
     panel.hidden=false;
@@ -68,7 +71,7 @@
     logoutButton.hidden=false;
     input.value='';
     resetCodeVisibility();
-    authState(level);
+    authState(level,accountLevel,provisional);
     message('');
     window.dispatchEvent(new Event('beagu:challenge-access-granted'));
   }
@@ -108,7 +111,7 @@
         lock('Lv.1 인증이 필요합니다.');
         return;
       }
-      unlock(token,Number(result.level));
+      unlock(token,Number(result.level),result.accountLevel,result.provisional===true);
     }catch(error){
       if(serial!==requestSerial)return;
       if(error.status===401||error.status===403){
@@ -136,7 +139,8 @@
         return;
       }
       save(result.token);
-      unlock(result.token,Number(result.level));
+      try{sessionStorage.setItem('beagu-login-code-mask-v1',JSON.stringify({token:result.token,mask:code.slice(0,2)+'*'.repeat(code.length-2)}))}catch(_){}
+      unlock(result.token,Number(result.level),result.accountLevel,result.provisional===true);
     }catch(error){
       if(serial!==requestSerial)return;
       button.disabled=false;
@@ -166,7 +170,7 @@
     const next=event.detail;
     if(next&&Number(next.level)>=1&&typeof next.token==='string'){
       ++requestSerial;
-      unlock(next.token,Number(next.level));
+      unlock(next.token,Number(next.level),next.accountLevel,next.provisional===true);
     }
   });
   window.addEventListener('beagu:participation-logged-out',()=>{
@@ -180,8 +184,10 @@
     }
     if(session()!==activeToken)return;
     const tier=event.detail?.status;
-    if((tier==='1'||tier==='2')&&panel.getAttribute('data-challenge-verified-level')!==tier){
-      authState(Number(tier));
+    const account=event.detail?.accountLevel===3?3:Number(tier);
+    const provisional=event.detail?.provisional===true;
+    if((tier==='1'||tier==='2')&&(panel.getAttribute('data-challenge-verified-level')!==tier||panel.dataset.accountLevel!==String(account)||panel.dataset.provisional!==String(provisional))){
+      authState(Number(tier),account,provisional);
       window.dispatchEvent(new Event('beagu:challenge-verified-level-changed'));
     }
   });

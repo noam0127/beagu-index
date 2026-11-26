@@ -45,18 +45,28 @@
     // separate personal code without a server-confirmed referral.
     const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-challenge-verified-level') || get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
     const premiumVisual=upgraded || verifiedLoginLevel>=2;
+    const account3=verifiedLoginLevel===2&&get('challengeAccessPanel')?.dataset.accountLevel==='3';
+    const visualTier=account3?3:premiumVisual?2:1;
+    document.body.dataset.challengeTier=String(visualTier);
+    identityPanel.hidden=account3;
+    const loginPanel=get('challengeLoginCodePanel');if(loginPanel)loginPanel.hidden=verifiedLoginLevel<2;
+    const benefits=get('togetherBenefitsTitle'),list=get('togetherBenefitsList');
+    if(benefits&&list){benefits.textContent=account3?'Lv.3 전용 혜택':'Lv.2 전용 혜택';
+      const items=account3?['학교별 상세자료 열람','커뮤니티 참여권 획득','좋아요 누르기']:['확장 학교 상세자료 열람','최신 조사자료 열람','행정동 공동주택 평균 공시가격 열람','좋아요 누르기'];
+      list.replaceChildren(...items.map(item=>{const li=document.createElement('li');li.textContent=item;return li;}));}
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
-    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' :
+    identityTitle.textContent = upgraded ? '추천으로 발급된 개인 Lv.2 참여코드' :
       premiumVisual && !currentLink ? 'Lv.2 참여코드 확인 중' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
       premiumVisual ? 'Lv.2 로그인 완료 · 개인 코드 미확정' : '승급 대기';
-    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
-    if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
-    if(stateLabel){stateLabel.hidden=!!currentLink&&count<1&&verifiedLoginLevel<2&&!upgraded;stateLabel.textContent=verifiedLoginLevel>=2?'Lv.2 인증 완료':upgraded?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!currentLink?'추천 확인 중':count>=1?'권한 활성화 확인 중':'';}
+    if(certificateLevelBanner)certificateLevelBanner.textContent = 'Lv.'+visualTier+' 챌린지 달성';
+    if(certificate)certificate.dataset.level = String(visualTier);
+    const medalTitle=certificateMedal?.querySelector('strong');if(medalTitle)medalTitle.textContent=account3?'LV.3 CHALLENGE HONOR':'LV.2 CHALLENGE HONOR';
+    if(stateLabel){stateLabel.hidden=!!currentLink&&count<1&&verifiedLoginLevel<2&&!upgraded;stateLabel.textContent=account3?'Lv.3 챌린지 달성':verifiedLoginLevel>=2?'Lv.2 인증 완료':upgraded?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!currentLink?'추천 확인 중':count>=1?'권한 활성화 확인 중':'';}
     if(meter)meter.hidden=premiumVisual;
-    copyIdentityCode.hidden = !upgraded;
-    copyIdentityCode.disabled = !upgraded || !lastIdentity;
+    copyIdentityCode.hidden = account3||!upgraded;
+    copyIdentityCode.disabled = account3||!upgraded || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
     if(certificateMedal)certificateMedal.hidden=!premiumVisual;
     if(certificateThanks){

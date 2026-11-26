@@ -54,3 +54,16 @@ body.beagu-page-challenge #challengeAccessPanel .beagu-participation-inline-stat
 body.beagu-page-challenge #challengeReferralCountHint{font-size:11px;flex-basis:100%;text-align:left;color:#536079}
 
 body.beagu-page-challenge .together-benefits{padding:21px 20px;border:1px solid #a78bcb;border-radius:18px;background:linear-gradient(145deg,#fff,#f3edff);box-shadow:0 8px 22px #3b17691a;color:#32224b}body.beagu-page-challenge .together-benefits h2{font-size:19px;color:#54328a}body.beagu-page-challenge .together-benefits ul{padding-left:20px;margin:12px 0 16px}body.beagu-page-challenge .together-benefits li{line-height:1.6}body.beagu-page-challenge .together-benefits .together-level-guide{display:flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #7951a8;border-radius:11px;background:#5c388a;color:#fff;text-decoration:none;font-weight:750}
+
+/* Lv.3 gold is a visual account tier; data access remains server verified. */
+body.beagu-page-challenge #level3-account [hidden]{display:none!important}
+body.beagu-page-challenge .together-login-code{border:1px solid #d5e3f3;border-radius:12px;padding:12px;margin-top:8px;overflow-wrap:anywhere}
+body.beagu-page-challenge .together-login-code h3{margin:0 0 8px;font-size:15px}
+body.beagu-page-challenge[data-challenge-tier="3"]{--lv3-border:#bb8b28;--lv3-ink:#68480c;--lv3-bg:#fff5d9}
+body.beagu-page-challenge[data-challenge-tier="3"] :is(#certificate,#level3-account,#challengeAccessPanel,#challengeReferralPanel,.together-benefits,.challenge-account-details,.together-login-code,.together-save,.beagu-xp,.beagu-home-notice,.challenge-referral-link-card,.challenge-referral-count-card){border:1px solid var(--lv3-border)!important;border-radius:14px}
+body.beagu-page-challenge[data-challenge-tier="3"] .together-save{padding:10px}
+body.beagu-page-challenge #certificate[data-level="3"]{background:linear-gradient(145deg,#fff,#fff1c6);color:#573a09}
+body.beagu-page-challenge #certificate[data-level="3"] .certificate-level-banner{background:linear-gradient(120deg,#78500a,#b47a16);color:#fff}
+body.beagu-page-challenge[data-challenge-tier="3"] :is(.together-benefits,.challenge-account-details,.together-login-code,#level3-account){background:var(--lv3-bg);color:var(--lv3-ink)}
+body.beagu-page-challenge[data-challenge-tier="3"] :is(.together-benefits h2,#challengeReferralCount,.together-auth-level){color:var(--lv3-ink)!important}
+body.beagu-page-challenge[data-challenge-tier="3"] .together-benefits .together-level-guide{background:#78500a;border-color:#bb8b28;color:#fff}
