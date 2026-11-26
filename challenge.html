@@ -183,8 +183,8 @@
 <script defer src="js/beagu-level-state-v1.js?v=11124-account1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
-<script defer src="js/beagu-participation-auth-v2.js?v=11123-ui1"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11202-account">
+<script defer src="js/beagu-participation-auth-v2.js?v=11202-account"></script>
 <link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
@@ -220,24 +220,28 @@
     <p class="challenge-access-help beagu-auth-help"><a class="together-survey" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 배구지수 조사 참여하기</a><span>기존 참여코드로도 인증할 수 있습니다.</span></p>
   </section>
   <p id="challengePublicSurvey"><a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">조사 참여</a></p>
-  <section id="level3-account" class="challenge-access-panel beagu-auth-card" aria-labelledby="level3Title" data-html2canvas-ignore="true">
-    <h2 id="level3Title">Lv.3 나의 계정</h2>
-    <p>별도의 아이디를 만들지 않습니다. 회원가입 시 이름, 이메일, 전화번호를 수집하지 않으며 비밀번호만으로 로그인할 수 있습니다.</p>
-    <button id="level3Upgrade" type="button" class="beagu-auth-submit" hidden>Lv.3 레벨업 (계정 생성)</button>
-    <p id="level3UpgradeHint" hidden>개인 Lv.2 참여코드로 인증하면 계정을 생성할 수 있습니다. 공용 코드는 계정에 연결할 수 없습니다.</p>
-    <button id="level3Login" type="button" class="beagu-auth-submit">비밀번호 로그인</button>
+  <section id="level3-account" class="challenge-access-panel beagu-auth-card beagu-account-card-v11202" aria-labelledby="level3Title" data-html2canvas-ignore="true">
+    <div class="beagu-account-heading"><span class="beagu-account-emblem" aria-hidden="true">♛</span><div><span class="beagu-account-kicker">BAEGU INDEX · MY ACCOUNT</span><h2 id="level3Title">Lv.3 나의 계정</h2></div></div>
+    <p id="level3Current" class="beagu-account-state" role="status">인증 확인 중</p>
+    <p class="beagu-account-intro">나만의 비밀번호로 로그인하세요. 이름, 이메일, 전화번호, 별도 아이디는 필요하지 않습니다.</p>
+    <div class="beagu-account-actions" role="group" aria-label="계정 이용 방식">
+      <button id="level3Upgrade" type="button" class="beagu-auth-submit" aria-pressed="false">계정 생성</button>
+      <button id="level3Login" type="button" class="beagu-auth-submit" aria-pressed="false">비밀번호 로그인</button>
+    </div>
+    <p id="level3UpgradeHint" class="beagu-account-help">개인 Lv.2 참여코드로 인증하면 계정을 생성할 수 있습니다.</p>
     <form id="level3Form" class="beagu-auth-form" hidden autocomplete="off">
-      <label for="level3Password">비밀번호 (영문·숫자 조합 10자리 이상)</label>
-      <input id="level3Password" type="password" minlength="10" maxlength="128" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
+      <label for="level3Password">비밀번호</label>
+      <div class="beagu-account-password"><input id="level3Password" type="password" minlength="10" maxlength="128" autocomplete="current-password" autocapitalize="off" spellcheck="false" required placeholder="영문·숫자 조합 10자리 이상"><button id="level3Reveal" type="button" aria-pressed="false">표시</button></div>
       <div id="level3RegisterFields" hidden>
         <label for="level3Confirm">비밀번호 확인</label>
-        <input id="level3Confirm" type="password" minlength="10" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false">
-        <p><strong>비밀번호를 분실하면 계정을 찾거나 복구할 수 없습니다. 운영자도 비밀번호를 확인해 드릴 수 없습니다.</strong></p>
-        <label><input id="level3Ack" type="checkbox"> 위 안내를 확인했습니다.</label>
+        <input id="level3Confirm" type="password" minlength="10" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="비밀번호를 한 번 더 입력">
+        <p class="beagu-account-warning"><strong>비밀번호를 분실하면 계정을 찾거나 복구할 수 없습니다. 운영자도 비밀번호를 확인해 드릴 수 없습니다.</strong></p>
+        <label class="beagu-account-consent"><input id="level3Ack" type="checkbox"> 위 안내를 확인했습니다.</label>
       </div>
       <button id="level3Submit" class="beagu-auth-submit" type="submit">로그인</button>
     </form>
     <p id="level3Status" role="status" aria-live="polite"></p>
+    <a class="beagu-account-guide" href="levels.html">레벨별 안내 →</a>
   </section>
   <div id="challengeProtected" hidden>
   
@@ -348,7 +352,7 @@
 <script src="js/challenge.js?v=11123-ui1"></script>
 <script src="js/challenge-referral-v1.js?v=11123-ui1"></script>
 <script src="js/challenge-access-v1.js?v=11123-ui1"></script>
-<script src="js/challenge-level3-v1.js?v=11123-ui1"></script>
+<script src="js/challenge-level3-v1.js?v=11202-account"></script>
 </body>
 </html>
 
