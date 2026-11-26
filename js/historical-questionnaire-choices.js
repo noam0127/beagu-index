@@ -294,3 +294,14 @@ window.BeaguHistoricalQuestionnaire=Object.freeze({
     ]
   }
 });
+
+(function(){// Only original documented choices; observed answer strings are NOT a source of allowed labels.
+const closedChoice=(catalog,year,id,value)=>{
+  if(typeof value!=='string'||typeof id!=='string'||!/^Q\d{2}$/.test(id))return null;
+  const options=catalog?.[String(year)]?.[id];
+  if(!Array.isArray(options))return null;
+  const v=value.trim();
+  return options.includes(v)?v:null;
+};
+
+window.BeaguHistoricalClosedChoice=(year,id,value)=>closedChoice(window.BeaguHistoricalQuestionnaire,year,id,value);})();

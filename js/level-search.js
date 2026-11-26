@@ -419,10 +419,6 @@
   function verifiedOptions(year,questionId){
     const authoritative=window.BeaguHistoricalQuestionnaire?.[String(year)]?.[questionId];
     if(Array.isArray(authoritative)&&authoritative.length)return {values:authoritative,source:'verified'};
-    const additional=window.BeaguHistoricalAdditionalObserved?.[String(year)]?.[questionId];
-    if(Array.isArray(additional)&&additional.length)return {values:additional,source:'observed'};
-    const observed=year===2025?window.Beagu2025ObservedChoices?.[questionId]:null;
-    if(Array.isArray(observed)&&observed.length)return {values:observed,source:'observed'};
     return {values:[],source:'missing'};
   }
   // One card per original question: school / region / nation together with
@@ -453,8 +449,8 @@
     section.append(overview);
     const vetted=new Map((Array.isArray(modes)?modes:[])
       .filter(d=>Number(d.year)===year&&/^Q\d{2}$/.test(String(d.questionId||''))&&
-        typeof d.modeOption==='string'&&d.modeOption.length>0)
-      .map(d=>[d.questionId,d.modeOption]));
+        window.BeaguHistoricalClosedChoice?.(year,d.questionId,d.modeOption))
+      .map(d=>[d.questionId,window.BeaguHistoricalClosedChoice(year,d.questionId,d.modeOption)]));
     const region=String(school?.sido_standard||school?.sido||'지역');
     // Review-approved checkbox choices are a school-level union of selected
     // original options, never an individual answer or raw response combination.
@@ -462,7 +458,7 @@
       .filter(item=>year===2025&&item?.year===2025&&['Q03','Q04'].includes(item.questionId)
         &&Array.isArray(item.selectedOptions)&&item.selectedOptions.length>0
         &&item.selectedOptions.every(v=>typeof v==='string'&&v.trim().length>0&&v.length<=180))
-      .map(item=>[item.questionId,[...new Set(item.selectedOptions)]]));
+      .map(item=>[item.questionId,[...new Set(item.selectedOptions.map(v=>window.BeaguHistoricalClosedChoice?.(year,item.questionId,v)).filter(Boolean))]]));
     const answerBadge=(value)=>{
       // Transform only exact yes/no/unknown choice labels. Explanatory
       // phrases such as "조금 있다" are never collapsed into O/X.
@@ -516,7 +512,7 @@
       const benchmark=m=>{
         if(!m||typeof m!=='object')return null;
         const preferred=m.kind==='most_frequent'||m.kind==='mode'?m.mode||m.mean:m.mean||m.mode;
-        return typeof preferred==='string'&&preferred.length<=180?preferred:null;
+        return window.BeaguHistoricalClosedChoice?.(year,id,preferred)??null;
       };
       const checkboxQuestion=year===2025&&(id==='Q03'||id==='Q04');
       const checked=checkboxQuestion?selectedOptions.get(id)||null:null;

@@ -1216,10 +1216,10 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   }
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261124-q45-wording1"></script>
-<script src="js/2026-approved-question-results.js?v=20261121-lv2-approved-instant"></script>
+<script src="js/2026-approved-question-results.js?v=closed-choice-privacy1"></script>
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
-<script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
-<script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
+<script src="js/historical-questionnaire-choices.js?v=closed-choice-privacy1"></script>
+<script src="js/2025-observed-choices.js?v=closed-choice-privacy1"></script>
 <script src="js/public-school-basics-2026-v1.js?v=11117"></script>
 <script>
 /* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
@@ -1526,11 +1526,10 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         const year=Number(d?.year),qid=String(d?.questionId||'');
         if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
            !state.years[String(year)]||
-           typeof d.modeOption!=='string'||!d.modeOption.trim()||
-           d.modeOption.length>180)continue;
+           !window.BeaguHistoricalClosedChoice?.(year,qid,d.modeOption))continue;
         if(!state.years[String(year)].items)state.years[String(year)].items={};
         state.years[String(year)].items[qid]={
-          display:d.modeOption,modeOption:d.modeOption,serverApproved:true
+          display:window.BeaguHistoricalClosedChoice(year,qid,d.modeOption),modeOption:window.BeaguHistoricalClosedChoice(year,qid,d.modeOption),serverApproved:true
         };
       }
       const releasedQuestions=window.Beagu2026ApprovedResults?.summary(r.schoolQuestionResults2026)||{};
@@ -1936,9 +1935,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     if(full&&Array.isArray(full.columns)&&full.columns.length)return full.columns;
     const prior=window.BeaguHistoricalQuestionnaire?.[year]?.[item.id];
     if(Array.isArray(prior)&&prior.length&&prior.every(x=>typeof x==='string'))return prior;
-    const observed=year===2025?window.Beagu2025ObservedChoices?.[item.id]:null;
-    if(Array.isArray(observed)&&observed.length&&observed.every(x=>typeof x==='string'))return observed;
-    if(Array.isArray(item.options)&&item.options.length&&item.options.every(x=>typeof x==='string'))return item.options;
+    // Historical questions without documented options are withheld.
+    if(year!==2026)return null;
     if(year===2026&&/^Q(0[1-9]|1[0-1])$/.test(item.id))return standard2026;
     if(year===2026)return verified2026Options[item.id]||null;
     return null;
@@ -2077,7 +2075,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       choices.append(desc);
     }
     row.append(choices);
-    const majority=itemApproved?(typeof data?.modeOption==='string'?data.modeOption:verifiedModalOption(data?.distribution)):null;
+    const majority=itemApproved?(state.selected===2026?(typeof data?.modeOption==='string'?data.modeOption:verifiedModalOption(data?.distribution)):(window.BeaguHistoricalClosedChoice?.(state.selected,item.id,data?.modeOption)??null)):null;
     const area=canonicalRegion(state.school?.sido_standard||state.school?.sido);
     const historical=geographyComparisonCache[area+'|'+state.selected]?.items?.[item.id]||{};
     const sourceNation=historical.national||null,sourceRegion=historical.regional||null;

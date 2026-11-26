@@ -11,9 +11,17 @@
     if(result.values.some(v=>typeof v!=='string'||(m.kind==='time'?!/^([01]\d|2[0-3]):[0-5]\d$/.test(v):!allowed.includes(v))))return null;
     return m;
   };
+  function filterResults(results){
+    return (Array.isArray(results)?results:[]).flatMap(r=>{
+      const m=window.Beagu2026Questionnaire?.[r?.questionId];if(!m||!Array.isArray(r.values))return [];
+      const allowed=m.kind==='grid'?m.columns:m.options;
+      const clean={questionId:r.questionId,row:r.row,values:[...new Set(r.values.filter(v=>typeof v==='string'&&(m.kind==='time'?/^([01]\d|2[0-3]):[0-5]\d$/.test(v):allowed.includes(v))))]};
+      return safe(clean)?[clean]:[];
+    });
+  }
   function summary(results){
     const out={};
-    for(const r of Array.isArray(results)?results:[]){
+    for(const r of filterResults(results)){
       const m=safe(r);if(!m)continue;
       const text=(r.row>=0?m.rows[r.row]+': ':'')+r.values.join(' · ');
       (out[r.questionId]??=[]).push(text);
@@ -22,7 +30,7 @@
   }
   function render(host,results,{level=1}={}){
     const groups=new Map();
-    for(const r of Array.isArray(results)?results:[]){const m=safe(r);if(!m)continue;if(!groups.has(r.questionId))groups.set(r.questionId,[]);groups.get(r.questionId).push(r);}
+    for(const r of filterResults(results)){const m=safe(r);if(!m)continue;if(!groups.has(r.questionId))groups.set(r.questionId,[]);groups.get(r.questionId).push(r);}
     if(!groups.size)return false;
     const section=document.createElement('section');section.className='beagu-approved-section';
     const note=document.createElement('p');note.className='beagu-source-caption';note.textContent='공개 검토·승인을 완료한 학교별 집계입니다. 단일선택은 최빈 응답(동률 포함), 복수선택은 선택된 항목, 시각은 평균입니다. 학교 전체 교사의 의견을 대표하지 않습니다.';section.append(note);
