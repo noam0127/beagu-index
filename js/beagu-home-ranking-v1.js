@@ -105,6 +105,7 @@
   list.replaceChildren();
   for(const r of rows){
    const li=el('li'),rank=el('strong',r.rank),identity=el('span'),a=el('a',r.school_name);
+   li.dataset.rank=String(r.rank);
    a.href=detailHref(r.school_id,tier());
    identity.append(a,el('small',r.region));li.append(rank,identity);list.append(li);
   }
