@@ -13,5 +13,13 @@ const snapshot=parseVI13Sheet(matrix,Date.parse(stamp)),approved=Object.fromEntr
 assert.equal(publicVI13Top10(snapshot,approved).rows.length,10);assert.ok(publicVI13Top10(snapshot,approved).rows.every(r=>Object.keys(r).length===4&&!('percentile' in r)));
 assert.throws(()=>publicVI13Top10(snapshot,{}));assert.deepEqual(permittedVI13Values(snapshot,[schools[0].school_id],{}),{});
 assert.deepEqual(permittedVI13Values(snapshot,[schools[0].school_id],approved),{[schools[0].school_id]:99.8});
+const numericMatrix=matrix.map((r,i)=>i<2?r:[Number(r[0]),...r.slice(1)]);
+assert.deepEqual(parseVI13Sheet(numericMatrix,Date.parse(stamp)),snapshot);
+const mixedMatrix=matrix.map((r,i)=>i<2||i%2?r:[Number(r[0]),...r.slice(1)]);
+assert.deepEqual(parseVI13Sheet(mixedMatrix,Date.parse(stamp)),snapshot);
+for(const id of [123456,12345678,7000000.5,null,true,' 7000000','07000000']){
+ const bad=matrix.map(r=>r.slice());bad[2][0]=id;assert.throws(()=>parseVI13Sheet(bad,Date.parse(stamp)),/VI13_SHEET_ROW/);
+}
+const duplicate=matrix.map(r=>r.slice());duplicate[3][0]=Number(duplicate[2][0]);assert.throws(()=>parseVI13Sheet(duplicate,Date.parse(stamp)),/VI13_SHEET_ROW/);
 assert.throws(()=>parseVI13Sheet(matrix,Date.parse(stamp)+49*3600000));
 console.log('PASS VI13 cohort baseline, exact ties, freshness and disclosure');

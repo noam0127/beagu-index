@@ -16,7 +16,9 @@ export function parseVI13Sheet(values,now=Date.now()){
  if(!Number.isFinite(stamp)||stamp>now+60000||now-stamp>MAX_AGE_MS)throw Error('VI13_SHEET_STALE');
  let total=0,prev=null;const seen=new Set(),rows=[];
  for(let i=0;i<data.length;i++){
-  const [id,name,region,percentile,rank,n,sum,flags]=data[i];
+  const [rawId,name,region,percentile,rank,n,sum,flags]=data[i];
+  // Sheets may coerce seven-digit IDs to numbers. Never pad, round or guess an ID.
+  const id=typeof rawId==='number'&&Number.isSafeInteger(rawId)?String(rawId):rawId;
   if(typeof id!=='string'||!ID.test(id)||seen.has(id)||typeof name!=='string'||!name.trim()||name.length>120||
    typeof region!=='string'||!region.trim()||region.length>100||typeof percentile!=='number'||!Number.isFinite(percentile)||
    percentile<0||percentile>100||!integer(rank,1,data.length)||!integer(n,1,50000)||
