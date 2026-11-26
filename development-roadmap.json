@@ -1016,19 +1016,60 @@
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "version": "v1.11.23",
-      "name": "자동 동기화",
+      "name": "나의 계정",
+      "scope": "Lv.2 참여코드·전용링크 전환 및 Lv.3 비밀번호 계정",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.11.23-my-account",
+      "tests": [],
+      "dependencies": [
+        "v1.11.22"
+      ],
+      "rollback_sha": "2dbc596e806917f86ac1b8b93ffa67c202e18f8d",
+      "order": 41,
+      "backend_prerequisites": [
+        "계정 SQL 및 서버 비밀키 설정, 독립 서버 검증 필요"
+      ]
+    },
+    {
+      "pr": null,
+      "commit": null,
+      "changed_files": [],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "version": "v1.11.24",
+      "name": "자동화",
       "scope": "기존 v1.11.22 자동 동기화 후보 보존; 바른 안내 적용 후 재통합 및 버전 갱신 필요",
       "status": "PENDING",
       "branch": "feat/v11122-vi13-sheet-sync",
       "tests": [],
       "dependencies": [
-        "v1.11.22"
+        "v1.11.23"
       ],
       "rollback_sha": null,
-      "order": 41
+      "order": 42
     },
     {
-      "order": 42,
+      "pr": null,
+      "commit": null,
+      "changed_files": [],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "version": "v1.11.25",
+      "name": "커뮤니티",
+      "scope": "계정 기반 커뮤니티 (후속 개발)",
+      "status": "PENDING",
+      "branch": null,
+      "tests": [],
+      "dependencies": [
+        "v1.11.24"
+      ],
+      "rollback_sha": null,
+      "order": 43
+    },
+    {
+      "order": 44,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -1048,7 +1089,7 @@
       "rollback_sha": null
     },
     {
-      "order": 43,
+      "order": 45,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -1067,7 +1108,7 @@
       "rollback_sha": null
     },
     {
-      "order": 44,
+      "order": 46,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -1084,7 +1125,7 @@
       "rollback_sha": null
     },
     {
-      "order": 45,
+      "order": 47,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

@@ -180,11 +180,11 @@
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
-<script defer src="js/beagu-level-state-v1.js?v=11113-header2"></script>
+<script defer src="js/beagu-level-state-v1.js?v=11124-account1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
-<script defer src="js/beagu-participation-auth-v2.js?v=11113-3-challenge-lv0"></script>
+<script defer src="js/beagu-participation-auth-v2.js?v=11124-account1"></script>
 <link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
@@ -220,6 +220,24 @@
     <p class="challenge-access-help beagu-auth-help"><a class="together-survey" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 배구지수 조사 참여하기</a><span>기존 참여코드로도 인증할 수 있습니다.</span></p>
   </section>
   <p id="challengePublicSurvey"><a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">조사 참여</a></p>
+  <section id="level3-account" class="challenge-access-panel beagu-auth-card" aria-labelledby="level3Title" data-html2canvas-ignore="true">
+    <h2 id="level3Title">Lv.3 나의 계정</h2>
+    <p>별도의 아이디를 만들지 않습니다. 회원가입 시 이름, 이메일, 전화번호를 수집하지 않으며 비밀번호만으로 로그인할 수 있습니다.</p>
+    <button id="level3Upgrade" type="button" class="beagu-auth-submit" hidden>Lv.3 레벨업</button>
+    <button id="level3Login" type="button" class="beagu-auth-submit">비밀번호 로그인</button>
+    <form id="level3Form" class="beagu-auth-form" hidden autocomplete="off">
+      <label for="level3Password">비밀번호 (영문·숫자 조합 10자리 이상)</label>
+      <input id="level3Password" type="password" minlength="10" maxlength="128" autocomplete="current-password" autocapitalize="off" spellcheck="false" required>
+      <div id="level3RegisterFields" hidden>
+        <label for="level3Confirm">비밀번호 확인</label>
+        <input id="level3Confirm" type="password" minlength="10" maxlength="128" autocomplete="new-password" autocapitalize="off" spellcheck="false">
+        <p><strong>비밀번호를 분실하면 계정을 찾거나 복구할 수 없습니다. 운영자도 비밀번호를 확인해 드릴 수 없습니다.</strong></p>
+        <label><input id="level3Ack" type="checkbox"> 위 안내를 확인했습니다.</label>
+      </div>
+      <button id="level3Submit" class="beagu-auth-submit" type="submit">로그인</button>
+    </form>
+    <p id="level3Status" role="status" aria-live="polite"></p>
+  </section>
   <div id="challengeProtected" hidden>
   
 
@@ -325,9 +343,10 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=11117-prep1"></script>
-<script src="js/challenge-referral-v1.js?v=11117-prep1"></script>
+<script src="js/challenge.js?v=11124-account1"></script>
+<script src="js/challenge-referral-v1.js?v=11124-account1"></script>
 <script src="js/challenge-access-v1.js?v=11113-minimal"></script>
+<script src="js/challenge-level3-v1.js?v=11124-account1"></script>
 </body>
 </html>
 

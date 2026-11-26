@@ -127,7 +127,7 @@
         headers: {'Content-Type': 'application/json', 'X-Beagu-Session': token},
         body: JSON.stringify({
           action: 'issue', visitor: detail.visitor, identityCode: detail.code,
-          deviceSecret: deviceSecret()
+          deviceSecret: (()=>{try{return deviceSecret();}catch{return '';}})()
         })
       });
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
@@ -171,7 +171,7 @@
       }
       const loginLevel = Number(get('challengeAccessPanel')?.getAttribute('data-auth-level') || 0);
       status.textContent = promoted
-        ? '동료에게 링크를 보내 1명 이상 참여하면 Lv.2로 레벨업됩니다.'
+        ? 'Lv.2 참여코드와 전용 조사 링크가 확인되었습니다.'
         : loginLevel >= 2
           ? '동료의 설문 참여가 확인되면 추천이 누적됩니다.'
           : '동료에게 링크를 보내 1명 이상 참여하면 Lv.2로 레벨업됩니다.';

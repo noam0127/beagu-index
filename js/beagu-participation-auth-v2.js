@@ -43,9 +43,11 @@
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
    <a href="${survey}" target="_blank" rel="noopener noreferrer">Lv.1 참여코드 받기</a>
    <a href="challenge.html">Lv.2 참여코드 받기</a>
+   <a href="challenge.html#level3-account" id="beaguAccountEntry">Lv.3 비밀번호 로그인</a>
   </nav>
  </section>`;
  document.body.append(modal);
+ modal.querySelector('#beaguAccountEntry')?.addEventListener('click',()=>{close();});
  const heading=modal.querySelector('#beaguParticipationTitle');
  const description=modal.querySelector('#beaguParticipationDescription');
  const label=modal.querySelector('#beaguParticipationCodeLabel');
@@ -78,7 +80,8 @@
  function paint(level){
   lastLevel=level;
   const text=labelFor(level);
-  badge.dataset.level=String(level);badge.textContent='Lv.'+level;
+  const accountLevel=level===2&&badge.dataset.accountLevel==='3'?3:level;
+  badge.dataset.level=String(level);badge.textContent='Lv.'+accountLevel;
   badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · Lv.2 참여코드 입력':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
   badge.title=level===1?'Lv.2 참여코드 입력 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);
@@ -98,13 +101,13 @@
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
   description.hidden=level<2;
-  description.textContent=level>=2?'Lv.2 인증이 완료되었습니다.':'';
+  description.textContent=accountLevel===3?'Lv.3 나의 계정으로 로그인했습니다.':level>=2?'Lv.2 인증이 완료되었습니다.':'';
   modal.querySelector('[role="dialog"]').dataset.level=String(level);
   label.textContent=level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
   submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';
   if(level>=1){
-   tierText.textContent=text;
+   tierText.textContent=accountLevel===3?'Lv.3 · 나의 계정':text;
    expiryText.textContent=expiresAt?
      '인증 만료: '+new Date(expiresAt).toLocaleString('ko-KR'):'현재 세션의 인증 정보';
   }
@@ -265,6 +268,7 @@
  let challengeEntryHandled=false;
  function handleChallengeEntry(level){
   if(challengeEntryHandled||!document.body.classList.contains('beagu-page-challenge'))return;
+  if(window.location?.hash==='#level3-account'){challengeEntryHandled=true;return;}
   if(level===0&&!stored()){
    challengeEntryHandled=true;
    if(modal.hidden)open();
