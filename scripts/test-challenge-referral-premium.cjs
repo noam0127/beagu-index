@@ -84,13 +84,19 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
   // A separate, server-verified Lv.2 login deserves the premium visual
   // without falsely upgrading an uncredited personal referral code.
-  el.challengeAccessPanel={getAttribute:()=> '2'};
+  el.challengeAccessPanel={getAttribute:()=> '2',dataset:{provisional:'true'}};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
-  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드 확인 중');
+  assert.equal(el.challengeIdentityPanel.hidden,false);
   assert.equal(el.challengeIdentityTag.textContent,'Lv.2 로그인 완료 · 개인 코드 미확정');
   assert.equal(el.copyIdentityCode.hidden,true);
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'pending');
+  el.challengeLoginCodePanel={hidden:true};
+  el.challengeAccessPanel.dataset.provisional='false';
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityPanel.hidden,true,'Verified personal Lv2 must not show a duplicate pending code');
+  assert.equal(el.challengeLoginCodePanel.hidden,false);
   delete el.challengeAccessPanel;
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
