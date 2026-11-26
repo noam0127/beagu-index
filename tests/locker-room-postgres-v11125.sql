@@ -19,6 +19,7 @@ insert into public.beagu_postit_comments(post_id,author_uid,body)
 values ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000002','comment');
 insert into public.beagu_postit_reactions(author_uid,target_type,target_id,kind)
 values ('20000000-0000-4000-8000-000000000002','post','10000000-0000-4000-8000-000000000001','like');
+create table if not exists public.beagu_admin_accounts(user_id uuid primary key,role text,enabled boolean);
 \ir ../docs/v1.11.25-locker-room-schema-preview.sql
 do $test$
 declare a uuid:='20000000-0000-4000-8000-000000000001'; n uuid:='30000000-0000-4000-8000-000000000001'; result jsonb; original uuid:='10000000-0000-4000-8000-000000000001';
@@ -53,3 +54,24 @@ begin
  or not has_function_privilege('service_role','public.beagu_postit_school_counts_v1(text[])','execute')
  then raise exception 'school count ACL'; end if;
 end $counts$;
+
+-- Synthetic owner only; nothing is configured in production.
+insert into public.beagu_admin_accounts(user_id,role,enabled) values ('90000000-0000-4000-8000-000000000001','owner',true);
+insert into public.beagu_locker_operator_v1(author_uid,admin_user_id) values('90000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000001');
+do $nick$
+declare p uuid; a uuid:='90000000-0000-4000-8000-000000000003'; op uuid:='90000000-0000-4000-8000-000000000002'; nick text; cn text; flag boolean;
+begin
+ insert into public.beagu_postit_posts(author_uid,subject_type,body,locker_nickname,locker_operator)
+ values(a,'general','fixture','카리브해매너티',true) returning id,locker_nickname,locker_operator into p,nick,flag;
+ if flag or nick not in ('아웃사이드 히터','아포짓 스파이커','미들 블로커','세터','리베로') then raise exception 'nickname spoof';end if;
+ insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,a,'same author') returning locker_nickname into cn;
+ if cn is distinct from nick then raise exception 'alias consistency';end if;
+ for i in 1..12 loop
+  insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,gen_random_uuid(),'different actor');
+ end loop;
+ if (select count(distinct nickname) from public.beagu_locker_aliases_v1 where post_id=p)<>13 then raise exception 'alias collision';end if;
+ insert into public.beagu_postit_comments(post_id,author_uid,body) values(p,op,'operator') returning locker_nickname,locker_operator into cn,flag;
+ if cn is distinct from '카리브해매너티' or flag is distinct from true then raise exception 'operator nickname';end if;
+ if exists(select 1 from public.beagu_postit_posts where body='original' and locker_nickname is not null) then raise exception 'legacy nickname rewritten';end if;
+ if has_table_privilege('anon','public.beagu_locker_aliases_v1','select') or has_table_privilege('authenticated','public.beagu_locker_operator_v1','select') then raise exception 'private mapping exposed';end if;
+end $nick$;
