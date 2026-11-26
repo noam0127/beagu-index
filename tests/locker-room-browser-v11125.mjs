@@ -6,7 +6,7 @@ const origin="http://127.0.0.1:8765";
 const server=spawn("python3",["-m","http.server","8765","--bind","127.0.0.1"],{stdio:"ignore"});
 const verified="a".repeat(64),codeOnly="b".repeat(64);
 const school={school_id:"TEST001",name:"가상초등학교",region:"가상지역",students:100,percentile:null};
-const initial=[{id:"legacy",body:"기존 포스트잇",subject_type:"school",school,created_at:"2026-11-26T00:00:00Z",likes:1,comments:0,mine:false,liked:false,reported:false}];
+const initial=[{id:"legacy",body:"기존 포스트잇",subject_type:"school",school,created_at:"2026-11-26T00:00:00Z",likes:1,comments:0,mine:false,liked:false,reported:false},{id:"operator-fixture",body:"운영자 테스트 글",subject_type:"general",school:null,created_at:"2026-11-26T00:01:00Z",likes:0,comments:0,nickname:"카리브해매너티",is_operator:true,mine:false,liked:false,reported:false}];
 let browser;
 try{
  for(let i=0;i<50;i++){try{if((await fetch(origin+"/postit.html")).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
@@ -42,7 +42,7 @@ try{
     writes.push(body);
     if([...body.text].length>300)return send({error:"INVALID_POST"},400);
     const id="fixture-"+writes.length;
-    posts.unshift({id,body:body.text,subject_type:body.subject_type,school:body.school_id?school:null,created_at:new Date().toISOString(),likes:0,comments:0,mine:true,liked:false,reported:false});
+    posts.unshift({id,body:body.text,subject_type:body.subject_type,school:body.school_id?school:null,created_at:new Date().toISOString(),likes:0,comments:0,nickname:"세터",is_operator:false,mine:true,liked:false,reported:false});
     return send({id},201);
    }
    return send({error:"UNEXPECTED_ACTION"},400);
@@ -58,12 +58,14 @@ try{
   }else{
    await page.locator("#postitWriteForm").waitFor({state:"visible"});
    await page.getByText("기존 포스트잇",{exact:true}).waitFor();
+   await page.getByText("카리브해매너티 · 운영자",{exact:true}).waitFor();
    assert.equal(await page.locator("#postitBody").isVisible(),true);
    await page.locator("#postitBody").fill("가".repeat(301));
    assert.equal([...(await page.locator("#postitBody").inputValue())].length,300);
    assert.equal(await page.locator("#postitCounter").innerText(),"300 / 300");
    await page.locator("#postitSubmit").click();
    await page.getByText("가".repeat(300),{exact:true}).waitFor();
+   await page.getByText("세터",{exact:true}).first().waitFor();
    assert.equal(writes[0].subject_type,"general");
    assert.equal("school_id" in writes[0],false);
    assert.equal([...writes[0].text].length,300);
