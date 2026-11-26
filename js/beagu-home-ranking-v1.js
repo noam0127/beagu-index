@@ -106,7 +106,7 @@
   for(const r of rows){
    const li=el('li'),rank=el('strong',r.rank),identity=el('span'),a=el('a',r.school_name);
    a.href=detailHref(r.school_id,tier());
-   identity.append(a,el('small',r.region));li.append(rank,identity,el('strong',r.percentile.toFixed(1)));list.append(li);
+   identity.append(a,el('small',r.region));li.append(rank,identity,el('strong',r.percentile.toFixed(1)+'%'));list.append(li);
   }
  }
  document.getElementById('beagu2026RankingTitle').textContent='2026 배구지수 TOP10';
