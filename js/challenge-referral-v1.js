@@ -48,8 +48,9 @@
     const account3=verifiedLoginLevel===2&&get('challengeAccessPanel')?.dataset?.accountLevel==='3';
     const visualTier=account3?3:premiumVisual?2:1;
     if(document.body)document.body.dataset.challengeTier=String(visualTier);
-    identityPanel.hidden=account3;
-    const loginPanel=get('challengeLoginCodePanel');if(loginPanel)loginPanel.hidden=verifiedLoginLevel<2;
+    const personalVerified=verifiedLoginLevel===2&&get('challengeAccessPanel')?.dataset?.provisional==='false';
+    identityPanel.hidden=account3||(personalVerified&&!upgraded);
+    const loginPanel=get('challengeLoginCodePanel');if(loginPanel)loginPanel.hidden=verifiedLoginLevel<2||(!account3&&upgraded);
     const benefits=get('togetherBenefitsTitle'),list=get('togetherBenefitsList');
     if(benefits&&list){benefits.textContent=account3?'Lv.3 전용 혜택':'Lv.2 전용 혜택';
       const items=account3?['학교별 상세자료 열람','커뮤니티 참여권 획득','좋아요 누르기']:['확장 학교 상세자료 열람','최신 조사자료 열람','행정동 공동주택 평균 공시가격 열람','좋아요 누르기'];
@@ -57,7 +58,7 @@
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? '추천으로 발급된 개인 Lv.2 참여코드' :
-      premiumVisual && !currentLink ? 'Lv.2 참여코드 확인 중' : 'Lv.2 참여코드(비활성)';
+      premiumVisual ? 'Lv.2 참여코드 확인 중' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
       premiumVisual ? 'Lv.2 로그인 완료 · 개인 코드 미확정' : '승급 대기';
     if(certificateLevelBanner)certificateLevelBanner.textContent = 'Lv.'+visualTier+' 챌린지 달성';
