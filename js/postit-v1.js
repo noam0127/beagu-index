@@ -11,7 +11,7 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:"",postAttempt:null,pendingActions:new Set()};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,contextTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:"",postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
  return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
@@ -60,8 +60,11 @@ function setSubject(subject,{schoolId="",game="",compare=""}={}){
 }
 async function renderContext(){
  const box=$("postitContext"),picker=$("postitSubjectPicker");
+ const ticket=++state.contextTicket;
+ if(!canRead()){box.textContent="학교 태그는 익명 계정 인증 후 이용할 수 있습니다.";updateComposeAccess();return;}
  if(state.subject==="school"&&validSchool(state.schoolId)){
   const schools=await schoolDetails([state.schoolId]);
+  if(ticket!==state.contextTicket||!canRead())return;
   const s=schools[state.schoolId];if(state.subject!=="school"||state.schoolId!==String(s?.school_id||state.schoolId))return;
   box.replaceChildren(node("strong","",s?.name||"선택한 학교"),node("span","", " · "+(s?.region||"학교")+" · 학생 "+(s?.students==null?"자료 없음":Number(s.students).toLocaleString("ko-KR")+"명")+
     " · 백분위 "+(s?.percentile==null?"자료 없음":s.percentile+" ("+s.percentile_year+"년)")));
@@ -70,11 +73,13 @@ async function renderContext(){
   box.replaceChildren(node("strong","",gameNames[state.game]||"게임"));
   if(validSchool(state.schoolId)){
    const schools=await schoolDetails([state.schoolId]);
+   if(ticket!==state.contextTicket||!canRead())return;
    const s=schools[state.schoolId];if(s)box.append(node("span",""," · "+s.name));
   }
   picker.hidden=true;
  }else if(state.subject==="comparison"){
   const items=state.compare.split(",");const schools=await schoolDetails(items.map(x=>x.split(":")[0]));
+  if(ticket!==state.contextTicket||!canRead())return;
   box.replaceChildren(node("strong","","학교비교 · "+items.length+"개 항목"));
   const s=items.map(x=>{const [id,year]=x.split(":");return (schools[id]?.name||id)+" ("+year+")";}).join(" · ");
   box.append(node("div","",s));
@@ -97,7 +102,7 @@ function updateComposeAccess(){
  if(lockedText)lockedText.textContent=canRead()
   ?"글쓰기 준비 중"
   :"Lv2부터 포스트잇을 열람할 수 있습니다";
- $("postitAccount").hidden=state.level<2||canRead();
+ $("postitAccount").hidden=state.level<1||canRead();
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!=="general"||!allowed;
@@ -299,6 +304,7 @@ function handleLevel(e){
  updateComposeAccess();
  if(!canRead()){
   state.expanded.clear();
+  state.contextTicket++;$("postitContext").textContent="학교 태그는 익명 계정 인증 후 이용할 수 있습니다.";
   // Previously retrieved comments and posts must not remain visible on downgrade.
   for(const host of $("postitThread").querySelectorAll(".postit-comments")){
    host.replaceChildren();host.hidden=true;
@@ -335,6 +341,7 @@ window.addEventListener("beagu:postit-account-status",event=>{
  state.accountToken=event?.detail?.token||"";
  if(!canRead()){state.expanded.clear();state.pendingActions.clear();state.queryTicket++;$("postitSchoolResults").replaceChildren();}
  updateComposeAccess();
+ void renderContext();
  void loadPosts();
 });
 $("postitSort").addEventListener("change",()=>void loadPosts());
