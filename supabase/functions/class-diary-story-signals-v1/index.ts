@@ -1,3 +1,4 @@
+import {storySignalChoice} from '../_shared/closed-choice-privacy.mjs';
 // 『나의 OO한 학급일지』 2단계: Lv2 전용, 공개 검증된 역사적 설문 최다선택 신호만 반환.
 // 원자료·응답자 수·미승인 학교 분포는 반환하지 않는다. 기존 API를 수정하지 않는다.
 const BASE=Deno.env.get('SUPABASE_URL')||'';
@@ -114,7 +115,7 @@ Deno.serve(async req=>{
       if(!published.has(year)||!/^Q\d{2}$/.test(questionId)||BLOCKED.has(key)||
          row.release_status!=='APPROVED_AGGREGATE_ONLY'||
          row.review_policy!==POLICY||Number(row.valid_response_rows)<10)continue;
-      const modeOption=safeString(row.mode_option,200);
+      const modeOption=storySignalChoice(year,questionId,row.mode_option);
       if(!modeOption||seen.has(key))continue;
       seen.add(key);
       signals.push({
