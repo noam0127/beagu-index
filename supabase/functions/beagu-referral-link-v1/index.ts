@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       return json(origin, 400, { error: 'INVALID_REQUEST' });
     const visitor = body.visitor.toLowerCase();
     const identityCode = body.identityCode;
-    if (session.identity_visitor_id && String(session.identity_visitor_id).toLowerCase() !== visitor)
+    if (session.identity_visitor_id && session.identity_visitor_id !== visitor)
       return json(origin, 403, { error: 'VISITOR_MISMATCH' });
 
     // Personal Lv2 sessions are already authenticated to the participant.
