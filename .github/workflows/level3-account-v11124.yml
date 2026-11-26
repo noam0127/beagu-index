@@ -1,0 +1,21 @@
+name: v1.11.24 account and referral validation
+on:
+  push:
+    branches: ['feature/v1.11.24-my-account']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Password primitives and identity contracts
+        run: |
+          node tests/level3-credential-v1.mjs
+          node tests/level3-account-contract.mjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
