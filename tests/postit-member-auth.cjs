@@ -21,33 +21,31 @@ assert.match(sql,/to service_role/i);
 for(const guard of ['d.device_secret_sha256=p_device_hash','r.valid_referrals>=1','r.upgraded_at is not null','r.disabled=false','m.identity_visitor_id=p_visitor','m.author_uid=p_actor'])
  assert.ok(sql.includes(guard),'Required membership validation: '+guard);
 assert.ok(!sql.includes('grant select on public.beagu_postit_member_accounts to authenticated'));
-assert.match(api,/db\.auth\.getUser\(jwt\)/,'JWT validated at Auth server');
-assert.match(api,/user\.is_anonymous/,'Anonymous account denied');
-assert.match(api,/user\.email_confirmed_at/,'Unverified email denied');
-assert.match(api,/verifiedMember\(req,viewer\)/,'Writer account checked');
+// New anonymous account contract replaces social login; all earlier legacy
+// table/ownership/ACL assertions above are still retained.
+const anonymous=read('supabase/account-provisional-v1.sql');
+assert.match(api,/beagu_account_session_status_v1/,'Account session verified server-side');
+assert.match(api,/beagu_account_level_session_allowed_v1/,'Revocation gate');
+assert.match(api,/beagu_account_postit_writer_v1/,'Canonical writer RPC');
 assert.match(api,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);
-assert.match(api,/if\(action==="link_member"\)/);
-assert.match(api,/if\(action==="writer_status"\)return respond\(req,\{linked:Boolean\(member\)\}\)/);
-assert.match(api,/beagu_postit_bind_verified_member/,'Device-bound database function');
-assert.match(api,/p_device_hash:await sha256\(deviceSecret\)/);
-assert.match(api,/beagu_has_earned_challenge_visitor/,'Referral revocation rechecked');
-assert.ok(!api.includes('user.user_metadata'), 'Mutable metadata must not authorize writers');
+assert.match(api,/if\(action==="link_member"\)return fail\(req,"ANONYMOUS_ACCOUNT_REQUIRED",403\)/);
+assert.match(api,/beagu_has_earned_challenge_visitor/);
+assert.doesNotMatch(api,/db\.auth\.getUser|user\.user_metadata/);
+assert.match(anonymous,/d\.device_secret_sha256=p_device_hash/,'Original device proof retained');
+assert.match(anonymous,/coalesce\(actor,gen_random_uuid\(\)\)/,'Legacy author retained');
+assert.match(anonymous,/a\.enabled/);
+assert.match(anonymous,/beagu_postit_restricted_v1\(a\.author_uid\)/);
+assert.match(anonymous,/REVOKE EXECUTE ON FUNCTION public\.beagu_postit_bind_verified_member/);
+assert.match(anonymous,/REVOKE ALL ON beagu_private\.beagu_anonymous_accounts_v1[^;]+FROM PUBLIC,anon,authenticated,service_role/);
+assert.match(js,/function canRead\(\)\{return state\.level>=2 && state\.accountReadable===true && state\.accountToken===token\(\)\}/);
 assert.match(js,/function canWrite\(\)\{return canRead\(\) && state\.accountLinked===true\}/);
-assert.match(js,/BeaguPostitAccount\?\.accessToken/);
-assert.match(js,/beagu:postit-account-status/);
-assert.ok(account.includes('signUp({email,password,options:{data:{beagu_sms_opt_in:wantsSms'), 'Signup must send explicit SMS choice');
-assert.match(account,/signInWithPassword\(\{email,password\}\)/);
-assert.match(account,/signInWithOAuth\(\{provider:'google'/,'Google OAuth is wired only through Supabase Auth');
-assert.match(account,/localStorage\.getItem\(deviceKey\)/);
-assert.ok(!account.includes('localStorage.setItem(deviceKey'),'Missing device proof must never be minted by the membership UI');
-assert.match(account,/action:'link_member',deviceSecret/);
-for(const id of ['postitAccount','postitAccountEmail','postitAccountPassword','postitAccountLogin',
- 'postitAccountSignup','postitAccountGoogle','postitAccountLink','postitAccountSignOut',
- 'postitAccountStatus','postitAccountNoDevice'])
- assert.ok(html.includes('id="'+id+'"'),'Account UI '+id);
-assert.ok(html.includes('styles/postit-account-v1.css?v='));
-assert.ok(html.includes('js/postit-account-v1.js?v='));
-assert.match(style,/max-width:460px/);
+assert.match(account,/writer_status/);
+assert.match(account,/serial!==generation\|\|t!==token\(\)/);
+assert.match(account,/beagu:postit-account-status/);
+assert.doesNotMatch(account,/signUp|signInWithOAuth|signInWithPassword|localStorage\.setItem/);
+assert.doesNotMatch(html,/type="email"|type="tel"|postitAccountGoogle|postitSmsConsent/);
+assert.match(html,/id="postitAccountStatus"/);
+assert.match(html,/href="account\.html"/);
 assert.match(api,/if\(!viewer\)return fail\(req,"LEVEL_REQUIRED",403\)/);
-assert.match(sql,/on conflict\(auth_user_id\) do nothing/i,'Avoid unwanted reassignment');
-console.log('PASS verified Lv2 account + original device proof + private author identity');
+assert.match(sql,/on conflict\(auth_user_id\) do nothing/i);
+console.log('PASS anonymous account, original device proof and canonical private author contract');
