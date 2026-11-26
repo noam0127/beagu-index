@@ -12,6 +12,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='home_vi13_sheet_top10'){
+  assert.deepEqual(route.request().postDataJSON(),{action:'home_vi13_sheet_top10'});
+  assert.equal(token,undefined);
+  const ranks=[1,2,3,4,4,6,7,8,8,10];
+  return route.fulfill({status:200,headers:cors,body:JSON.stringify({day:'2026-11-26',rows:ranks.map((rank,i)=>({school_id:String(7003915+i),school_name:'자동검증학교 '+(i+1),region:'부산',rank}))})});
+ }
  if(a==='home_ranking_2026'){
   assert.deepEqual(route.request().postDataJSON(),{action:'home_ranking_2026'});
   assert.equal(token,undefined);
@@ -105,11 +111,13 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body})
  }catch{return route.fulfill({status:404,body:''})}});
  const page=await context.newPage();
- await page.clock.setFixedTime(new Date('2026-11-25T14:59:00Z'));
+ await page.clock.setFixedTime(new Date('2026-11-26T14:59:00Z'));
  await page.goto(origin+'/index.html');
  await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
  await page.waitForFunction(()=>document.querySelector('#beaguHomeNoticeBody').textContent==='공통 검증 공지');
  await page.waitForFunction(()=>document.querySelectorAll('#beagu2026Ranking [data-ranking-list] li').length===10);
+ await page.waitForFunction(()=>document.querySelector('#beagu2026Ranking [data-ranking-status]')?.textContent.includes('자동 집계'));
+ assert.equal(await page.locator('#beagu2026Ranking [data-ranking-list] li a').first().innerText(),'자동검증학교 1');
  assert.equal(await page.locator('#beagu2026Ranking').isVisible(),true);
  assert.deepEqual(await page.locator('#beagu2026Ranking [data-ranking-list] li > strong:first-child').allTextContents(),['1','2','3','4','4','6','7','8','8','10']);
  const podium=page.locator('#beagu2026Ranking [data-ranking-list] li');
@@ -141,7 +149,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.locator('.minimal-notice-toggle').click();assert.equal(await page.locator('.minimal-notice-toggle').getAttribute('aria-expanded'),'false');
  await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
  const refreshed=await ids();assert.ok(refreshed.every((id,i)=>id!==today[i]),JSON.stringify({today,refreshed}));
- await page.clock.setFixedTime(new Date('2026-11-25T15:00:01Z'));
+ await page.clock.setFixedTime(new Date('2026-11-26T15:00:01Z'));
  await page.evaluate(()=>{window.dispatchEvent(new Event('pageshow'));window.dispatchEvent(new Event('beagu:level-state-updated'));});
  assert.deepEqual(await ids(),refreshed,'midnight and auth repaint do not resample');
  const again=await ids();
