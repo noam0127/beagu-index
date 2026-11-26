@@ -6,14 +6,16 @@ const origin="http://127.0.0.1:8765";
 const server=spawn("python3",["-m","http.server","8765","--bind","127.0.0.1"],{stdio:"ignore"});
 const verified="a".repeat(64),codeOnly="b".repeat(64);
 const school={school_id:"TEST001",name:"가상초등학교",region:"가상지역",students:100,percentile:null};
-const initial=[{id:"legacy",body:"기존 포스트잇",subject_type:"school",school,created_at:"2026-11-26T00:00:00Z",likes:1,comments:0,mine:false,liked:false,reported:false},{id:"operator-fixture",body:"운영자 테스트 글",subject_type:"general",school:null,created_at:"2026-11-26T00:01:00Z",likes:0,comments:0,nickname:"카리브해매너티",is_operator:true,mine:false,liked:false,reported:false}];
+const operatorPost="93000000-0000-4000-8000-000000000001",rootComment="93000000-0000-4000-8000-000000000002",replyComment="93000000-0000-4000-8000-000000000003";
+const initial=[{id:"legacy",body:"기존 포스트잇",subject_type:"school",school,created_at:"2026-11-26T00:00:00Z",likes:1,comments:0,mine:false,liked:false,reported:false},{id:operatorPost,body:"운영자 테스트 글",subject_type:"general",school:null,created_at:"2026-11-26T00:01:00Z",likes:0,comments:1,nickname:"카리브해매너티",is_operator:true,mine:false,liked:false,reported:false}];
 let browser;
 try{
  for(let i=0;i<50;i++){try{if((await fetch(origin+"/postit.html")).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch({headless:true,...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
  async function scenario(width,token){
   const context=await browser.newContext({viewport:{width,height:850},serviceWorkers:"block"});
-  const page=await context.newPage();const posts=structuredClone(initial);const writes=[];const reads=[];
+  const page=await context.newPage();const posts=structuredClone(initial);const writes=[];const reads=[];const commentWrites=[];let readNotification=false;
+  const thread=[{id:rootComment,body:"원댓글 테스트",parent_id:null,nickname:"리베로",is_operator:false,created_at:"2026-11-26T00:02:00Z",likes:0,mine:false}];
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
   await context.addInitScript(t=>{if(t)sessionStorage.setItem("beagu-level-session-v1",t);},token);
   await context.route("**/*",async route=>{
@@ -34,10 +36,13 @@ try{
    if(action==="writer_status")return allowed?send({linked:true,readable:true}):send({error:"LEVEL_REQUIRED"},403);
    reads.push(action);
    if(!allowed)return send({error:"LEVEL_REQUIRED"},403);
-   if(action==="posts"){const tag=u.searchParams.get("school_id");return send({posts:posts.filter(p=>!tag||p.school?.school_id===tag)});}
+   if(action==="posts"){const tag=u.searchParams.get("school_id"),focus=u.searchParams.get("post_id");return send({posts:posts.filter(p=>(!tag||p.school?.school_id===tag)&&(!focus||p.id===focus))});}
    if(action==="schools")return send({schools:[school]});
    if(action==="school_info")return send({schools:{TEST001:school}});
-   if(action==="comments")return send({comments:[]});
+   if(action==="comments")return send({comments:u.searchParams.get("post_id")===operatorPost?thread:[]});
+   if(action==="notifications")return send({notifications:[{comment_id:rootComment,post_id:operatorPost,kind:"comment",created_at:"2026-11-26T00:02:00Z",is_read:readNotification}]});
+   if(action==="notification_read"){assert.equal(body.comment_id,rootComment);readNotification=true;return send({read:true});}
+   if(action==="create_comment"){commentWrites.push(body);thread.push({id:replyComment,body:body.text,parent_id:body.parent_id,nickname:"세터",created_at:new Date().toISOString(),likes:0,mine:true});return send({id:replyComment},201);}
    if(action==="create_post"){
     writes.push(body);
     if([...body.text].length>300)return send({error:"INVALID_POST"},400);
@@ -55,6 +60,7 @@ try{
    assert.equal(await page.locator("#postitBoardContent").isVisible(),false);
    assert.equal(await page.locator(".postit-entry").count(),0);
    assert.equal(writes.length,0);
+   assert.equal(await page.locator("#lockerNotifications").isVisible(),false);
   }else{
    await page.locator("#postitWriteForm").waitFor({state:"visible"});
    await page.getByText("기존 포스트잇",{exact:true}).waitFor();
@@ -90,14 +96,28 @@ try{
    await page.waitForFunction(()=>document.activeElement?.id==="postitBody");
    assert.equal(await page.getByText("가".repeat(300),{exact:true}).count(),0);
    assert.equal(await page.locator('input[type="email"],input[type="tel"]').count(),0);
+   await page.locator("#lockerNotificationTitle").click();
+   await page.getByRole("link",{name:/내 글에 댓글이 달렸습니다/}).click();
+   await page.waitForURL("**/postit.html?post_id="+operatorPost);
+   await page.getByText("원댓글 테스트",{exact:true}).waitFor();
+   assert.equal(readNotification,true);
+   await page.getByRole("button",{name:"답글",exact:true}).click();
+   await page.locator(".bookmark-composer textarea").fill("대댓글 테스트");
+   await page.locator(".bookmark-composer button[type=submit]").click();
+   await page.locator(".locker-reply").getByText("대댓글 테스트",{exact:true}).waitFor();
+   assert.equal(commentWrites[0].parent_id,rootComment);
+   assert.equal(commentWrites[0].post_id,operatorPost);
+   assert.equal(await page.locator(".locker-reply").getByRole("button",{name:"답글",exact:true}).count(),0);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,"mobile horizontal overflow");
    await page.evaluate(()=>{sessionStorage.removeItem("beagu-level-session-v1");document.getElementById("beaguLevelState").dataset.level="0";window.dispatchEvent(new CustomEvent("beagu:level-state-updated",{detail:{level:0}}));});
    await page.locator("#postitBoardContent").waitFor({state:"hidden"});
    assert.equal(await page.locator(".postit-entry").count(),0);
+   assert.equal(await page.locator("#lockerNotifications").isVisible(),false);
+   assert.equal(await page.locator("#lockerNotificationList li").count(),0);
   }
   assert.deepEqual(errors,[],"uncaught browser errors");
   await context.close();
  }
  await scenario(1280,"");await scenario(390,codeOnly);await scenario(1280,verified);await scenario(390,verified);
- console.log("PASS desktop/mobile locker room: verified account gate, 300 characters, optional tag, shared deep link, no contact fields, revoke and purge");
+ console.log("PASS desktop/mobile locker room: verified account gate, 300 characters, optional tag, shared deep link, no contact fields, one-level replies, notification click and revoke/purge");
 }finally{if(browser)await browser.close();server.kill();}
