@@ -17,4 +17,4 @@ vm.runInNewContext(read('js/arcade-fire-court-bgm-v1.js'),{window,document,setIn
 const bgm=window.BeaguFireCourtBgm.create('volleyball');const ctx=bgm.unlock();assert.equal(ctx,bgm.getContext());assert.equal(bgm.unlock(),ctx);assert.equal(contexts,1);assert.equal(resumes,1);bgm.dispose();
 console.log('PASS court report, compact ranking, 2x2, counter layout, shared gesture audio contracts');
 
-const info=JSON.parse(read('release-info.json')),manifest=JSON.parse(read('release-candidate.json'));assert.ok(['v1.11.22','v1.11.23','v1.11.23.1'].includes(info.version));assert.equal(info.version,manifest.version);assert.equal(info.name,info.version==='v1.11.22'?'바른 안내':'나의 계정');assert.equal(info.environment,'candidate');assert.equal(info.commit,null);
+const info=JSON.parse(read('release-info.json')),manifest=JSON.parse(read('release-candidate.json'));assert.ok(['v1.11.22','v1.11.23','v1.11.23.1','v1.11.25'].includes(info.version));assert.equal(info.version,manifest.version);assert.equal(info.name,info.version==='v1.11.25'?'라커룸 개장':info.version==='v1.11.22'?'바른 안내':'나의 계정');assert.equal(info.environment,'candidate');assert.equal(info.commit,null);

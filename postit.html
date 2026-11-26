@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>라커룸 | 배구지수</title>
-<meta name="description" content="레벨2 전용 익명 포스트잇에서 학교정보, 게임, 비교 결과를 검색하고 의견을 나눕니다.">
+<meta name="description" content="레벨3 계정 전용 라커룸에서 학교정보, 게임, 비교 결과를 검색하고 의견을 나눕니다.">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css">
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
@@ -15,8 +15,9 @@
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
+<link rel="stylesheet" href="styles/locker-room-feed-v11125.css">
 </head>
-<body class="beagu-ui-page beagu-postit-page">
+<body class="beagu-ui-page beagu-postit-page locker-feed-v11125">
 <a class="beagu-skip-link" href="#postit-main">본문으로 건너뛰기</a>
 <header class="beagu-unified-header"><div class="beagu-unified-inner">
 <a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈">
@@ -24,61 +25,42 @@
 </a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" href="levels.html" data-level="checking">확인 중</a></div>
 <main id="postit-main" class="postit-layout">
-<header class="postit-intro"><div class="postit-kicker">BAEGUINDEX · NOTES ON A STRING</div>
-<h1>라커룸<span aria-hidden="true">.</span></h1><p>숫자에 담기지 않은 이야기를 한 장씩 붙입니다. 기존 익명 방식으로 이야기를 나눕니다.</p>
+<header class="postit-intro"><div class="postit-kicker">BAEGUINDEX · LOCKER ROOM</div>
+<h1>라커룸<span aria-hidden="true">.</span></h1><p>코트 밖에서 나누는 우리의 이야기</p>
 <div class="postit-tools"><label for="postitSort" class="sr-only">정렬</label>
-<select id="postitSort" aria-label="포스트잇 정렬"><option value="recent">최신순</option><option value="popular">공감순</option></select>
+<select id="postitSort" aria-label="포스트잇 정렬"><option value="recent">최신순</option></select>
 <a href="search.html" class="postit-link">학교 찾아보기</a></div></header>
 <section class="postit-account" id="postitAccount" aria-labelledby="postitAccountHeading" hidden>
-<h3 id="postitAccountHeading">Lv2 정식 계정</h3>
-<p>Lv2 참여코드로 읽을 수 있습니다. 글쓰기·댓글·공감은 별도의 계정 인증이 필요합니다.</p>
-<form id="postitAccountForm" autocomplete="on">
-<label class="sr-only" for="postitAccountEmail">이메일</label>
-<input id="postitAccountEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
-<label class="sr-only" for="postitAccountPassword">비밀번호</label>
-<input id="postitAccountPassword" type="password" autocomplete="current-password" placeholder="비밀번호 (10자 이상)" minlength="10" maxlength="128" required>
-<div class="postit-sms-consent">
-<label for="postitSmsPhone">휴대폰번호 (선택 · 회원가입 시 문자 안내용)</label>
-<input id="postitSmsPhone" type="tel" autocomplete="tel-national" inputmode="tel" maxlength="13" placeholder="010-1234-5678">
-<label class="postit-sms-check" for="postitSmsConsent"><input id="postitSmsConsent" type="checkbox"><span>(선택) 배구지수 설문·서비스 소식 및 광고성 안내를 SMS/LMS로 받겠습니다.</span></label>
-<small>수집 항목: 휴대폰번호 · 목적: 배구지수 소식과 서비스 안내(광고 포함) · 보유: 동의 철회 또는 회원탈퇴 시까지. 미동의해도 가입 가능하며, 번호 확인 전에는 발송하지 않습니다.</small>
-</div>
-<div class="postit-account-actions">
-<button type="submit" id="postitAccountLogin">이메일 로그인</button>
-<button type="button" id="postitAccountSignup">새 계정 만들기</button>
-</div>
-</form>
-<div class="postit-account-actions">
-<button type="button" id="postitAccountGoogle">Google로 로그인</button>
-<button type="button" id="postitAccountLink" hidden>원래 기기 인증 · Lv2 연결</button>
-<button type="button" id="postitSmsUnsubscribe" hidden>문자 수신 동의 철회</button>
-<button type="button" id="postitAccountSignOut" hidden>계정 로그아웃</button>
-</div>
-<p id="postitAccountNoDevice" hidden>챌린지 발급 기기의 비밀값이 필요합니다. 다른 기기의 참여코드만으로는 연결할 수 없습니다.</p>
-<p id="postitAccountStatus" role="status" aria-live="polite">계정 인증 상태 확인 중…</p>
+<h3 id="postitAccountHeading">익명 계정 인증</h3>
+<p>기존 Lv.2 혜택은 유지됩니다. 라커룸 열람과 작성은 서버에서 확인된 익명 계정으로 이용합니다.</p>
+<p id="postitAccountStatus" role="status" aria-live="polite">인증 상태 확인 중…</p>
+<a href="challenge.html#level3-account">Lv.3 나의 계정 가입·로그인</a>
 </section>
 <section class="postit-compose" aria-labelledby="composeTitle">
-<div class="compose-head"><h2 id="composeTitle">새 포스트잇 붙이기</h2><span id="postitAccess" class="access-tag">등급 확인 중</span></div>
-<div id="postitContext" class="postit-context" role="status" aria-live="polite">학교검색 · 게임 · 비교하기에서 포스트잇을 붙일 수 있습니다.</div>
+<div class="compose-head"><h2 id="composeTitle">새 이야기</h2><span id="postitAccess" class="access-tag">등급 확인 중</span></div>
+<div id="postitContext" class="postit-context" role="status" aria-live="polite">학교 태그 없이도 자유롭게 이야기할 수 있습니다.</div>
 <div id="postitSubjectPicker" class="postit-subject-picker">
-<label for="postitSchoolSearch">학교를 찾아 붙이기</label>
+<label for="postitSchoolSearch">학교 태그 (선택)</label>
 <input id="postitSchoolSearch" type="search" placeholder="학교명 검색" autocomplete="off" maxlength="25">
 <div id="postitSchoolResults" class="postit-school-results" role="listbox" aria-label="학교 선택 결과"></div>
 </div>
+<button type="button" id="lockerClearTag" hidden>학교 태그 / 현재 주제 해제</button>
 <div id="postitWriteForm" class="postit-form" hidden>
 <label for="postitBody" class="sr-only">포스트잇 본문</label>
-<textarea id="postitBody" rows="3" maxlength="200" placeholder="학교나 게임에 관해 남기고 싶은 이야기를 200자 이내로 적어주세요. 특정 개인을 식별할 수 있는 내용은 적지 마세요."></textarea>
-<div class="postit-form-footer"><small id="postitCounter">0 / 200</small><button type="button" id="postitSubmit">포스트잇 붙이기</button></div>
+<textarea id="postitBody" rows="3" maxlength="600" placeholder="오늘 어떤 이야기를 나누고 싶으신가요? (300자 이내)"></textarea>
+<div class="postit-form-footer"><small id="postitCounter">0 / 300</small><button type="button" id="postitSubmit">게시하기</button></div>
 </div>
 <div id="postitLocked" class="postit-lock" hidden><span aria-hidden="true">🔒</span>
-<b>글쓰기 준비 중</b><span>Lv2는 게시글과 댓글을 열람할 수 있습니다. 글쓰기·댓글·공감은 준비 중입니다.</span>
+<b>글쓰기 준비 중</b><span>Lv.3 나의 계정 인증 후 이용할 수 있습니다.</span>
 <a href="levels.html">레벨 안내 보기</a></div>
 <div id="postitMessage" class="postit-message" role="status" aria-live="polite"></div>
 </section>
+<section id="lockerNotifications" class="locker-notifications" hidden aria-labelledby="lockerNotificationTitle"><details><summary id="lockerNotificationTitle">댓글 알림</summary><button id="lockerNotificationRefresh" type="button">새로고침</button><ul id="lockerNotificationList" aria-live="polite"></ul></details></section>
+<a id="lockerFocusClear" href="postit.html" hidden>전체 이야기로 돌아가기</a>
 <section class="postit-board" aria-labelledby="boardTitle">
-<div class="postit-board-heading"><h2 id="boardTitle">이어지는 이야기</h2><p id="postitListStatus" role="status" aria-live="polite">등급 확인 중…</p></div>
+<div class="postit-board-heading"><h2 id="boardTitle">최신 이야기</h2><p id="postitListStatus" role="status" aria-live="polite">등급 확인 중…</p></div>
 <div id="postitBoardLocked" class="postit-lock postit-board-lock" hidden>
-<b>🔒 Lv.2 전용 공간입니다</b><span>게시글·댓글 검색과 열람은 Lv.2에서 이용할 수 있습니다.</span><a href="levels.html">레벨 안내 보기</a>
+<b>🔒 Lv.3 전용 공간입니다</b><span>게시글·댓글 검색과 열람은 Lv.3 나의 계정 인증 후 이용할 수 있습니다.</span><a href="levels.html">레벨 안내 보기</a>
 </div>
 <div id="postitBoardContent" hidden>
 <form id="postitSearchForm" class="postit-search" role="search" autocomplete="off">
@@ -93,8 +75,6 @@
 </section>
 <footer class="postit-footer">익명 게시글은 개인의 경험과 의견이며 학교 전체의 평가가 아닙니다. 개인·학생을 특정하거나 비방하는 글은 삼가주세요.</footer>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/postit-account-v1.js?v=20261121-sms1" defer></script>
-<script src="js/postit-v1.js?v=1119-legacy" defer></script>
+<script src="js/postit-account-v1.js?v=11125-anonymous" defer></script>
+<script src="js/postit-v1.js?v=11125-replies" defer></script>
 </body></html>
