@@ -158,7 +158,8 @@
   legacy.before(action);
  }
  async function request(action,payload={},token=''){
-  const res=await fetch(ENDPOINT,{
+  const res=action==='verify'&&token&&Object.keys(payload).length===0&&typeof window.BeaguVerifyLevelSession==='function'
+      ?await window.BeaguVerifyLevelSession(token):await fetch(ENDPOINT,{
    method:'POST',cache:'no-store',
    headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{})},
    body:JSON.stringify({action,...payload})
