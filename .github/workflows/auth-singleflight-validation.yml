@@ -1,7 +1,7 @@
 name: Auth single-flight independent validation
 on:
   push:
-    branches: [perf/v1.12.06-auth-singleflight, perf/v1.12.06-2026-batch]
+    branches: [perf/v1.12.06-auth-singleflight, perf/v1.12.06-2026-batch, fix/v112061-emergency-stability]
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,6 +24,8 @@ jobs:
           node --check js/challenge.js
           node --check js/visit-stats.js
           node --check js/beagu-presence-games-v1.js
+          node tests/emergency-stability-v112061.mjs
+          node tests/participation-code-unified.mjs
           node tests/auth-verify-singleflight.mjs
           node tests/auth-background-load-performance.mjs
           node tests/telemetry-gateway-client-smoke.cjs
