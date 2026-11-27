@@ -5,9 +5,9 @@
  *
  * 설치: 원본 응답 시트의 확장 프로그램 > Apps Script 에 전체 붙여넣기
  *       프로젝트 설정 > 스크립트 속성에 SUPABASE_PUBLISHABLE_KEY 저장
- *       installBeagu2026Sync()를 한 번 수동 실행해 권한 승인 및 트리거 2종 설치
+ *       installBeagu2026Sync()를 한 번 수동 실행해 권한 승인 및 15분 집계·VI13 요청 트리거 설치
  * 테스트: refreshBeagu2026Stats()를 수동 실행한다.
- * 정오: Asia/Seoul 12:00 부근(구글 Apps Script 트리거는 ±15분 지연 가능)
+ * 집계: 15분 간격(실행 시각은 Google 스케줄러에 따름)
  *
  * 개인정보: 개별 응답 원문과 자유서술은 집계 MASTER로 복사하지 않는다.
  * 공개 API와의 연결은 별도 검수/승인 절차를 거쳐야 한다.
@@ -25,17 +25,18 @@ const BEAGU26 = Object.freeze({
   maxResponses: 50000,
   maxSchools: 10000
 });
-function setupDailyNoonTrigger() {
-  const existing=ScriptApp.getProjectTriggers();
-  // Replace both older single-pipeline jobs and duplicates with one backup job.
-  existing.filter(t=>["refreshBeagu2026Stats","refreshBeagu2026SchoolCulture","refreshBeagu2026AllPrivateStats"].includes(t.getHandlerFunction()))
-    .forEach(t=>ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger("refreshBeagu2026AllPrivateStats").timeBased()
-    .everyDays(1).atHour(12).nearMinute(0).inTimezone(BEAGU26.timezone).create();
-  Logger.log("매일 한국시간 정오 부근(±15분) 학교별·학교문화 집계 백업 트리거를 설치했습니다.");
+function setupBeagu2026BatchTrigger() {
+  // Only remove this pipeline's known legacy handlers; leave referral/VI13 and other jobs alone.
+  const handlers=["refreshBeagu2026Stats","refreshBeagu2026SchoolCulture","refreshBeagu2026AllPrivateStats","onBeagu2026FormSubmitted","runBeagu2026QuarterHour"];
+  const existing=ScriptApp.getProjectTriggers().filter(t=>handlers.includes(t.getHandlerFunction()));
+  // Install first, so a trigger creation failure leaves the existing schedule intact.
+  ScriptApp.newTrigger("runBeagu2026QuarterHour").timeBased().everyMinutes(15).create();
+  existing.forEach(t=>ScriptApp.deleteTrigger(t));
+  Logger.log("2026 전체 비공개 집계 15분 주기 설치");
 }
+function runBeagu2026QuarterHour(){return refreshBeagu2026AllPrivateStats(true);}
 /**
- * One refresh entrypoint for form submission and the daily fallback.
+ * One refresh entrypoint for manual and quarter-hour batch execution.
  * Both pipelines ONLY write to private review sheets; neither authorizes
  * publication. MBTI is optional for backward compatibility with installs
  * where the second source file has not yet been added.
@@ -65,13 +66,14 @@ function beagu26SendRunReport(report){
     if(response.getResponseCode()!==200)Logger.log("BEAGU26_RUN_REPORT_FAILED HTTP "+response.getResponseCode());
   }catch(e){Logger.log("BEAGU26_RUN_REPORT_UNAVAILABLE");}
 }
-function refreshBeagu2026AllPrivateStats() {
+function refreshBeagu2026AllPrivateStats(batch=false) {
   if(typeof refreshBeagu2026QuestionResults!=="function")throw Error("최신 Code.gs 설치 필요");
   const report={kind:"WATERWAY_RUN_V1",started_at:new Date().toISOString(),finished_at:null,
     source_rows:null,basic_review_rows:null,stages:["SOURCE","QUESTION_RESULTS","CORE_AND_QA","SCHOOL_CULTURE"]
       .map(stage=>({stage,status:"SKIPPED",reason:"NOT_INSTALLED",duration_ms:0}))};
   const lock=LockService.getScriptLock();
-  if(!lock.tryLock(180000)){
+  if(!lock.tryLock(batch===true?1000:180000)){
+    if(batch===true){Logger.log("BEAGU26_BATCH_LOCK_BUSY");return;}
     report.stages[0]={stage:"SOURCE",status:"ERROR",reason:"LOCK_BUSY",duration_ms:0};
     report.finished_at=new Date().toISOString();
     beagu26SendRunReport(report);
@@ -122,21 +124,11 @@ function refreshBeagu2026AllPrivateStats() {
     beagu26SendRunReport(report);
   }
 }
-// Optional near-real-time private aggregation after each genuine Google Form submission.
-// This never publishes a result or bypasses the per-school privacy review.
-function setupBeagu2026FormSubmitTrigger() {
-  const name="onBeagu2026FormSubmitted";
-  ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()===name)
-    .forEach(t=>ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger(name).forSpreadsheet(BEAGU26.sourceId).onFormSubmit().create();
-  Logger.log("2026 본조사 응답 제출 후 비공개 집계 갱신 트리거를 설치했습니다.");
-}
+// Compatibility for legacy installed form-submit triggers. Google Forms already
+// records responses immediately; the 15-minute worker rereads the complete source.
 function onBeagu2026FormSubmitted(event) {
-  // Only an installed spreadsheet form-submit trigger, never a direct web request.
   if(!event||!event.range||event.range.getSheet().getName()!==BEAGU26.sourceTab)return;
-  // Idempotently recompute both private summaries (Q01-Q13 and Q14-Q17).
-  // A submitted response is never directly published as a school result.
-  refreshBeagu2026AllPrivateStats();
+  // Do not queue or transmit a full snapshot from this event.
 }
 // Send ONLY a national total of official submission rows. No school IDs,
 // teacher responses, answer content, timestamps, or per-school counts leave
@@ -269,18 +261,17 @@ function installBeagu2026Sync() {
   const token=String(props.getProperty("BEAGU_2026_INGEST_TOKEN")||"").trim();
   if(!key)throw Error("설치 중단: 스크립트 속성 SUPABASE_PUBLISHABLE_KEY가 없습니다.");
   if(token.length<32)throw Error("설치 중단: BEAGU_2026_INGEST_TOKEN은 32자 이상의 비밀 값이어야 합니다.");
-  setupBeagu2026FormSubmitTrigger();
-  setupDailyNoonTrigger();
+  setupBeagu2026BatchTrigger();
   setupBeagu2026VI13RequestTrigger();
   const active=ScriptApp.getProjectTriggers().map(t=>t.getHandlerFunction());
-  if(!active.includes("onBeagu2026FormSubmitted")||!active.includes("refreshBeagu2026AllPrivateStats"))
+  if(active.filter(name=>name==="runBeagu2026QuarterHour").length!==1||active.includes("onBeagu2026FormSubmitted")||active.includes("refreshBeagu2026AllPrivateStats"))
     throw Error("자동 집계 트리거 설치를 확인하지 못했습니다.");
   if(typeof refreshBeagu2026SchoolCulture!=="function")
     Logger.log("Q14~Q17 스크립트가 없어 수직성 Q01~Q13만 자동 집계됩니다.");
-  Logger.log("2026 본조사 제출/정오 백업 트리거 확인 완료. 인증키 값은 기록하지 않습니다.");
+  Logger.log("2026 본조사 15분 통합 집계 트리거 확인 완료. 인증키 값은 기록하지 않습니다.");
   // Initial private aggregation; output count remains inaccessible to public roles.
   refreshBeagu2026AllPrivateStats();
-  Logger.log("초기 비공개 집계 완료. 다음부터 개별 등록 명령 없이 새 설문 제출 때마다 갱신합니다.");
+  Logger.log("초기 비공개 집계 완료. 다음부터 15분 단위로 갱신합니다.");
 }
 function normalize(s) {
   return String(s||"").replace(/[①-⑳㉑-㉟㊱-㊿]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
@@ -771,6 +762,33 @@ function readBeagu2026SourceSnapshot() {
   } catch(e){Logger.log('BEAGU26_PRIOR_MATCH_AUDIT unavailable');}
   return {startedAt,values,schools};
 }
+// Fingerprint only the existing sanitized aggregate payload, excluding freshness metadata.
+// Keep a periodic reconciliation and allow direct manual question refresh to force transfer.
+function beagu26SendQuestionSnapshot(payload,secret,force=false) {
+  const {snapshot_at,...content}=payload;
+  const fingerprint=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+    JSON.stringify(content),Utilities.Charset.UTF_8)
+    .map(b=>(b&255).toString(16).padStart(2,'0')).join('');
+  const props=PropertiesService.getScriptProperties();
+  const key='BEAGU_2026_QUESTION_SNAPSHOT_ACK_V1';
+  const now=Date.now();
+  let ack=null;
+  try{ack=JSON.parse(props.getProperty(key)||'null');}catch(_){}
+  if(!force&&ack&&ack.hash===fingerprint&&Number.isSafeInteger(ack.at)&&
+    ack.at<=now&&now-ack.at<24*60*60*1000)return false;
+  // Invalidate before any write attempt: a failed/ambiguous update must never
+  // allow an older acknowledged fingerprint to suppress a subsequent revert.
+  props.deleteProperty(key);
+  const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{
+    method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':secret},
+    payload:JSON.stringify(payload),muteHttpExceptions:true
+  });
+  if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
+  const result=JSON.parse(response.getContentText());
+  if(result?.ok!==true)throw Error('비공개 문항 집계 전송 확인 실패');
+  props.setProperty(key,JSON.stringify({hash:fingerprint,at:Date.now()}));
+  return true;
+}
 function refreshBeagu2026QuestionResults(snapshot) {
   const lock=snapshot?null:LockService.getScriptLock();
   if(lock&&!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
@@ -791,12 +809,8 @@ function refreshBeagu2026QuestionResults(snapshot) {
     replaceBody(review,reviewRows,reviewHeaders.length);
     const secret=PropertiesService.getScriptProperties().getProperty('BEAGU_2026_INGEST_TOKEN')||'';
     if(secret.length<32)throw Error('BEAGU_2026_INGEST_TOKEN 설정 필요');
-    const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{
-      method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':secret},
-      payload:JSON.stringify(payload),muteHttpExceptions:true
-    });
-    if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
-    Logger.log('비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.');
+    const sent=beagu26SendQuestionSnapshot(payload,secret,!snapshot);
+    Logger.log(sent?'비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.':'비공개 문항 집계 변경 없음: 서버 전송 생략');
     return {basicReviewRows:new Set(reviewRows.map(r=>r[0])).size};
   } finally {if(lock)lock.releaseLock();}
 }
