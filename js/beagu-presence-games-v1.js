@@ -16,8 +16,12 @@
   const raw=location.pathname.split('/').pop()||'';
   const page=raw==='teacher-volleyball.html'?'volleyball':raw==='teacher-run.html'?'teacher-run':'other';
   let pending=false;
+  let lastPresenceAttempt=-Infinity;
   async function ping(){
     if(pending||document.visibilityState!=='visible'||typeof supabaseClient==='undefined')return;
+    const now=Date.now();
+    if(now-lastPresenceAttempt<60000)return;
+    lastPresenceAttempt=now;
     pending=true;
     try{await supabaseClient.functions.invoke('beagu-telemetry-v2',{body:{action:'ping',visitor,page}})}
     catch(_){/* Telemetry must never block gameplay. */}
