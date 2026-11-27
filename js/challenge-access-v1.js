@@ -76,7 +76,8 @@
     window.dispatchEvent(new Event('beagu:challenge-access-granted'));
   }
   async function api(action,payload={},token=''){
-    const response=await fetch(endpoint,{
+    const response=action==='verify'&&token&&Object.keys(payload).length===0&&typeof window.BeaguVerifyLevelSession==='function'
+      ?await window.BeaguVerifyLevelSession(token):await fetch(endpoint,{
       method:'POST',cache:'no-store',
       headers:{'Content-Type':'application/json','X-Beagu-Session':token},
       body:JSON.stringify({action,...payload})
@@ -105,7 +106,7 @@
     message('Lv.1 인증 상태 확인 중…');
     try{
       const result=await api('verify',{},token);
-      if(serial!==requestSerial)return;
+      if(serial!==requestSerial||session()!==token)return;
       if(!isLevelOne(result)){
         clearSaved();
         lock('Lv.1 인증이 필요합니다.');
@@ -113,7 +114,7 @@
       }
       unlock(token,Number(result.level),result.accountLevel,result.provisional===true);
     }catch(error){
-      if(serial!==requestSerial)return;
+      if(serial!==requestSerial||session()!==token)return;
       if(error.status===401||error.status===403){
         clearSaved();
         lock('인증이 만료되었습니다. 참여코드를 입력해 주세요.');
