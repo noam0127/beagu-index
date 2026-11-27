@@ -1,104 +1,88 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {Script} from 'node:vm';
+import {Script,runInNewContext} from 'node:vm';
+const read=p=>readFileSync(p,'utf8');
+const source=read('js/level-search.js');
+const lv1=read('search-lv1.html');
+const lv0=read('search.html');
+const cards=read('js/school-search-card-v1.js');
+const sharedChart=read('js/percentile-chart.js');
 
-const source=readFileSync('js/level-search.js','utf8');
-const lv1=readFileSync('search-lv1.html','utf8');
-const lv0=readFileSync('search.html','utf8');
-const cards=readFileSync('js/school-search-card-v1.js','utf8');
-const sharedChart=readFileSync('js/percentile-chart.js','utf8');
-
-assert.doesNotThrow(()=>new Script(source),'Lv.1 script is valid JavaScript');
+assert.doesNotThrow(()=>new Script(source));
 assert.match(lv0,/js\/percentile-chart\.js\?v=20261031-independent5b/);
 assert.match(lv1,/js\/percentile-chart\.js\?v=20261031-independent5b/);
 assert.match(lv1,/js\/level-search\.js\?v=/);
-assert.match(source,/percentile:percentilePanel\(school\)/,
-  'Lv.1 reuses the same canonical percentile renderer as Lv.0');
-assert.match(cards,/percentileChart\(values,\{/,
-  'Shared card renderer produces the independent yearly vertical chart');
-assert.match(sharedChart,/No cross-year line/,'Never pretend different surveys are a continuous trend');
-assert.doesNotMatch(source,/graphic\?\.remove\(\)/,
-  'Lv.1 must not remove the newly generated graph');
-assert.match(source,/historyPanel\.append\(detail\)/,
-  'Existing in-card detail disclosure must remain available');
+assert.match(source,/percentile:percentilePanel\(school\)/);
+assert.match(sharedChart,/No cross-year line/);
+assert.match(source,/host\.replaceChildren\(facilities,yearlyPercentileHistory\(school,viewerTier\)\)/);
+assert.match(source,/common2026:null/,'Representative mean must not change on 2026 release');
+assert.doesNotMatch(cards,/percentileChart\(/,'Yearly chart lives in expanded detail, not the basic card');
+
+class Node {
+ constructor(tag){this.tag=tag;this.children=[];this.dataset={};this.style={};this.attrs={};this.className='';this.textContent='';this.classList={add(){}};}
+ append(...nodes){this.children.push(...nodes);}
+ setAttribute(k,v){this.attrs[k]=String(v);}
+}
+const document={createElement:tag=>new Node(tag)};
+const window={};
+runInNewContext(cards,{window,document});
+const cardRenderer=window.BeaguSchoolSearchCard;
+const flatten=node=>[node,...node.children.flatMap(flatten)];
+const panel=tier=>cardRenderer.percentiles({publicValues:[10,20,30],value2026:57.5,common2026:null,viewerTier:tier});
+const score=node=>flatten(node).find(n=>n.className==='glory-score').textContent;
+assert.equal(score(panel(0)),'30.0%');
+assert.equal(score(panel(1)),'20.0%');
+assert.equal(score(panel(2)),'20.0%');
+assert.equal(flatten(panel(1)).filter(n=>n.className==='glory-year-row').length,0);
+const rows=flatten(panel(2)).filter(n=>n.className==='glory-year-row');
+assert.equal(rows.length,4);
+assert.equal(rows.map(n=>n.dataset.year).join(','),'2026,2025,2024,2023');
+assert.equal(rows[0].children.at(-1).textContent,'57.5%');
+const missing=cardRenderer.percentiles({publicValues:[10,20,30],status2026:'unpublished',viewerTier:2});
+assert.equal(flatten(missing).find(n=>n.className==='glory-year-row').children.at(-1).textContent,'미공개');
 
 const start=source.indexOf('  function loadPagePercentiles(');
-const end=source.indexOf('  function showDetails(',start);
-assert.ok(start>0&&end>start,'Approved percentile refresh function must exist');
-const build=new Function('serial','api','current2026','$','percentilePanel','loggedOut',
-  source.slice(start,end)+'\nreturn loadPagePercentiles;');
-
-async function exercise({existing,latest}){
-  const changes={replacedGrid:null,replacedGraph:null,removedGraph:false,insertedGraph:null,
-    beforeNode:null,selectedYear:null};
-  const oldGraph=existing?{
-    replaceWith(node){changes.replacedGraph=node;},
-    remove(){changes.removedGraph=true;}
-  }:null;
-  const newGraph=latest?{role:'yearly-vertical-chart'}:null;
-  const selectedCell={dataset:{year:'2025'}};
-  const newCell={classList:{add(v){if(v==='is-current-year')changes.selectedYear='2025';}}};
-  const oldGrid={
-    querySelector(sel){return sel==='.percentile-cell.is-current-year'?selectedCell:null;},
-    replaceWith(node){changes.replacedGrid=node;}
-  };
-  const newGrid={
-    querySelector(sel){return sel==='.percentile-cell[data-year="2025"]'?newCell:null;}
-  };
-  const detail={role:'expanded-school-detail'};
-  const oldPanel={
-    querySelector(sel){
-      if(sel==='.percentile-grid')return oldGrid;
-      if(sel==='.percentile-graph')return oldGraph;
-      if(sel==='.school-detail')return detail;
-      return null;
-    },
-    insertBefore(node,before){changes.insertedGraph=node;changes.beforeNode=before;}
-  };
-  const card={
-    dataset:{schoolId:'ABC1234'},
-    querySelector(sel){return sel==='.percentile-panel'?oldPanel:null;}
-  };
-  const $=id=>{
-    assert.equal(id,'results');
-    return {querySelectorAll(sel){
-      assert.equal(sel,'.school-card');
-      return [card];
-    }};
-  };
-  const current2026=new Map();
-  const api=async (action,args)=>{
-    assert.equal(action,'percentiles');
-    assert.deepEqual(args,{schoolIds:['ABC1234']});
-    return {values:{ABC1234:57.5}};
-  };
-  const getFreshPanel=()=>{
-    assert.equal(current2026.get('ABC1234')?.value,57.5);
-    return {querySelector(sel){
-      if(sel==='.percentile-grid')return newGrid;
-      if(sel==='.percentile-graph')return newGraph;
-      return null;
-    }};
-  };
-  const refresh=build(1,api,current2026,$,getFreshPanel,()=>assert.fail('unexpected auth error'));
-  refresh([{school_id:'ABC1234'}],1);
-  await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(current2026.get('ABC1234').status,'published');
-  assert.equal(changes.replacedGrid,newGrid,'approved numbers must refresh without replacing card');
-  assert.equal(changes.selectedYear,'2025','selected detail year must be preserved');
-  if(existing&&latest)assert.equal(changes.replacedGraph,newGraph,
-    'existing vertical chart must update with approved 2026 values');
-  if(!existing&&latest){
-    assert.equal(changes.insertedGraph,newGraph,
-      'chart must be added when 2026 is the first released percentile');
-    assert.equal(changes.beforeNode,detail,'new chart must precede, not replace, expanded details');
-  }
-  if(existing&&!latest)assert.equal(changes.removedGraph,true,
-    'stale chart must not remain visible when no values are renderable');
-  assert.ok(!changes.replacedGraph||!changes.insertedGraph,
-    'must not duplicate vertical graph containers');
+const mid=source.indexOf('  function yearlyPercentileHistory(',start);
+const end=source.indexOf('  function showDetails(',mid);
+assert.ok(start>0&&mid>start&&end>mid);
+const current2026=new Map();
+const school={school_id:'ABC1234'};
+const chartCalls=[];
+const historyBuilder=new Function('make','asPublicPercentiles','current2026','YEARS','percentileChart',
+ source.slice(mid,end)+'\nreturn yearlyPercentileHistory;');
+const history=historyBuilder((tag,cls,text)=>Object.assign(new Node(tag),{className:cls||'',textContent:text||''}),()=>[10,20,30],current2026,[2023,2024,2025,2026],
+ (values,opts)=>{chartCalls.push({values:[...values],blank:opts.blank2026});return '<svg></svg>';});
+let mode='published',requestId=1;
+let panelUpdates=0,historyUpdates=0,footerUpdates=0,officialUpdates=0;
+let latestHistory=null;
+const detail={role:'expanded-detail'};
+const card={dataset:{schoolId:school.school_id},querySelector(sel){
+ if(sel==='.percentile-panel')return {replaceWith(){panelUpdates++;}};
+ if(sel==='.beagu-yearly-percentiles')return {replaceWith(node){historyUpdates++;latestHistory=node;}};
+ if(sel==='.school-detail')return detail;
+ return null;
+}};
+const api=async(action,args)=>{
+ assert.equal(action,'percentiles');
+ assert.deepEqual(args,{schoolIds:['ABC1234']});
+ if(mode==='error')throw Error('synthetic offline');
+ return {values:mode==='published'?{ABC1234:57.5}:{}};
+};
+const build=new Function('serial','api','current2026','$','percentilePanel','loggedOut','viewerTier','BeaguSchoolSearchCard','yearlyPercentileHistory','renderOfficial2026',
+ source.slice(start,mid)+'\nreturn loadPagePercentiles;');
+const refresh=build(1,api,current2026,()=>({querySelectorAll:()=>[card]}),()=>panel(1),()=>assert.fail('unexpected auth reset'),1,
+ {updateRecordedYears(c){assert.equal(c,card);footerUpdates++;}},history,()=>{officialUpdates++;});
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+for(const status of ['published','unpublished','error']){
+ mode=status;
+ refresh([school],requestId);
+ await tick();
+ assert.equal(current2026.get(school.school_id).status,status);
+ assert.equal(chartCalls.at(-1).values[3],status==='published'?57.5:null);
+ assert.equal(chartCalls.at(-1).blank,status!=='published');
+ assert.equal(latestHistory.className,'beagu-yearly-percentiles');
+ assert.equal(card.querySelector('.school-detail'),detail,'Expanded detail is preserved');
 }
-await exercise({existing:true,latest:true});
-await exercise({existing:false,latest:true});
-await exercise({existing:true,latest:false});
-console.log('PASS: Lv.1 restores Lv.0 vertical chart; updates/reveals/clears approved yearly markers without resetting expanded details.');
+assert.equal(panelUpdates,3);assert.equal(historyUpdates,3);assert.equal(footerUpdates,3);assert.equal(officialUpdates,3);
+refresh([school],2);await tick();assert.equal(panelUpdates,3,'Obsolete requests cannot repaint');
+console.log('PASS: tier-specific basic cards, detail-only independent yearly chart, signed refresh, withdrawal and error clearing without replacing expanded detail.');
