@@ -1273,6 +1273,25 @@
       ],
       "admin_registration": "NOT_REGISTERED",
       "production": "NOT_APPROVED"
+    },
+    {
+      "order": 56,
+      "version": "v1.12.06",
+      "name": "쾌적한 코트",
+      "scope": "참여코드 인증 요청 통합 · 부가 정보 로딩 분리 · 접속 통계 호출 제한 · 2026 비공개 15분 통합 집계 및 동일 문항 집계 전송 생략 (Apps Script 별도 적용)",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "perf/v1.12.06-2026-batch",
+      "baseline_sha": "67c02f6456372862c28369f012a8c47310e17e04",
+      "dependencies": [
+        "v1.12.05.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        "clean-release-validation.yml",
+        "auth-singleflight-validation.yml",
+        "2026-question-results.yml"
+      ]
     }
   ],
   "source_manifest": {
