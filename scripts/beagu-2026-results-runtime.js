@@ -26,6 +26,33 @@ function readBeagu2026SourceSnapshot() {
   } catch(e){Logger.log('BEAGU26_PRIOR_MATCH_AUDIT unavailable');}
   return {startedAt,values,schools};
 }
+// Fingerprint only the existing sanitized aggregate payload, excluding freshness metadata.
+// Keep a periodic reconciliation and allow direct manual question refresh to force transfer.
+function beagu26SendQuestionSnapshot(payload,secret,force=false) {
+  const {snapshot_at,...content}=payload;
+  const fingerprint=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+    JSON.stringify(content),Utilities.Charset.UTF_8)
+    .map(b=>(b&255).toString(16).padStart(2,'0')).join('');
+  const props=PropertiesService.getScriptProperties();
+  const key='BEAGU_2026_QUESTION_SNAPSHOT_ACK_V1';
+  const now=Date.now();
+  let ack=null;
+  try{ack=JSON.parse(props.getProperty(key)||'null');}catch(_){}
+  if(!force&&ack&&ack.hash===fingerprint&&Number.isSafeInteger(ack.at)&&
+    ack.at<=now&&now-ack.at<24*60*60*1000)return false;
+  // Invalidate before any write attempt: a failed/ambiguous update must never
+  // allow an older acknowledged fingerprint to suppress a subsequent revert.
+  props.deleteProperty(key);
+  const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{
+    method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':secret},
+    payload:JSON.stringify(payload),muteHttpExceptions:true
+  });
+  if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
+  const result=JSON.parse(response.getContentText());
+  if(result?.ok!==true)throw Error('비공개 문항 집계 전송 확인 실패');
+  props.setProperty(key,JSON.stringify({hash:fingerprint,at:Date.now()}));
+  return true;
+}
 function refreshBeagu2026QuestionResults(snapshot) {
   const lock=snapshot?null:LockService.getScriptLock();
   if(lock&&!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
@@ -46,12 +73,8 @@ function refreshBeagu2026QuestionResults(snapshot) {
     replaceBody(review,reviewRows,reviewHeaders.length);
     const secret=PropertiesService.getScriptProperties().getProperty('BEAGU_2026_INGEST_TOKEN')||'';
     if(secret.length<32)throw Error('BEAGU_2026_INGEST_TOKEN 설정 필요');
-    const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{
-      method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':secret},
-      payload:JSON.stringify(payload),muteHttpExceptions:true
-    });
-    if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
-    Logger.log('비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.');
+    const sent=beagu26SendQuestionSnapshot(payload,secret,!snapshot);
+    Logger.log(sent?'비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.':'비공개 문항 집계 변경 없음: 서버 전송 생략');
     return {basicReviewRows:new Set(reviewRows.map(r=>r[0])).size};
   } finally {if(lock)lock.releaseLock();}
 }
