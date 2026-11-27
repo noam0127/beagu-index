@@ -37,10 +37,14 @@
   // A heartbeat is sent at most once per minute while the page is visible;
   // failures never delay page content, search, or the existing visit counter.
   let presencePending=false;
+  let lastPresenceAttempt=-Infinity;
   const presencePage=/^[a-z0-9-]{1,48}$/.test(rawPage)?rawPage:'other';
   async function presencePing(){
     if(presencePending || document.visibilityState!=='visible' ||
        typeof supabaseClient==='undefined')return;
+    const now=Date.now();
+    if(now-lastPresenceAttempt<60000)return;
+    lastPresenceAttempt=now;
     presencePending=true;
     try{
       await supabaseClient.functions.invoke('beagu-telemetry-v2',{
