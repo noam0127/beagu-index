@@ -108,8 +108,13 @@
     updateAuthUI();
     authMessage('');
     renderTable();
-    refreshApprovedSelections();
-    void loadPublic2026(state.selected.map(x=>x.id),true);
+    const epoch=state.authEpoch;
+    // Render verified authentication first; optional school loads run separately.
+    setTimeout(()=>{
+      if(epoch!==state.authEpoch||state.sessionToken!==token)return;
+      refreshApprovedSelections();
+      void loadPublic2026(state.selected.map(x=>x.id),true);
+    },0);
   }
   async function verifyStoredSession() {
     let token='';
