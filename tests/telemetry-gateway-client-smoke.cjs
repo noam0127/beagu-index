@@ -13,7 +13,7 @@ const client={functions:{invoke:async(name,opts)=>{
   if(opts.body.action==='visit')return {data:{today:7,month:91,total:1000},error:null};
   return {data:{ok:true},error:null};
 }}};
-const context={window,document,localStorage:{getItem:()=>null,setItem(){}},
+const context={window,document,AbortController,setTimeout,clearTimeout,localStorage:{getItem:()=>null,setItem(){}},
   sessionStorage:{getItem:()=>null,setItem(){}},crypto:{randomUUID:()=> 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'},
   location:{pathname:'/'},supabaseClient:client};
 runInNewContext(visit,context);
