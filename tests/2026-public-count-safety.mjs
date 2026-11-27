@@ -25,7 +25,19 @@ assert.ok(sync.includes('setupBeagu2026BatchTrigger();'),'Periodic recovery trig
 assert.ok(edge.includes('INGEST_NOT_CONFIGURED'),'Missing secret fails closed');
 assert.ok(edge.includes('UNAUTHORIZED'),'Invalid secret denied');
 assert.ok(edge.includes('body.source_spreadsheet_id!==sourceId'),'Source sheet validated');
-assert.equal(edge.includes('school_id'),false,'Ingest accepts no school data');
+// Historical school identifiers may be returned by the authenticated GET
+// route. The POST storage path must still persist national totals only.
+const getStart=edge.indexOf("if(req.method==='GET'){");
+const postStart=edge.indexOf("let raw='';let bytes=0;",getStart);
+assert.ok(getStart>=0&&postStart>getStart,'Separate historical GET and national-count POST paths');
+const authStart=edge.indexOf("return send(401,{error:'UNAUTHORIZED'})");
+assert.ok(authStart>=0&&authStart<getStart,'Historical GET requires ingest authentication');
+const post=edge.slice(postStart);
+assert.doesNotMatch(post,/school_id|school_name|support_office|original_sido/,'POST must not reference school identities');
+assert.doesNotMatch(post,/\.\.\.body\b|\.upsert\(\s*body\b/,'Never forward arbitrary submitted fields to storage');
+assert.match(post,/official_submission_rows:body\.official_submission_rows/);
+assert.match(post,/new_unique_schools:body\.new_unique_schools/);
+assert.match(post,/publish_policy:'national_cumulative_counts_only_v2'/);
 assert.ok(lv1.includes('전체 조사 문항·공개 상태 보기'));
 assert.ok(report.includes("const check=await tierCall('verify')"));
 assert.ok(guide.includes('익명 및 일반 사용자 SELECT 권한 없음'));
