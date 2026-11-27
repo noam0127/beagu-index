@@ -1,7 +1,7 @@
 name: 2026 Question Results Pipeline
 on:
   push:
-    branches: [main]
+    branches: [main, perf/v1.12.06-2026-batch]
     paths:
       - 'scripts/beagu-2026-*.gs'
       - 'scripts/beagu-2026-results-*.js'
@@ -52,6 +52,8 @@ jobs:
           git diff --exit-code -- scripts/beagu-2026-noon-sync.gs supabase/functions/_shared/questionnaire-2026.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-form-submit-private-sync.mjs
+          node tests/2026-batch-ingest-performance.mjs
+          node tests/2026-public-count-safety.mjs
           node tests/2026-approved-search-refresh.mjs
           node tests/2026-public-revalidation-fail-closed.mjs
           node tests/2026-synthetic-school-withdrawal-flow.mjs
