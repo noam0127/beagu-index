@@ -111,11 +111,11 @@ const renderWrapped=(host,year,...args)=>{
 };
 const showDetails=new Function(
  'make','renderYear','asPublicPercentiles','YEARS','level',
- 'loadGeographyComparisons','session','approved2026Views',
+ 'loadGeographyComparisons','session','approved2026Views','window','yearlyPercentileHistory','current2026',
  search.slice(viewStart,viewEnd)+'\nreturn showDetails;'
 )(
  make,renderWrapped,()=>[null,null,null,null],[2023,2024,2025,2026],
- 1,async()=>({}),'synthetic-session',approved2026Views
+ 1,async()=>({}),'synthetic-session',approved2026Views,browser.window,()=>make('section','synthetic-yearly-history'),new Map()
 );
 const card=make('article','school-card');
 const detail=make('div','school-detail');
@@ -164,6 +164,8 @@ const comparisonState={
 };
 let apiMode='approved';
 const history={year:2025,questionId:'Q01',modeOption:'2025년 승인된 예시 선택'};
+// Use a deterministic closed-choice validator for the synthetic historical fixture.
+browser.window.BeaguHistoricalClosedChoice=(year,qid,value)=>year===2025&&qid==='Q01'&&value===history.modeOption?value:null;
 const authenticatedReply=()=>{
   if(apiMode==='offline')throw Object.assign(new Error('synthetic timeout'),{status:503});
   return {level:1,rows:[],schoolQuestionModes:[history],
@@ -200,25 +202,17 @@ const publicStart=comparison.indexOf('  async function loadPublic2026(');
 const publicEnd=comparison.indexOf('  function percentile(',publicStart);
 assert.ok(publicStart>0&&publicEnd>publicStart);
 let percentileMode='approved';
-const supabaseClient={
- from(table){
-  assert.equal(table,'beagu_school_report_yearly');
-  const chain={
-    select(){return chain;},
-    in(){return chain;},
-    eq(){return chain;},
-    limit(){
-      if(percentileMode==='offline')return Promise.resolve({data:null,error:new Error('synthetic network error')});
-      return Promise.resolve({error:null,data:percentileMode==='approved'
-        ?[{school_id:schoolId,survey_year:2026,percentile:73.5}]:[]});
-    }
-  };
-  return chain;
- }
+const supabaseClient={from(){assert.fail('Public comparison must not query raw school rows');}};
+const percentileRequest=async(action,payload,token)=>{
+  assert.equal(action,'percentiles');
+  assert.deepEqual(payload.schoolIds,[schoolId]);
+  assert.equal(token,'synthetic-session');
+  if(percentileMode==='offline')throw new Error('synthetic network error');
+  return {values:percentileMode==='approved'?{[schoolId]:73.5}:{}};
 };
-const loadPublic2026=new Function('state','supabaseClient','renderTable','console',
+const loadPublic2026=new Function('state','supabaseClient','renderTable','console','authRequest',
  comparison.slice(publicStart,publicEnd)+'\nreturn loadPublic2026;'
-)(comparisonState,supabaseClient,()=>{renderCount++;},console);
+)(comparisonState,supabaseClient,()=>{renderCount++;},console,percentileRequest);
 await loadPublic2026([schoolId]);
 assert.equal(comparisonState.public2026.get(schoolId),73.5);
 percentileMode='withheld';
