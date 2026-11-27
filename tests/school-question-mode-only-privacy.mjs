@@ -8,12 +8,12 @@ const report = read('school-report.html');
 const compare = read('js/statistics-compare.js');
 const sql = read('supabase/migrations/20261118_verified_2025_checkbox_modes.sql');
 
-assert.match(edge, /const level=Number\(session\.access_level\);\s*if\(level<1\)/);
+assert.match(edge, /const verifiedLevel=Number\(session\.access_level\);\s*const level=body\.viewLevel===undefined\?verifiedLevel:body\.viewLevel;\s*if\(typeof level!=='number'\|\|!\[1,2\]\.includes\(level\)\|\|level>verifiedLevel\)return send\(\{error:'ACCESS_DENIED'\},403,origin\)/);
 assert.match(edge, /\.from\('beagu_school_question_aggregates_v2'\)/);
 assert.match(edge, /\.from\('beagu_school_question_modes_supplement_v1'\)/);
 assert.match(edge, /SOURCE_VERIFIED_UNIQUE_MODE/);
 assert.match(edge, /schoolQuestionModes=\[\.\.\.modeIndex\.values\(\)\]/);
-assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears\}/);
+assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited\.data\.active===true,editedPercentile:finalRow\?\.percentile\?\?null\}/);
 assert.doesNotMatch(edge, /schoolDistributions|roundedDistribution:/,
   'No school percentages or distribution arrays may leave the API');
 assert.doesNotMatch(edge, /\.select\('[^']*source_rows/,
