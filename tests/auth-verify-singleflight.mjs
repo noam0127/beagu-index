@@ -7,7 +7,7 @@ const end=src.indexOf('  let generation=0;',start);
 assert.ok(start>=0&&end>start);
 const window={},calls=[],pending=[];
 const fetch=(url,opts)=>{calls.push({url,opts});return new Promise((res,rej)=>pending.push({res,rej}));};
-vm.runInNewContext(src.slice(start,end),{window,fetch,VERIFY_URL:'https://example.invalid'});
+vm.runInNewContext(src.slice(start,end),{window,fetch,VERIFY_URL:'https://example.invalid',AbortController,setTimeout,clearTimeout});
 const verify=window.BeaguVerifyLevelSession;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const response=(status,level)=>new Response(JSON.stringify({level}),{status});
