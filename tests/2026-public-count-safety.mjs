@@ -21,7 +21,7 @@ assert.ok(sync.includes('scanned-prelaunch-undated'),'Private sync excludes pre-
 assert.ok(sync.includes('BEAGU_2026_INGEST_TOKEN'),'Token required for private sync');
 assert.ok(sync.includes('onBeagu2026FormSubmitted'),'Form-submit handler retained');
 assert.ok(sync.includes('function installBeagu2026Sync()'),'One-click owner setup available');
-assert.ok(sync.includes('setupDailyNoonTrigger();'),'Daily recovery trigger retained');
+assert.ok(sync.includes('setupBeagu2026BatchTrigger();'),'Periodic recovery trigger retained');
 assert.ok(edge.includes('INGEST_NOT_CONFIGURED'),'Missing secret fails closed');
 assert.ok(edge.includes('UNAUTHORIZED'),'Invalid secret denied');
 assert.ok(edge.includes('body.source_spreadsheet_id!==sourceId'),'Source sheet validated');
