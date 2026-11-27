@@ -51,22 +51,35 @@ jobs:
       - run: |
           node scripts/build-2026-results.mjs
           git diff --exit-code -- scripts/beagu-2026-noon-sync.gs supabase/functions/_shared/questionnaire-2026.mjs
-          node tests/2026-question-results-pipeline.mjs
-          node tests/2026-form-submit-private-sync.mjs
-          node tests/2026-batch-ingest-performance.mjs
-          node tests/2026-public-count-safety.mjs
-          node tests/2026-approved-search-refresh.mjs
-          node tests/2026-public-revalidation-fail-closed.mjs
-          node tests/2026-synthetic-school-withdrawal-flow.mjs
-          node tests/2026-school-empty-survey-cta.mjs
-          node tests/school-question-mode-only-privacy.mjs
-          node tests/three-day-release.mjs
-          node tests/2026-release-consent-gate.mjs
-          node tests/2026-auto-quality-referral-gate.mjs
-          node tests/2026-three-stage-review-flow.mjs
-          node tests/2026-nonscorable-core-coverage.mjs
-          node tests/2026-qa-read-only-preflight.mjs
-          node tests/2026-staging-sandbox-static.mjs
-          node tests/2026-one-response-publication-review.mjs
-          node scripts/test-challenge-referral-stage2.cjs
-          node tests/lv1-percentile-chart-parity.mjs
+          failures=0
+          check() {
+            echo "::group::$1"
+            if node "$1"; then
+              echo "PASS: $1"
+            else
+              echo "::error file=$1::Regression failed"
+              failures=$((failures + 1))
+            fi
+            echo "::endgroup::"
+          }
+          check tests/2026-question-results-pipeline.mjs
+          check tests/2026-form-submit-private-sync.mjs
+          check tests/2026-batch-ingest-performance.mjs
+          check tests/2026-public-count-safety.mjs
+          check tests/2026-approved-search-refresh.mjs
+          check tests/2026-public-revalidation-fail-closed.mjs
+          check tests/2026-synthetic-school-withdrawal-flow.mjs
+          check tests/2026-school-empty-survey-cta.mjs
+          check tests/school-question-mode-only-privacy.mjs
+          check tests/three-day-release.mjs
+          check tests/2026-release-consent-gate.mjs
+          check tests/2026-auto-quality-referral-gate.mjs
+          check tests/2026-three-stage-review-flow.mjs
+          check tests/2026-nonscorable-core-coverage.mjs
+          check tests/2026-qa-read-only-preflight.mjs
+          check tests/2026-staging-sandbox-static.mjs
+          check tests/2026-one-response-publication-review.mjs
+          check scripts/test-challenge-referral-stage2.cjs
+          check tests/lv1-percentile-chart-parity.mjs
+          echo "Failed regression files: $failures"
+          test "$failures" -eq 0
