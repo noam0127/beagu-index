@@ -81,7 +81,7 @@ level=1;
 elems.challengeAccessCode.value='testcode';
 await elems.challengeAccessForm.listeners.submit({preventDefault(){}});
 assert.equal(token,'b'.repeat(64));
-assert.deepEqual(JSON.parse(storage.get('beagu-login-code-mask-v1')),{token,mask:'te******'});
+assert.deepEqual(JSON.parse(storage.get('beagu-login-code-mask-v1')),{token,level:1,mask:'te******'});
 assert.equal(elems.challengeProtected.hidden,false);
 assert.equal(elems.challengeAccessForm.hidden,true);
 assert.equal(elems.challengeAccessBadge.textContent,'Lv.1 인증 완료');
