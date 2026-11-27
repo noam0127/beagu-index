@@ -25,21 +25,29 @@ assert.doesNotMatch(sql,/\b(?:set\s+approval_status\s*=\s*'APPROVED'|set\s+revie
 assert.match(sql,/REVOKE ALL ON FUNCTION public\.beagu_2026_admin_review_queue\(text,integer,integer\) FROM public,anon,authenticated/);
 assert.match(sql,/REVOKE ALL ON FUNCTION public\.beagu_2026_admin_pipeline_status\(\) FROM public,anon,authenticated/);
 
-for(const [value,label] of [
- ['single','응답 1건 학교 · 전체'],
- ['single_technical','응답 1건 학교 · 기술검사 통과'],
- ['awaiting_basis','기술검사 통과 · 공개 근거 검토 대기']
-]){
- assert.ok(html.includes('<option value="'+value+'">'+label+'</option>'));
+// The old review filters remain server-side; the current admin page uses
+// explicit final edited data and civic reports, not the legacy school approval UI.
+for(const value of ['single','single_technical','awaiting_basis']){
  assert.ok(edge.includes('"'+value+'"'));
 }
 for(const id of ['adminPipelineSingle','adminPipelineSingleTechnical','adminPipelineSingleReview']){
- assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(ui,new RegExp('setCount\\("'+id+'"'));
 }
-assert.match(html,/응답 수 1건인 학교도 검토할 수 있지만/);
-assert.match(html,/동의·적법 근거·재식별 위험 검수와 최종 승인을 생략하지 않습니다/);
-assert.match(html,/기술검사 통과만으로 공개되지 않습니다/);
+assert.doesNotMatch(html,/src="js\/beagu-2026-admin-review\.js/);
+assert.match(html,/id="adminAuto2026" hidden/);
+assert.match(html,/src="js\/beagu-2026-edited-admin-v1\.js/);
+assert.match(html,/src="js\/beagu-2026-civic-admin-v1\.js/);
+const edited=read('js/beagu-2026-edited-admin-v1.js');
+const civic=read('js/beagu-2026-civic-admin-v1.js');
+assert.match(edited,/owner=role==="owner";[^\n]*if\(!owner\)return/);
+assert.match(edited,/action:"edited_2026_publish",confirmation:"FINAL_EDITED_FILE",table/);
+assert.match(edited,/기존 공개중단은 유지됩니다/);
+assert.match(edge,/if\(account\.role!=="owner"\)return send\(origin,403/);
+assert.match(edge,/if\(input\.confirmation!=="FINAL_EDITED_FILE"\)return send\(origin,400/);
+assert.match(edge,/beagu_admin_active_mfa_session/);
+assert.match(civic,/owner=role==="owner";panel\.hidden=!owner/);
+assert.match(civic,/c\.school_approval==="APPROVED"&&\(!c\.edited_file\|\|c\.edited_after_hold\)/);
+assert.match(civic,/원본 설문이나 공개 수치는 자동 수정되지 않습니다/);
 assert.doesNotMatch(ui,/\bpublish\(|\bapproveResults\(/);
 assert.match(release,/review_status='VERIFIED'/);
 assert.match(release,/beagu_admin_active_mfa_session/);
@@ -49,4 +57,4 @@ assert.match(lv2,/review_status='VERIFIED'/);
 assert.match(lv2,/r\.approval_status='APPROVED'/);
 assert.doesNotMatch(sql,/school_response_rows\s*>?=\s*5/);
 new vm.Script(ui);
-console.log('PASS: 2026 single-response reviewer filters and metrics without automatic public release or consent bypass');
+console.log('PASS: 2026 legacy review filters, current owner-only edited publication and civic hold safeguards');
