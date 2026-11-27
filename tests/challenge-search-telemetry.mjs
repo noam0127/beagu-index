@@ -283,7 +283,7 @@ assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.1 인증 완료',
 assert.equal(gateElements.challengeAccessPanel.attributes['data-auth-level'],'1','Shared signed-in state styles');
 assert.equal(gateElements.challengeAccessToggle.attributes['aria-pressed'],'false','Reveal is cleared after authentication');
 assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search');
-assert.deepEqual(JSON.parse(gateStorage.get('beagu-login-code-mask-v1')),{token:storedGateToken,mask:'sa********'});
+assert.deepEqual(JSON.parse(gateStorage.get('beagu-login-code-mask-v1')),{token:storedGateToken,level:1,mask:'sa********'});
 assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
 assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
 await gateElements.challengeLogout.listeners.click();
