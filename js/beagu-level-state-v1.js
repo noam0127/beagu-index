@@ -13,6 +13,21 @@
   indicator.setAttribute('href','levels.html');
   const KEY='beagu-level-session-v1';
   const VERIFY_URL='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
+  // Share only concurrent server verification; never cache a completed result.
+  // Each consumer gets its own response body; tokens never cross request groups.
+  const verifying=new Map();
+  window.BeaguVerifyLevelSession=async(token)=>{
+    let pending=verifying.get(token);
+    if(!pending){
+      pending=Promise.resolve().then(()=>fetch(VERIFY_URL,{
+        method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        body:JSON.stringify({action:'verify'})
+      })).finally(()=>{if(verifying.get(token)===pending)verifying.delete(token);});
+      verifying.set(token,pending);
+    }
+    return (await pending).clone();
+  };
   let generation=0;
   let lastValidatedToken='';
   const getToken=()=>{
@@ -69,11 +84,7 @@
       setState('checking','확인 중','인증 상태를 확인하는 중');
     }
     try{
-      const response=await fetch(VERIFY_URL,{
-        method:'POST',cache:'no-store',
-        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
-        body:JSON.stringify({action:'verify'})
-      });
+      const response=await window.BeaguVerifyLevelSession(token);
       if(seq!==generation||getToken()!==token)return;
       if(response.status===401||response.status===403){
         lastValidatedToken='';
