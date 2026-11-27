@@ -55,7 +55,8 @@
     if (token !== verifiedToken) display(false, token ? 'Lv.1 인증 상태를 확인하고 있습니다.' : 'Lv.1 인증 후 플레이할 수 있습니다.');
     if (!token) { verifiedToken = ''; display(false); return; }
     try {
-      const response = await fetch(endpoint, {
+      const response = typeof window.BeaguVerifyLevelSession==='function'
+        ?await window.BeaguVerifyLevelSession(token):await fetch(endpoint, {
         method: 'POST',
         cache: 'no-store',
         headers: {'Content-Type':'application/json','X-Beagu-Session':token},
