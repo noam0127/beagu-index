@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const src=readFileSync('js/beagu-level-state-v1.js','utf8');
+const start=src.indexOf('  const verifying=new Map();');
+const end=src.indexOf('  let generation=0;',start);
+assert.ok(start>=0&&end>start);
+const window={},calls=[],pending=[];
+const fetch=(url,opts)=>{calls.push({url,opts});return new Promise((res,rej)=>pending.push({res,rej}));};
+vm.runInNewContext(src.slice(start,end),{window,fetch,VERIFY_URL:'https://example.invalid'});
+const verify=window.BeaguVerifyLevelSession;
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+const response=(status,level)=>new Response(JSON.stringify({level}),{status});
+const a=verify('a'),b=verify('a'),c=verify('b');
+await tick();
+assert.equal(calls.length,2);
+assert.deepEqual(calls.map(x=>x.opts.headers['X-Beagu-Session']),['a','b']);
+assert.ok(calls.every(x=>x.opts.cache==='no-store'&&JSON.parse(x.opts.body).action==='verify'));
+pending[0].res(response(200,2));pending[1].res(response(401,0));
+const [ar,br,cr]=await Promise.all([a,b,c]);
+assert.notEqual(ar,br);assert.equal(cr.status,401);
+assert.equal((await ar.json()).level,2);assert.equal((await br.json()).level,2);
+const d=verify('a');await tick();assert.equal(calls.length,3);
+pending[2].rej(Error('network'));await assert.rejects(d,/network/);
+const e=verify('a');await tick();assert.equal(calls.length,4);
+pending[3].res(response(403,0));assert.equal((await e).status,403);
+const g=verify('a');await tick();assert.equal(calls.length,5);
+pending[4].res(response(200,1));assert.equal((await (await g).json()).level,1);
+for(const path of ['js/beagu-participation-auth-v2.js','js/challenge-access-v1.js']){
+ const code=readFileSync(path,'utf8');
+ assert.ok(code.includes("action==='verify'&&token&&Object.keys(payload).length===0"));
+ assert.ok(code.includes('await window.BeaguVerifyLevelSession(token):await fetch('));
+}
+console.log('PASS: concurrent-only verification sharing, token isolation, independent response bodies, failure retry, no completed-result cache, integration guards');
