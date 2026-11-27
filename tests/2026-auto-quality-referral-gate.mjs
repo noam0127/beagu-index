@@ -49,9 +49,22 @@ assert.match(review,/if\(account\.role!=="owner"\)/);
 assert.match(review,/beagu_admin_active_mfa_session/);
 assert.match(ui,/referral_quality_queue/);
 assert.match(ui,/referral_quality_resolve/);
-assert.match(html,/adminReferralRiskCard/);
-assert.match(html,/value="quality"/);
-assert.match(html,/20261123-level-approvals1/);
+// Legacy owner referral review implementation is retained, but is not mounted
+// by the current final-edition/civic admin page. Do not re-enable it for this test.
+assert.match(ui,/const card=\$\("adminReferralRiskCard"\)/);
+assert.match(ui,/if\(role!=="owner"\|\|!ready\)/);
+assert.doesNotMatch(html,/src="js\/beagu-2026-admin-review\.js/);
+assert.match(html,/id="adminReview2026"/);
+assert.match(html,/id="adminAuto2026" hidden/);
+assert.match(html,/src="js\/beagu-2026-edited-admin-v1\.js/);
+assert.match(html,/src="js\/beagu-2026-civic-admin-v1\.js/);
+const access=read('js/beagu-admin-access-v1.js');
+assert.match(access,/if \(!proof\.permitted \|\| !proof\.mfa_verified\) throw/);
+assert.match(access,/Beagu2026ReviewAdmin\?\.mount\(proof\.role\)/);
+assert.match(access,/BeaguCivicAdmin\?\.mount\(proof\.role\)/);
+const edited=read('js/beagu-2026-edited-admin-v1.js');
+assert.match(edited,/owner=role==="owner";[^\n]*if\(!owner\)return/);
+
 const ctx={};
 vm.createContext(ctx);
 vm.runInContext(form,ctx);
@@ -71,4 +84,4 @@ const missing=good.filter(([i])=>i!==13);
 assert.equal(ctx.beaguReferralSubmissionQuality_(getResponse(missing)).qualitySignals.includes('MISSING_REQUIRED_CORE'),true);
 const malformed=good.map(([i,ans])=>[i,i===9?['incorrect']:ans]);
 assert.equal(ctx.beaguReferralSubmissionQuality_(getResponse(malformed)).qualitySignals.includes('UNREADABLE_ITEM_RESPONSE'),true);
-console.log('PASS: school aggregate triage, referral anti-fraud hold, owner review, Forms metadata-only signals');
+console.log('PASS: school aggregate triage, referral anti-fraud hold, owner-only legacy referral review API, current admin mount, Forms metadata-only signals');
