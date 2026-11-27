@@ -158,17 +158,26 @@
   legacy.before(action);
  }
  async function request(action,payload={},token=''){
-  const res=action==='verify'&&token&&Object.keys(payload).length===0&&typeof window.BeaguVerifyLevelSession==='function'
-      ?await window.BeaguVerifyLevelSession(token):await fetch(ENDPOINT,{
-   method:'POST',cache:'no-store',
-   headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{})},
-   body:JSON.stringify({action,...payload})
+  const controller=new AbortController();
+  let timer;
+  const deadline=new Promise((_,reject)=>{
+   timer=setTimeout(()=>{reject(Error('AUTH_TIMEOUT'));controller.abort();},12000);
   });
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok){
-   const e=new Error(data.error||'AUTH_FAILED');e.status=res.status;throw e;
-  }
-  return data;
+  const operation=(async()=>{
+   const res=action==='verify'&&token&&Object.keys(payload).length===0&&typeof window.BeaguVerifyLevelSession==='function'
+      ?await window.BeaguVerifyLevelSession(token):await fetch(ENDPOINT,{
+    method:'POST',cache:'no-store',signal:controller.signal,
+    headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{})},
+    body:JSON.stringify({action,...payload})
+   });
+   const data=await res.json().catch(()=>({}));
+   if(!res.ok){
+    const e=new Error(data.error||'AUTH_FAILED');e.status=res.status;throw e;
+   }
+   return data;
+  })();
+  try{return await Promise.race([operation,deadline]);}
+  finally{clearTimeout(timer);}
  }
  async function verifyCurrent(){
   const token=stored();
@@ -260,7 +269,7 @@
    if(document.body.classList.contains('beagu-page-search'))
     window.location.assign('search-lv1.html');
   }catch(err){
-   message.textContent=err.status===429?'인증 요청이 많습니다. 잠시 후 다시 시도해 주세요.':
+   message.textContent=err.message==='AUTH_TIMEOUT'||err.status>=500?'서버 응답이 지연됩니다. 기존 인증은 유지되며 잠시 후 다시 시도해 주세요.':err.status===429?'인증 요청이 많습니다. 잠시 후 다시 시도해 주세요.':
     err.status===401||err.status===403?'참여코드를 확인해 주세요.':
     err.message==='STORAGE_UNAVAILABLE'?'브라우저의 저장 기능을 허용해 주세요.':
     '인증할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.';
