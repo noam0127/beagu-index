@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only, fix/v11118-static-basics, fix/v111181-court-completion, feat/v11119-daily-ranking, feat/v11120-ranking-integration, feat/v11121-manual-school-top10, fix/v111211-top10-ui, release/v1.11.22-fair-disclosure, fix/v1.11.23-account-challenge-ui, fix/defer-level3-release-20261127, fix/v11205-court-integrated, fix/v112051-readable-court]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only, fix/v11118-static-basics, fix/v111181-court-completion, feat/v11119-daily-ranking, feat/v11120-ranking-integration, feat/v11121-manual-school-top10, fix/v111211-top10-ui, release/v1.11.22-fair-disclosure, fix/v1.11.23-account-challenge-ui, fix/defer-level3-release-20261127, fix/v11205-court-integrated, fix/v112051-readable-court, perf/v1.12.06-2026-batch]
 permissions:
   contents: read
 jobs:
@@ -18,6 +18,28 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
           fetch-depth: 0
+      - name: Verify v1.12.06 registration metadata and production ancestry
+        if: github.ref == 'refs/heads/perf/v1.12.06-2026-batch'
+        run: |
+          set -euo pipefail
+          base=67c02f6456372862c28369f012a8c47310e17e04
+          test "$(git merge-base HEAD "$base")" = "$base"
+          count=$(git diff --name-only "$base" HEAD | wc -l)
+          test "$count" -gt 0 && test "$count" -lt 300
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('release-candidate.json','utf8'));
+          const i=JSON.parse(fs.readFileSync('release-info.json','utf8'));
+          assert.equal(m.version,'v1.12.06');
+          assert.equal(i.version,m.version);
+          assert.equal(i.name,'쾌적한 코트');
+          assert.equal(i.environment,'candidate');
+          assert.equal(i.commit,null);
+          assert.equal(i.deployedAt,null);
+          assert.ok(m.summary.trim().length>=3&&m.summary.trim().length<=500);
+          JS
+          node tests/direct-pages-release-contract.cjs
       - name: Verify source and simulated DOM
         run: |
           node --check js/beagu-release-info-v1.js
