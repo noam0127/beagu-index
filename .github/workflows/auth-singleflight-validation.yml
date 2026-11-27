@@ -1,0 +1,28 @@
+name: Auth single-flight independent validation
+on:
+  push:
+    branches: [perf/v1.12.06-auth-singleflight]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authentication regression checks (no deployment)
+        run: |
+          node --check js/beagu-level-state-v1.js
+          node --check js/beagu-participation-auth-v2.js
+          node --check js/challenge-access-v1.js
+          node tests/auth-verify-singleflight.mjs
+          node tests/level-guide-route.mjs
+          node tests/auth-journey-states.mjs
+          node tests/levelup-provisional-v1.cjs
+          node tests/challenge-auth-ui.mjs
+          node tests/auth-unified-2026-link.mjs
+          node tests/postit-static-check.cjs
