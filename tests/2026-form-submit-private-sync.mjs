@@ -50,8 +50,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(reviewRows[0])),[
 assert.ok(!JSON.stringify(reviewRows).includes('부장은'));
 assert.ok(!JSON.stringify(reviewRows).includes('학교별 자체 방식'));
 assert.match(js,/2026_기타응답_검수대기/);
-assert.match(js,/newTrigger\("onBeagu2026FormSubmitted"\)|newTrigger\(name\)\.forSpreadsheet/);
-assert.match(js,/newTrigger\("refreshBeagu2026AllPrivateStats"\)/);
+assert.match(js,/function onBeagu2026FormSubmitted/);
+assert.match(js,/newTrigger\("runBeagu2026QuarterHour"\)\.timeBased\(\)\.everyMinutes\(15\)/);
 assert.match(js,/refreshBeagu2026AllPrivateStats\(\);/);
 assert.match(js,/if\(typeof refreshBeagu2026SchoolCulture==="function"\)/);
 assert.match(js,/firstOfficialResponseDay: "2026-11-01"/);
@@ -115,15 +115,21 @@ assert.equal(JSON.stringify(rowResult.reviewRows).includes(validRow[0]),false);
 const invoked=[];
 const snapshot={values:[],schools:[]};
 let locked=false;
+let expectedTimeout=180000;
 scope.LockService={getScriptLock:()=>({
-  tryLock:timeout=>{assert.equal(timeout,180000);assert.equal(locked,false);locked=true;return true;},
+  tryLock:timeout=>{assert.equal(timeout,expectedTimeout);assert.equal(locked,false);locked=true;return true;},
   releaseLock:()=>{assert.equal(locked,true);locked=false;}
 })};
 scope.readBeagu2026SourceSnapshot=()=>{assert.equal(locked,true);invoked.push('read');return snapshot;};
 scope.refreshBeagu2026QuestionResults=input=>{assert.equal(input,snapshot);invoked.push('questions');};
 scope.refreshBeagu2026Stats=input=>{assert.equal(input,snapshot);invoked.push('core');};
+scope.refreshBeagu2026VI13Private=()=>{assert.equal(locked,true);};
 scope.refreshBeagu2026SchoolCulture=input=>{assert.equal(input,snapshot);invoked.push('culture');};
 scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '설문지 응답 시트1'})}});
+assert.equal(invoked.length,0,'Form submission must not launch a full rebuild');
+expectedTimeout=1000;
+scope.runBeagu2026QuarterHour();
+expectedTimeout=180000;
 assert.deepEqual(invoked,['read','questions','core','culture'],'Every output must use the same source snapshot');
 assert.equal(locked,false);
 scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '다른 시트'})}});
@@ -142,4 +148,4 @@ scope.refreshBeagu2026Stats=input=>{assert.equal(input,snapshot);invoked.push('c
 scope.refreshBeagu2026AllPrivateStats();
 assert.deepEqual(invoked.slice(-4),['read','questions','core','culture'],'A later retry must use a fresh snapshot and complete all stages');
 assert.equal(locked,false);
-console.log('PASS: 2026 one-time trigger path, one official row, school-type review, Q01-Q17 private auto aggregation');
+console.log('PASS: 2026 quarter-hour trigger path, one official row, school-type review, Q01-Q17 private auto aggregation');
