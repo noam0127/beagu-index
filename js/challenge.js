@@ -177,7 +177,12 @@
     if(token!==activeSession){epoch++;busy=false;certificateRefreshPending=false;activeSession=token;resetIdentity();}
     accessGranted=true;paintLoginCode();
     if(busy){certificateRefreshPending=true;return;}
-    void prepare();
+    const grantEpoch=epoch;
+    // Let verified access UI settle before requesting optional certificate data.
+    setTimeout(()=>{
+      if(!accessGranted||epoch!==grantEpoch||currentSession()!==token)return;
+      void prepare();
+    },0);
   });
 })();
 
