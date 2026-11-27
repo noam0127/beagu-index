@@ -19,7 +19,15 @@ jobs:
           node --check js/beagu-level-state-v1.js
           node --check js/beagu-participation-auth-v2.js
           node --check js/challenge-access-v1.js
+          node --check js/beagu-game-lv1-gate-v1.js
+          node --check js/statistics-compare.js
+          node --check js/challenge.js
+          node --check js/visit-stats.js
+          node --check js/beagu-presence-games-v1.js
           node tests/auth-verify-singleflight.mjs
+          node tests/auth-background-load-performance.mjs
+          node tests/telemetry-gateway-client-smoke.cjs
+          node tests/challenge-search-telemetry.mjs
           node tests/level-guide-route.mjs
           node tests/auth-journey-states.mjs
           node tests/levelup-provisional-v1.cjs
