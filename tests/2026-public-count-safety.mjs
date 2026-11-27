@@ -38,7 +38,7 @@ assert.doesNotMatch(post,/\.\.\.body\b|\.upsert\(\s*body\b/,'Never forward arbit
 assert.match(post,/official_submission_rows:body\.official_submission_rows/);
 assert.match(post,/new_unique_schools:body\.new_unique_schools/);
 assert.match(post,/publish_policy:'national_cumulative_counts_only_v2'/);
-assert.ok(lv1.includes('전체 조사 문항·공개 상태 보기'));
+assert.ok(lv1.includes('문항별 결과')&&lv1.includes('최신 공개 승인 상태를 확인하지 못했습니다. 2026년 학교별 결과를 숨기고'),'Question detail retains fail-closed approval status');
 assert.ok(report.includes("const check=await tierCall('verify')"));
-assert.ok(guide.includes('익명 및 일반 사용자 SELECT 권한 없음'));
+assert.ok(guide.includes('`beagu_2026_public_progress` (일반 사용자 접근 불가)')&&guide.includes('익명 INSERT/UPDATE 불가'),'Documented private progress and anonymous write restrictions retained');
 console.log('PASS: survey counts hidden, internal ingestion authenticated, legacy school privacy retained');
