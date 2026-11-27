@@ -18,6 +18,10 @@ on:
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'
+      - 'tests/school-question-mode-only-privacy.mjs'
+      - 'tests/three-day-release.mjs'
+      - 'scripts/test-challenge-referral-stage2.cjs'
+      - 'tests/lv1-percentile-chart-parity.mjs'
       - '.github/workflows/2026-question-results.yml'
   pull_request:
     branches: [main]
@@ -36,6 +40,10 @@ on:
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'
+      - 'tests/school-question-mode-only-privacy.mjs'
+      - 'tests/three-day-release.mjs'
+      - 'scripts/test-challenge-referral-stage2.cjs'
+      - 'tests/lv1-percentile-chart-parity.mjs'
       - '.github/workflows/2026-question-results.yml'
   workflow_dispatch:
 permissions:
