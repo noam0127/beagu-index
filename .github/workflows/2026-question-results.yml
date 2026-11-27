@@ -3,6 +3,7 @@ on:
   push:
     branches: [main, perf/v1.12.06-2026-batch]
     paths:
+      - 'scripts/README-2026-noon-sync.md'
       - 'scripts/beagu-2026-*.gs'
       - 'scripts/beagu-2026-results-*.js'
       - 'scripts/build-2026-results.mjs'
