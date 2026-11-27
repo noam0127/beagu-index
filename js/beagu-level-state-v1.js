@@ -19,11 +19,25 @@
   window.BeaguVerifyLevelSession=async(token)=>{
     let pending=verifying.get(token);
     if(!pending){
-      pending=Promise.resolve().then(()=>fetch(VERIFY_URL,{
-        method:'POST',cache:'no-store',
-        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
-        body:JSON.stringify({action:'verify'})
-      })).finally(()=>{if(verifying.get(token)===pending)verifying.delete(token);});
+      const controller=new AbortController();
+      let timer;
+      const deadline=new Promise((_,reject)=>{
+        timer=setTimeout(()=>{reject(Error('AUTH_TIMEOUT'));controller.abort();},12000);
+      });
+      const operation=Promise.resolve().then(async()=>{
+        const response=await fetch(VERIFY_URL,{
+          method:'POST',cache:'no-store',signal:controller.signal,
+          headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+          body:JSON.stringify({action:'verify'})
+        });
+        // Bound the body as well as the response headers. Keep independent bodies for consumers.
+        await response.clone().arrayBuffer();
+        return response;
+      });
+      pending=Promise.race([operation,deadline]).finally(()=>{
+        clearTimeout(timer);
+        if(verifying.get(token)===pending)verifying.delete(token);
+      });
       verifying.set(token,pending);
     }
     return (await pending).clone();
