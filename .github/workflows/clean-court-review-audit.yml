@@ -1,0 +1,31 @@
+name: Clean Court review write and workflow audit (offline)
+on:
+  push:
+    branches: [refactor/clean-court-review-writes-20261128]
+  pull_request:
+    branches: [fix/v112061-emergency-stability]
+    paths:
+      - 'tests/fixtures/clean-court-review/**'
+      - 'scripts/audit-clean-court-workflows.rb'
+      - '.github/workflows/clean-court-review-audit.yml'
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify synthetic PostgreSQL review equivalence
+        run: |
+          set -euo pipefail
+          c="clean-court-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          docker cp tests/fixtures/clean-court-review "$c:/tmp/clean-court-review"
+          docker exec "$c" psql -X -v ON_ERROR_STOP=1 -U postgres -f /tmp/clean-court-review/fixture.sql -f /tmp/clean-court-review/assertions.sql
+      - name: Inventory workflow schedules and identical job steps
+        run: ruby scripts/audit-clean-court-workflows.rb
