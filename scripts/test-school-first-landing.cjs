@@ -35,5 +35,40 @@ const originText='초등학교에서는 근무 중 직장 스포츠 활동으로
     await ctx.close();console.log('PASS',width,colorScheme,JSON.stringify(metrics));
    }
   }
+
+  // Static presentation across the remaining pages: no application scripts or
+  // external traffic. Authentication and dynamic state use the separate E2E suite.
+  const pages=[
+   ['search.html','#searchTitle'],
+   ['search-lv1.html','#searchTitle'],
+   ['statistics.html','#headingTitle'],
+   ['school-report.html','.page-heading h1'],
+   ['challenge.html','#challengeAccessTitle'],
+   ['games.html','#playground-title'],
+   ['levels.html','.beagu-level-guide-hero h1']
+  ];
+  for(const width of [320,390,768,1365]){
+   for(const colorScheme of ['light','dark']){
+    const ctx=await browser.newContext({viewport:{width,height:900},colorScheme,javaScriptEnabled:false,serviceWorkers:'block'});
+    await ctx.route('**/*',r=>r.request().url().startsWith(origin+'/')?r.continue():r.abort());
+    const page=await ctx.newPage();
+    for(const [path,heading] of pages){
+     await page.goto(origin+'/'+path,{waitUntil:'load'});
+     const result=await page.evaluate(async heading=>{
+      const h=document.querySelector(heading),nav=document.querySelector('.beagu-unified-nav.beagu-core-nav');
+      const style=document.querySelector('link[href*="beagu-public-typography-v11208.css"]');
+      const fonts=await document.fonts.load('700 20px Pretendard','선생님 학교');
+      const hs=h?getComputedStyle(h):null;
+      return {linked:!!style?.sheet,fonts:fonts.some(f=>f.status==='loaded'),family:getComputedStyle(document.body).fontFamily,heading:!!h,headingSize:hs?parseFloat(hs.fontSize):0,nav:nav?[...nav.querySelectorAll('a')].filter(a=>a.getClientRects().length).map(a=>{const b=a.getBoundingClientRect();return {left:b.left,right:b.right,height:b.height}}):[]};
+     },heading);
+     assert(result.linked&&result.fonts&&result.family.includes('Pretendard')&&result.heading,JSON.stringify({path,width,colorScheme,result}));
+     if(path!=='challenge.html')assert(result.headingSize>=28,JSON.stringify({path,result}));
+     for(const n of result.nav)assert(n.left>=-1&&n.right<=width+1&&n.height>=36,JSON.stringify({path,width,n}));
+     await page.screenshot({path:'artifacts/landing/'+path.replace('.html','')+'-'+width+'-'+colorScheme+'.png',fullPage:false,animations:'disabled'});
+     console.log('PASS static public page',path,width,colorScheme,JSON.stringify(result));
+    }
+    await ctx.close();
+   }
+  }
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
