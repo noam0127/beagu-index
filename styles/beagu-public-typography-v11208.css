@@ -1,0 +1,73 @@
+/* v1.12.08 — shared public-page typography; no access or layout state changes. */
+@font-face{font-family:"Pretendard";font-style:normal;font-weight:400;font-display:swap;src:url("../assets/fonts/pretendard/Pretendard-Regular.subset.woff2") format("woff2")}
+@font-face{font-family:"Pretendard";font-style:normal;font-weight:600;font-display:swap;src:url("../assets/fonts/pretendard/Pretendard-SemiBold.subset.woff2") format("woff2")}
+@font-face{font-family:"Pretendard";font-style:normal;font-weight:700;font-display:swap;src:url("../assets/fonts/pretendard/Pretendard-Bold.subset.woff2") format("woff2")}
+body.beagu-ui-page:is(.beagu-page-home,.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-report,.beagu-page-challenge,.beagu-page-playground,.beagu-page-levels){
+ --beagu-public-font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+ --beagu-public-title:clamp(2.125rem,4.4vw,3.5rem);
+ --beagu-public-section:clamp(1.5rem,2.7vw,2rem);
+ --beagu-public-body:1.1875rem;
+ --beagu-public-note:1rem;
+ --beagu-public-action:1.125rem;
+ font-family:var(--beagu-public-font);font-size:var(--beagu-public-body);line-height:1.7;letter-spacing:-.015em;
+}
+body.beagu-ui-page:is(.beagu-page-home,.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-report,.beagu-page-challenge,.beagu-page-playground,.beagu-page-levels) .beagu-unified-nav.beagu-core-nav>a{
+ font-family:var(--beagu-public-font);font-size:1rem;font-weight:700;min-height:44px;letter-spacing:-.02em;
+}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-report,.beagu-page-challenge,.beagu-page-playground,.beagu-page-levels) main :is(h1,h2,h3,p,li,label){word-break:keep-all;overflow-wrap:anywhere}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero h1,
+body.beagu-ui-page.beagu-page-compare main.shell .intro h1,
+body.beagu-ui-page.beagu-page-report .page-heading h1,
+body.beagu-ui-page.beagu-page-playground .playground-intro h1,
+body.beagu-ui-page.beagu-page-levels .beagu-level-guide-hero h1{
+ font-size:var(--beagu-public-title);font-weight:700;line-height:1.28;letter-spacing:-.035em;text-wrap:balance;
+}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) :is(.beagu-search-card-title,#beaguInterestTitle,#beaguRegionInterestTitle),
+body.beagu-ui-page.beagu-page-compare :is(.section-head h2,.comparison-head h2,#compareResultsTitle),
+body.beagu-ui-page.beagu-page-report .section-top h3,
+body.beagu-ui-page.beagu-page-challenge :is(#challengeReferralTitle,#togetherBenefitsTitle,#challengeLoginCodeTitle),
+body.beagu-ui-page.beagu-page-playground .playground-shell section>h2,
+body.beagu-ui-page.beagu-page-levels :is(.beagu-level-guide-card h2,.beagu-level-guide-flow h2){
+ font-size:var(--beagu-public-section);font-weight:700;line-height:1.4;letter-spacing:-.025em;
+}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) :is(.search-box,.region-select,.search-tab),
+body.beagu-ui-page.beagu-page-compare .compare-search-field input{
+ font-family:var(--beagu-public-font);font-size:var(--beagu-public-action);min-height:52px;line-height:1.5;
+}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) :is(.field-label,.beagu-search-sort label,.beagu-search-sort select){font-size:1rem;line-height:1.5}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-card .school-name{font-size:1.375rem;line-height:1.4;font-weight:700}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-card :is(.school-meta,.percentile-note){font-size:1rem;line-height:1.65}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-card :is(.percentile-value,.school-sort-primary-value){font-size:1.25rem;line-height:1.45;font-weight:700}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-card .view-button{font-size:1rem;min-height:48px;line-height:1.5;border-radius:14px}
+body.beagu-ui-page.beagu-page-compare .intro .subtitle,
+body.beagu-ui-page.beagu-page-report .page-heading .lead,
+body.beagu-ui-page.beagu-page-playground .playground-intro p,
+body.beagu-ui-page.beagu-page-levels .beagu-level-guide-hero p{font-size:var(--beagu-public-body);line-height:1.7}
+body.beagu-ui-page.beagu-page-compare :is(.compare-table thead th,.compare-table tbody th,.compare-table tbody td){font-size:1rem;line-height:1.6}
+body.beagu-ui-page.beagu-page-compare :is(.compare-selection-title,.compare-plain-button){font-size:1.0625rem;line-height:1.5}
+body.beagu-ui-page.beagu-page-report .question-row .question-label{font-size:1.125rem!important;line-height:1.65;font-weight:700}
+body.beagu-ui-page.beagu-page-report .question-row :is(.question-value,.question-choices li){font-size:1rem;line-height:1.65}
+body.beagu-ui-page.beagu-page-report .section-top p{font-size:1rem;line-height:1.65}
+body.beagu-ui-page.beagu-page-report .tier-button{font-size:1rem;min-height:46px}
+body.beagu-ui-page.beagu-page-challenge .together-benefits :is(p,li,a),
+body.beagu-ui-page.beagu-page-challenge #challengeReferralPanel #challengeReferralStatus{font-size:1.0625rem;line-height:1.65}
+body.beagu-ui-page.beagu-page-challenge :is(.together-private-note,#togetherReferralState,#challengeReferralCountHint){font-size:1rem;line-height:1.6}
+body.beagu-ui-page.beagu-page-challenge :is(.together-save .action,.together-share-actions>*){
+ font-size:1.125rem;min-height:48px;line-height:1.5;border-radius:14px;
+}
+body.beagu-ui-page.beagu-page-playground .playground-content h3{font-size:1.5rem;font-weight:700}
+body.beagu-ui-page.beagu-page-playground :is(.playground-content p,.playground-note){font-size:1.0625rem;line-height:1.65}
+body.beagu-ui-page.beagu-page-playground .playground-actions a{font-size:1.125rem;min-height:48px;border-radius:14px;line-height:1.5}
+body.beagu-ui-page.beagu-page-levels .beagu-level-guide-title-line{white-space:normal}
+body.beagu-ui-page.beagu-page-levels :is(.beagu-level-guide-sentence,.beagu-level-guide-list li,.beagu-level-guide-step,.beagu-level-guide-step strong){font-size:1.0625rem;line-height:1.65}
+body.beagu-ui-page.beagu-page-levels :is(.beagu-level-guide-note,.beagu-level-guide-disclaimer,.beagu-level-guide-status){font-size:1rem;line-height:1.6}
+body.beagu-ui-page.beagu-page-levels .beagu-level-guide-action{font-size:1.125rem;min-height:48px;border-radius:14px}
+@media(max-width:760px){
+ body.beagu-ui-page .beagu-unified-nav.beagu-core-nav>a{font-size:.9375rem;padding-inline:2px}
+ body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero,
+ body.beagu-ui-page.beagu-page-compare main.shell>.intro{padding:24px 18px}
+}
+@media(max-width:380px){
+ body.beagu-ui-page{--beagu-public-title:2rem;--beagu-public-section:1.5rem}
+ body.beagu-ui-page .beagu-unified-nav.beagu-core-nav>a{font-size:.875rem}
+}
