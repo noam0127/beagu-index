@@ -44,13 +44,7 @@
            window.BeaguSchoolViewCounts?.applyConfirmedCount?.(schoolId,Number(view.views));
        }).catch(()=>{console.warn('학교 조회수 기록 연결 실패');});
      }
-     // Only a server-accepted school action can contribute to rankings.
-     // The database stores a salted digest, never the visitor UUID.
-     return supabaseClient.rpc('beagu_record_school_interest',{
-      p_school_id:schoolId,p_action_id:actionId,p_visitor:visitor
-     }).then(({error:interestError})=>{
-      if(interestError)console.warn('학교 관심 집계 비활성화');
-     });
+     // Ranking v2 uses the same verified view record; no separate legacy write.
    }).catch(()=>{});
    return true;
   }catch(_){return false;}

@@ -124,7 +124,7 @@ assert.ok(challenge.indexOf('id="challengeAccessCode"')<challenge.indexOf('id="c
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
 assert.match(read('js/visit-stats.js'),/beagu-telemetry-v2/,'Preserve preexisting visit accounting via Edge');
 assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallback');
-assert.match(read('js/visit-stats.js'),/body:\{action:'visit',visitor,event,page\}/,'Reuse one event for retries');
+assert.match(read('js/visit-stats.js'),/invokeTelemetry\(\{action:'visit',visitor,event,page\}\)/,'Reuse one event for retries');
 assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent visit totals');
 assert.match(read('js/challenge.js'),/participantNo\.textContent = '순번 조회 실패'/,'Show a retryable ordinal error');
 assert.doesNotMatch(home,/방문한 선생님/);
@@ -175,7 +175,7 @@ assert.doesNotThrow(()=>new Script(visitSource));
 const counts=['today','month','total'].map(stat=>({dataset:{stat},textContent:'집계 중'}));
 const storedVisitor='11111111-1111-4111-8111-111111111111';
 const visitCalls=[];
-const visitScope={
+const visitScope={AbortController,setTimeout,clearTimeout,
  window:{setTimeout:()=>0,setInterval:()=>0},
  document:{querySelectorAll:()=>counts,addEventListener:()=>{},visibilityState:'visible'},
  localStorage:{getItem:()=>storedVisitor,setItem:()=>{}},

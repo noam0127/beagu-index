@@ -36,20 +36,30 @@
   // Passive site presence. Browser UUID already exists for anonymous visit counting.
   // A heartbeat is sent at most once per minute while the page is visible;
   // failures never delay page content, search, or the existing visit counter.
+  // Bound an SDK invocation even if the transport fails to settle after abort.
+  async function invokeTelemetry(body){
+    const controller=new AbortController();
+    let timer;
+    const deadline=new Promise((_,reject)=>{
+      timer=setTimeout(()=>{reject(Error('TELEMETRY_TIMEOUT'));controller.abort();},8000);
+    });
+    const operation=Promise.resolve().then(()=>supabaseClient.functions.invoke('beagu-telemetry-v2',{body,signal:controller.signal}));
+    try{return await Promise.race([operation,deadline]);}
+    finally{clearTimeout(timer);}
+  }
+  let visitConfirmed=false;
   let presencePending=false;
   let lastPresenceAttempt=-Infinity;
   const presencePage=/^[a-z0-9-]{1,48}$/.test(rawPage)?rawPage:'other';
   async function presencePing(){
-    if(presencePending || document.visibilityState!=='visible' ||
+    if(!visitConfirmed || presencePending || document.visibilityState!=='visible' ||
        typeof supabaseClient==='undefined')return;
     const now=Date.now();
     if(now-lastPresenceAttempt<60000)return;
     lastPresenceAttempt=now;
     presencePending=true;
     try{
-      await supabaseClient.functions.invoke('beagu-telemetry-v2',{
-        body:{action:'ping',visitor,page:presencePage}
-      });
+      await invokeTelemetry({action:'ping',visitor,page:presencePage});
     }catch(_){ /* nonblocking; telemetry is best effort */ }
     finally{presencePending=false}
   }
@@ -84,16 +94,16 @@
       try {
         if (typeof supabaseClient === 'undefined') throw new Error('CLIENT_UNAVAILABLE');
         // Reuse the same event UUID on retries, preventing duplicate visit events.
-        const {data,error} = await supabaseClient.functions.invoke('beagu-telemetry-v2', {body:{action:'visit',visitor,event,page}});
+        const {data,error} = await invokeTelemetry({action:'visit',visitor,event,page});
         if (error) throw error;
-        if (display(data)) return data;
+        if (display(data)) {visitConfirmed=true;return data;}
         throw new Error('INVALID_VISIT_STATS');
       } catch (_) {
-        if (attempt === 2) {
-          show('집계 확인 불가');
-          return null;
-        }
-        await new Promise(resolve => setTimeout(resolve, 900 * (attempt + 1)));
+        // Never leave the initial placeholder visible after a failed attempt.
+        // Keep the original event UUID for bounded, non-overlapping retries.
+        show('집계 확인 불가');
+        if (attempt === 2) return null;
+        await new Promise(resolve => setTimeout(resolve, 3000 * Math.pow(3,attempt)));
       }
     }
     return null;

@@ -11,9 +11,11 @@ assert.deepEqual('첫 문장입니다. 나머지 안내입니다.'.match(pattern
 const html=read('challenge.html'),capture=read('js/challenge.js'),referral=read('js/challenge-referral-v1.js'),access=read('js/challenge-access-v1.js'),account=read('js/challenge-level3-v1.js'),header=read('js/beagu-participation-auth-v2.js');
 assert.match(html,/<button id="level3Upgrade"[^>]*>계정 생성<\/button>/);
 assert.ok(html.includes('id="challengeLoginCode"'));
-assert.ok(referral.includes("account3?3:premiumVisual?2:1"));
-assert.ok(referral.includes("'학교별 상세자료 열람','커뮤니티 참여권 획득','좋아요 누르기'"));
-assert.ok(referral.includes('identityPanel.hidden=account3'));
+assert.ok(referral.includes("const visualTier=premiumVisual?2:1;")); // Lv.3 display deferred; preserve Lv.2 tier
+assert.ok(referral.includes("'확장 학교 상세자료 열람','최신 조사자료 열람','행정동 공동주택 평균 공시가격 열람','좋아요 누르기'"));
+assert.ok(referral.includes('const loginCard=verifiedLoginLevel>=2&&(account3||!upgraded||!upgradedFromLv1);'));
+assert.ok(referral.includes('identityPanel.hidden=loginCard'));
+assert.match(html,/<section id="level3-account" hidden inert aria-hidden="true"/);
 assert.ok(access.includes('next.accountLevel,next.provisional===true'));
 assert.ok(account.includes('open.disabled=busy'));
 assert.ok(account.includes('if(register&&!eligible())'));

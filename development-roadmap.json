@@ -1292,6 +1292,24 @@
         "auth-singleflight-validation.yml",
         "2026-question-results.yml"
       ]
+    },
+    {
+      "order": 57,
+      "version": "v1.12.07",
+      "name": "클린코트",
+      "scope": "구형 관심도 중복 호출 제거, 미사용 JS 2개 정리, 긴급 안정화 및 기존 공개 권한 보존. 자동 검수 반복 저장 개선은 독립 테스트 전용이며 운영 DB 적용 제외.",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.12.07-clean-court",
+      "dependencies": [
+        "v1.12.06"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        "clean-release-validation.yml",
+        "clean-court-asset-audit.yml",
+        "clean-court-review-audit.yml"
+      ]
     }
   ],
   "source_manifest": {

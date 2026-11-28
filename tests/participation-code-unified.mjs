@@ -115,7 +115,7 @@ async function exercise(level){
  };
  win.self=win;win.top=win;
  const context=createContext({
-  document:doc,window:win,sessionStorage:storageAPI,
+  document:doc,window:win,sessionStorage:storageAPI,AbortController,setTimeout,clearTimeout,
   CustomEvent:class{constructor(type,o){this.type=type;this.detail=o?.detail}},
   Event:class{constructor(type){this.type=type}},
   fetch:async (_url,opts)=>{

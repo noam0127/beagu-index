@@ -12,7 +12,7 @@ for(const path of ['js/visit-stats.js','js/beagu-presence-games-v1.js']){
     calls.push(body.action);
     return {data:body.action==='visit'?{today:1,month:1,total:1}:{ok:true}};
   }}};
-  vm.runInNewContext(readFileSync(path,'utf8'),{window,document,localStorage:storage,sessionStorage:storage,
+  vm.runInNewContext(readFileSync(path,'utf8'),{window,document,localStorage:storage,sessionStorage:storage,AbortController,setTimeout,clearTimeout,
     crypto:{randomUUID:()=> 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'},
     location:{pathname:path.includes('games')?'/teacher-run.html':'/'},supabaseClient,Date:{now:()=>now}});
   if(window.beaguVisitReady)await window.beaguVisitReady;

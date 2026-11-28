@@ -142,31 +142,32 @@ async function hiddenCards(page){
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv2.png',fullPage:false});
    await page.keyboard.press('Escape');
    await page.locator('#togetherIdentityDetails summary').click();
-   assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   // Current approved member card displays the entered code only in the
+   // authenticated details panel. Lv.3 is deferred in the production baseline.
+   assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2);
    assert.match(await page.locator('#togetherBenefitsList').innerText(),/좋아요 누르기/);
-   await page.locator('#level3Upgrade').click();
-   await page.locator('#level3Username').fill('ExampleUser');
-   await page.locator('#level3Password').fill('Example12345');await page.locator('#level3Confirm').fill('Example12345');await page.locator('#level3Ack').check();await page.locator('#level3Submit').click();
-   await page.waitForFunction(()=>document.querySelector('#certificate')?.dataset.level==='3');
-   await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.textContent==='Lv.3');
-   assert.equal(await page.locator('#certificateLevelBanner').innerText(),'Lv.3 챌린지 달성');
-   assert.equal(await page.locator('#togetherBenefitsTitle').innerText(),'Lv.3 전용 혜택');
-   assert.deepEqual(await page.locator('#togetherBenefitsList li').allTextContents(),['학교별 상세자료 열람','커뮤니티 참여권 획득','좋아요 누르기']);
-   for(const selector of ['#certificate','#level3-account','#challengeReferralPanel','.together-benefits','.challenge-account-details','.together-save'])assert.equal(await page.locator(selector).evaluate(n=>getComputedStyle(n).borderTopColor),'rgb(187, 139, 40)',selector+' gold border');
-   if(await page.locator('#togetherIdentityDetails').getAttribute('open')===null)await page.locator('#togetherIdentityDetails summary').click();
-   assert.equal(await page.locator('#togetherCurrentAuth').innerText(),'Lv.3');
-   assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   assert.equal(await page.locator('#level3-account').isHidden(),true);
+   assert.equal(await page.locator('#level3-account').getAttribute('inert'),'');
+   assert.equal(await page.locator('#beaguAccountEntry').isHidden(),true);
+   assert.equal(await page.locator('#certificate').getAttribute('data-level'),'2');
+   assert.equal(await page.locator('#certificateLevelBanner').innerText(),'Lv.2 챌린지 달성');
+   assert.equal(await page.locator('#togetherBenefitsTitle').innerText(),'Lv.2 전용 혜택');
+   assert.deepEqual(await page.locator('#togetherBenefitsList li').allTextContents(),['확장 학교 상세자료 열람','최신 조사자료 열람','행정동 공동주택 평균 공시가격 열람','좋아요 누르기']);
    assert.equal(await page.locator('#challengeIdentityPanel').isHidden(),true);
    assert(!((await page.locator('#certificate').innerText()).includes(LV2)));
+   assert.equal(await page.locator('#challengeLoginCodePanel').getAttribute('data-html2canvas-ignore'),'true');
+   assert.equal(tracker.accountLevel,0);
    await page.waitForFunction(()=>!document.querySelector('#capture')?.disabled,{},{timeout:45000});
    const [certificateDownload]=await Promise.all([page.waitForEvent('download'),page.locator('#capture').click()]);
    assert.equal((await fs.readFile(await certificateDownload.path())).subarray(0,8).toString('hex'),'89504e470d0a1a0a');
-   await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv3.png',fullPage:true});
-   await view(page,'challenge.html');await page.waitForFunction(()=>document.querySelector('#certificate')?.dataset.level==='3');
-   await page.locator('#togetherIdentityDetails summary').click();assert.equal(await page.locator('#challengeLoginCode').innerText(),LV2.slice(0,2)+'*'.repeat(LV2.length-2));
+   await view(page,'challenge.html');await headerState(page,2);
+   await page.locator('#togetherIdentityDetails summary').click();
+   await page.waitForFunction(code=>document.querySelector('#challengeLoginCode')?.textContent===code,LV2);
    await open(page);
    await page.locator('#beaguParticipationLogout').click();
    await headerState(page,0);await hiddenCards(page);
+   assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-login-code-mask-v1')),null);
+   await page.waitForFunction(()=>!document.querySelector('#challengeLoginCode')?.textContent);
    for(const route of ['search.html','statistics.html','games.html','challenge.html']){
     await view(page,route);await headerState(page,0);await hiddenCards(page);
     const overlay=page.locator('#beaguParticipationOverlay');
@@ -186,6 +187,6 @@ async function hiddenCards(page){
    assert.deepEqual(authErrors,[],'No shared UI exceptions');
    await ctx.close();
   }
-  console.log('PASS: desktop/mobile Lv0 rejection, Lv1/Lv2 auth, Lv3 registration, masked entered code, gold cards, PNG, notice toggle, persistence and revoke');
+  console.log('PASS: desktop/mobile Lv0 rejection, Lv1/Lv2 auth, deferred Lv3, authenticated entered-code card, private PNG, notice toggle, persistence and revoke');
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
