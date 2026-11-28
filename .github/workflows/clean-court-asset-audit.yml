@@ -1,0 +1,32 @@
+name: Clean Court asset reference audit (offline)
+on:
+  push:
+    branches: [refactor/clean-court-asset-audit-20261128]
+  pull_request:
+    branches: [refactor/clean-court-school-interest-20261128, fix/v112061-emergency-stability]
+    paths:
+      - 'scripts/audit-clean-court-assets.py'
+      - 'scripts/verify-clean-court-retired-assets.py'
+      - 'js/beagu-edited-workbook-v1.js'
+      - 'js/class-diary-audio-v1.js'
+      - '.github/workflows/clean-court-asset-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python3 scripts/verify-clean-court-retired-assets.py
+      - run: python3 scripts/audit-clean-court-assets.py
+      - run: node tests/edited-2026.mjs
+      - run: node scripts/test-class-diary-sound.cjs
+      - run: node scripts/test-class-diary-semester.cjs
+      - run: node tests/school-view-client-integration.cjs
