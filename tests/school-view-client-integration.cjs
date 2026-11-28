@@ -7,7 +7,7 @@ new vm.Script(telemetry);
 new vm.Script(widget);
 for(const path of ['search.html','search-lv1.html','school-report.html']){
   const html=fs.readFileSync(path,'utf8');
-  assert.ok(html.includes('js/search-telemetry-v1.js?v=11117-combined1'),'Search telemetry must be cache-busted on '+path);
+  assert.ok(html.includes('js/search-telemetry-v1.js?v=11117-combined1-clean1'),'Search telemetry must be cache-busted on '+path);
   assert.ok(html.includes('js/school-view-counts-v1.js?v=11117-combined1'),'Counter widget must be cache-busted on '+path);
 }
 assert.ok(telemetry.includes("supabaseClient.rpc('beagu_record_school_view_v2'"));
@@ -37,7 +37,7 @@ async function scenario(withWidget){
   assert.ok(action,'Trusted selection emits an action ID');
   await new Promise(resolve=>setImmediate(resolve));
   assert.deepEqual(calls.map(c=>c.name),[
-    'beagu_log_school_search','beagu_record_school_view_v2','beagu_record_school_interest'
+    'beagu_log_school_search','beagu_record_school_view_v2'
   ]);
   const view=calls.find(c=>c.name==='beagu_record_school_view_v2');
   assert.equal(view.args.p_school_id,'1234567');
@@ -46,7 +46,7 @@ async function scenario(withWidget){
   assert.equal(paints.length,withWidget?1:0);
   if(withWidget)assert.deepEqual(paints[0],{id:'1234567',count:1});
   assert.equal(win.BeaguSearchTelemetry.selected('1234567',0,'search',{isTrusted:true}),null);
-  assert.equal(calls.length,3,'Repeated client click within five seconds is ignored');
+  assert.equal(calls.length,2,'Repeated client click within five seconds is ignored');
   win.BeaguSearchTelemetry.searchConfirmed('7654321',0,'search');
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(calls.filter(c=>c.name==='beagu_record_school_view_v2').length,2,'Confirmed search increments the search category');
@@ -54,9 +54,13 @@ async function scenario(withWidget){
   await new Promise(resolve=>setImmediate(resolve));
   const records=calls.filter(c=>c.name==='beagu_record_school_view_v2');
   assert.deepEqual(records.map(c=>c.args.p_event_type),['school_selected','search_confirmed','detail_viewed']);
-  win.BeaguSearchTelemetry.selectedFromReport('7654321');
+  const reportAction=win.BeaguSearchTelemetry.selectedFromReport('7654321');
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(calls.filter(c=>c.name==='beagu_record_school_view_v2').length,3,'Direct report navigation is not a search');
+  win.BeaguSearchTelemetry.detailViewed('7654321',0,'school-report',reportAction);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls.filter(c=>c.name==='beagu_record_school_view_v2').length,4,'Direct report detail still counts');
+  assert.ok(calls.every(c=>['beagu_log_school_search','beagu_record_school_view_v2'].includes(c.name)),'No legacy write on any route');
 }
 (async()=>{
  await scenario(false);
