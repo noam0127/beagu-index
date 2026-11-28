@@ -317,35 +317,58 @@ body.beagu-page-home main.container>:is(.beagu-landing-hero,.beagu-landing-benef
   font-weight:400;letter-spacing:-.015em;word-break:keep-all;overflow-wrap:anywhere;
 }
 body.beagu-page-home .beagu-landing-hero #beaguLandingTitle{
-  max-width:18ch;font-size:clamp(36px,5.2vw,60px);font-weight:700;line-height:1.28;
+  max-width:18ch;font-size:clamp(2.5rem,5.5vw,4rem);font-weight:700;line-height:1.28;
   letter-spacing:-.035em;text-wrap:balance;word-break:keep-all;overflow-wrap:anywhere;
 }
 body.beagu-page-home .beagu-landing-hero .beagu-landing-kicker{font-weight:600;letter-spacing:0}
-body.beagu-page-home .beagu-landing-hero .beagu-landing-lead{font-size:clamp(20px,2.4vw,24px);line-height:1.7;font-weight:400}
+body.beagu-page-home .beagu-landing-hero .beagu-landing-lead{font-size:clamp(1.375rem,2.6vw,1.625rem);line-height:1.7;font-weight:400}
 body.beagu-page-home .beagu-landing-hero .beagu-landing-lead strong{font-weight:700}
-body.beagu-page-home .beagu-landing-hero .beagu-landing-description{font-size:clamp(18px,2vw,20px);line-height:1.75;max-width:44em}
+body.beagu-page-home .beagu-landing-hero .beagu-landing-description{font-size:clamp(1.25rem,2.15vw,1.375rem);line-height:1.75;max-width:44em}
 body.beagu-page-home .beagu-landing-hero .beagu-landing-primary{
-  justify-content:center;min-height:60px;font-size:20px;font-weight:700;letter-spacing:-.01em;text-align:center;
+  justify-content:center;min-height:64px;font-size:1.375rem;font-weight:700;letter-spacing:-.01em;text-align:center;
 }
 body.beagu-page-home .beagu-landing-hero .beagu-landing-primary span{flex:none}
 body.beagu-page-home main.container>:is(.beagu-landing-benefits,.beagu-landing-invitation) h2,
 body.beagu-page-home main.container>.beagu-survey-purpose #beaguQ50Title{
-  font-size:clamp(26px,3.2vw,34px);font-weight:700;letter-spacing:-.025em;line-height:1.4;text-wrap:balance;
+  font-size:clamp(1.75rem,3.3vw,2.25rem);font-weight:700;letter-spacing:-.025em;line-height:1.4;text-wrap:balance;
 }
 body.beagu-page-home main.container>:is(.beagu-landing-benefits,.beagu-landing-invitation) p,
-body.beagu-page-home main.container>.beagu-survey-purpose :is(.beagu-q50-question,.beagu-q50-purpose p,.beagu-survey-fold>p,.beagu-survey-fold>summary){font-size:18px;line-height:1.75}
-body.beagu-page-home main.container>.beagu-landing-benefits .beagu-landing-note{font-size:15px;line-height:1.7}
+body.beagu-page-home main.container>.beagu-survey-purpose :is(.beagu-q50-question,.beagu-q50-purpose p,.beagu-survey-fold>p,.beagu-survey-fold>summary){font-size:1.25rem;line-height:1.75}
+body.beagu-page-home main.container>.beagu-landing-benefits .beagu-landing-note{font-size:1rem;line-height:1.7}
 body.beagu-page-home .beagu-landing-benefits li strong{font-weight:700}
-body.beagu-page-home .beagu-landing-benefits li span{font-size:18px;line-height:1.7}
+body.beagu-page-home .beagu-landing-benefits li span{font-size:1.25rem;line-height:1.7}
 body.beagu-page-home main.container>.beagu-survey-purpose .beagu-q50-highlight>strong{font-weight:700;letter-spacing:-.025em}
 body.beagu-page-home main.container>.beagu-survey-purpose .beagu-q50-highlight>span{font-weight:600}
 body.beagu-page-home .beagu-landing-evidence>summary{font-weight:600;min-height:44px;padding:8px 0}
-body.beagu-page-home .beagu-home-actions>:is(.survey-access-link,.data-access-link){font-size:20px;font-weight:700;min-height:52px}
+body.beagu-page-home .beagu-home-actions>:is(.survey-access-link,.data-access-link){font-size:1.375rem;font-weight:700;min-height:56px}
 @media(max-width:480px){
-  body.beagu-page-home .beagu-landing-hero #beaguLandingTitle{font-size:clamp(32px,9vw,40px);max-width:none}
+  body.beagu-page-home .beagu-landing-hero #beaguLandingTitle{font-size:clamp(2.125rem,10vw,2.75rem);max-width:none}
   body.beagu-page-home main.container>.beagu-landing-hero{padding:24px 18px}
   body.beagu-page-home .beagu-landing-hero .beagu-landing-primary{padding:14px 12px}
   body.beagu-page-home main.container>.beagu-survey-purpose .beagu-q50-row-label{flex-wrap:wrap;gap:4px 12px}
+}
+
+/* Keep the landing type scale coherent across supporting data and actions. */
+body.beagu-page-home .beagu-landing-hero .beagu-landing-kicker{font-size:clamp(1rem,1.7vw,1.125rem);line-height:1.6}
+body.beagu-page-home .beagu-landing-hero .beagu-landing-note{font-size:1rem;line-height:1.7}
+body.beagu-page-home .beagu-landing-benefits li strong{font-size:1.375rem;line-height:1.45}
+body.beagu-page-home main.container>.beagu-survey-purpose :is(.beagu-q50-highlight>span,.beagu-q50-row-label){font-size:1.1875rem;line-height:1.6}
+body.beagu-page-home main.container>.beagu-survey-purpose :is(.beagu-q50-source,.beagu-q50-eyebrow,.beagu-q50-highlight>small){font-size:1rem;line-height:1.7}
+body.beagu-page-home main.container>.beagu-survey-purpose .beagu-q50-highlight>strong{font-size:clamp(2.25rem,5vw,3.25rem)}
+body.beagu-page-home main.container>.beagu-survey-purpose :is(.beagu-q50-results h3,.beagu-q50-purpose h3){font-size:1.5rem;line-height:1.45}
+body.beagu-page-home .beagu-landing-evidence>summary{font-size:1.25rem;line-height:1.6}
+body.beagu-page-home main.container>.survey-totals dt{font-size:1rem;line-height:1.5;white-space:normal}
+body.beagu-page-home main.container>.survey-totals .survey-total-number{font-size:clamp(1.5rem,5.5vw,2.25rem)}
+body.beagu-page-home main.container>.survey-totals .survey-total-unit{font-size:.9375rem}
+body.beagu-page-home main.container>.beagu-xp .beagu-xp-head{flex-wrap:wrap;gap:.5rem}
+body.beagu-page-home main.container>.beagu-xp .beagu-xp-head h2{font-size:clamp(1.25rem,2.6vw,1.625rem);line-height:1.45;min-width:0;white-space:normal}
+body.beagu-page-home main.container>.beagu-xp .beagu-xp-number{font-size:1.125rem;line-height:1.45}
+body.beagu-page-home main.container>.beagu-xp .beagu-xp-footer{font-size:1rem;line-height:1.5}
+body.beagu-page-home .beagu-home-actions>:is(.survey-access-link,.data-access-link){white-space:normal;text-align:center;overflow-wrap:anywhere}
+@media(max-width:380px){
+  body.beagu-page-home .beagu-landing-hero .beagu-landing-lead{font-size:1.25rem}
+  body.beagu-page-home .beagu-landing-hero .beagu-landing-primary{font-size:1.25rem;gap:8px}
+  body.beagu-page-home main.container>.survey-totals dd{white-space:normal;overflow-wrap:normal}
 }
 </style>
 </head>
