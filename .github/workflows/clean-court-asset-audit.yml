@@ -1,0 +1,20 @@
+name: Clean Court asset reference audit (offline)
+on:
+  push:
+    branches: [refactor/clean-court-asset-audit-20261128]
+  pull_request:
+    branches: [refactor/clean-court-school-interest-20261128]
+    paths:
+      - 'scripts/audit-clean-court-assets.py'
+      - '.github/workflows/clean-court-asset-audit.yml'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 scripts/audit-clean-court-assets.py
