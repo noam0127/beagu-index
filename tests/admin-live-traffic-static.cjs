@@ -24,7 +24,7 @@ assert.match(html,/id="adminHourlyChart"/);
 assert.match(read('js/beagu-admin-access-v1.js'),/30000/);
 assert.match(read('js/visit-stats.js'),/presencePing/);
 for(const page of ['index.html','search.html','search-lv1.html','statistics.html','challenge.html','result.html','school-report.html']){
-  assert.match(read(page),/js\/visit-stats\.js\?v=20261120-gateway2/);
+  assert.match(read(page),/js\/visit-stats\.js\?v=112061-stability/);
 }
 for(const page of ['teacher-run.html','teacher-volleyball.html']){
   assert.match(read(page),/js\/beagu-presence-games-v1\.js\?v=20261120-gateway2/);
