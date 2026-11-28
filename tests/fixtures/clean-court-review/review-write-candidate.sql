@@ -109,4 +109,4 @@ BEGIN
   SELECT count(*)::integer INTO checked_count FROM decisions;
   RETURN checked_count;
 END;
-$function$
+$function$;

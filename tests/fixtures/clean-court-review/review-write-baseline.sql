@@ -92,4 +92,4 @@ BEGIN
   GET DIAGNOSTICS checked_count=ROW_COUNT;
   RETURN checked_count;
 END;
-$function$
+$function$;
