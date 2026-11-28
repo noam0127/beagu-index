@@ -1,7 +1,7 @@
 name: Emergency mobile stability (offline WebKit)
 on:
   push:
-    branches: [fix/v112061-emergency-stability]
+    branches: [fix/v112061-emergency-stability, release/v1.12.07-clean-court]
   workflow_dispatch:
 permissions:
   contents: read

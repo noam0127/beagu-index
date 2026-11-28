@@ -1,7 +1,7 @@
 name: Auth single-flight independent validation
 on:
   push:
-    branches: [perf/v1.12.06-auth-singleflight, perf/v1.12.06-2026-batch, fix/v112061-emergency-stability]
+    branches: [perf/v1.12.06-auth-singleflight, perf/v1.12.06-2026-batch, fix/v112061-emergency-stability, release/v1.12.07-clean-court]
   workflow_dispatch:
 permissions:
   contents: read

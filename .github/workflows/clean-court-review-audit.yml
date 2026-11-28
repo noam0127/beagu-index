@@ -3,7 +3,7 @@ on:
   push:
     branches: [refactor/clean-court-review-writes-20261128]
   pull_request:
-    branches: [fix/v112061-emergency-stability]
+    branches: [fix/v112061-emergency-stability, release/base-pages-clean-court-20261128]
     paths:
       - 'tests/fixtures/clean-court-review/**'
       - 'scripts/audit-clean-court-workflows.rb'

@@ -40,6 +40,29 @@ jobs:
           assert.ok(m.summary.trim().length>=3&&m.summary.trim().length<=500);
           JS
           node tests/direct-pages-release-contract.cjs
+      - name: Verify Clean Court release metadata and production ancestry
+        if: github.base_ref == 'release/base-pages-clean-court-20261128'
+        run: |
+          set -euo pipefail
+          base=e9cce3ba862691763e86f72aa7de07db3dd4cd96
+          test "$(git merge-base HEAD "$base")" = "$base"
+          count=$(git diff --name-only "$base" HEAD | wc -l)
+          test "$count" -gt 0 && test "$count" -lt 300
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('release-candidate.json','utf8'));
+          const i=JSON.parse(fs.readFileSync('release-info.json','utf8'));
+          assert.equal(m.version,'v1.12.07');
+          assert.equal(i.version,m.version);
+          assert.equal(i.name,'클린코트');
+          assert.equal(i.environment,'candidate');
+          assert.equal(i.commit,null);
+          assert.equal(i.deployedAt,null);
+          assert.ok(m.summary.trim().length>=3&&m.summary.trim().length<=500);
+          assert.ok(m.summary.includes('운영 DB 별도 승인 전 미적용'));
+          JS
+          node tests/direct-pages-release-contract.cjs
       - name: Verify source and simulated DOM
         run: |
           node --check js/beagu-release-info-v1.js
