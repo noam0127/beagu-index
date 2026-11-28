@@ -116,7 +116,7 @@ async function hiddenCards(page){
    const tracker={level:0,token:''};
    await fixture(page,tracker);
    await view(page,'index.html');await headerState(page,0);
-   const notice=page.locator('.beagu-survey-purpose details');await notice.waitFor();assert.equal(await notice.getAttribute('open'),null);await notice.locator('summary').click();assert.notEqual(await notice.getAttribute('open'),null);assert.equal(await notice.locator('p').first().isVisible(),true);await notice.locator('summary').click();assert.equal(await notice.getAttribute('open'),null);
+   const notice=page.locator('.beagu-survey-purpose > .beagu-survey-fold:not(.beagu-name-origin)');await notice.waitFor();assert.equal(await notice.getAttribute('open'),null);await notice.locator('summary').click();assert.notEqual(await notice.getAttribute('open'),null);assert.equal(await notice.locator('p').first().isVisible(),true);await notice.locator('summary').click();assert.equal(await notice.getAttribute('open'),null);
    const rankNotice=page.locator('#beagu2026Ranking .beagu-survey-fold');await rankNotice.waitFor({state:'attached'});assert.equal(await rankNotice.getAttribute('open'),null);
    await page.locator('.beagu-header-code input').fill('INVALIDCODE12');
    await page.locator('.beagu-header-code button').click();

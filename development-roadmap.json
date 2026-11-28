@@ -1310,6 +1310,25 @@
         "clean-court-asset-audit.yml",
         "clean-court-review-audit.yml"
       ]
+    },
+    {
+      "order": 58,
+      "version": "v1.12.08",
+      "name": "좋은 학교를 찾아서",
+      "scope": "학교 검색 중심 랜딩페이지, 선생님 호칭, Pretendard 자체 호스팅, 주요 8개 화면 가독성 통일 및 기존 기능 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "ui/v1.12.08-school-first-landing",
+      "pr": 342,
+      "baseline_sha": "7af74ab807bdb3b2c9ca4fcd32c0fb8aa1c1a6c3",
+      "dependencies": [
+        "v1.12.07"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        "clean-release-validation.yml",
+        "school-first-landing.yml"
+      ]
     }
   ],
   "source_manifest": {
