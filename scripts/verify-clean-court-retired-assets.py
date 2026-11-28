@@ -24,7 +24,15 @@ for path, symbol in retired.items():
     assert not refs, "Baseline references still exist: " + repr(refs)
     result = subprocess.run(args+["--",".",":(exclude)scripts/verify-clean-court-retired-assets.py"],cwd=root,text=True,capture_output=True)
     assert result.returncode in (0,1), result.stderr
-    assert not result.stdout.strip(), "Current references still exist: " + result.stdout
+    current_refs = result.stdout.splitlines()
+    workflow = ".github/workflows/clean-court-asset-audit.yml"
+    if workflow in current_refs:
+        # A paths filter detects accidental reintroduction; it does not load an asset.
+        matches = [line for line in (root/workflow).read_text(encoding="utf-8").splitlines()
+                   if any(pattern in line for pattern in patterns)]
+        assert matches and all(line.strip() == "- '" + path + "'" for line in matches), repr(matches)
+        current_refs.remove(workflow)
+    assert not current_refs, "Current references still exist: " + repr(current_refs)
     print("PASS no tracked text references to retired asset or exported symbol:",path)
 for path in ["admin.html","teacher-class-diary-play.html","js/beagu-edited-sheet-v1.js","js/beagu-2026-edited-admin-v1.js","js/class-diary-sound-v1.js","js/class-diary-semester-v1.js"]:
     git("diff","--exit-code",baseline,"--",path)
